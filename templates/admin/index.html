@@ -1,0 +1,407 @@
+{% extends "admin/base_site.html" %}
+
+
+{% block content %}
+
+
+<style>
+.rp-dashboard {
+    display:grid;
+    gap:24px;
+}
+
+.rp-hero {
+    align-items:flex-end;
+    background:#ffffff;
+    border:1px solid #ded8cb;
+    border-radius:8px;
+    box-shadow:0 10px 28px rgba(24, 24, 24, 0.06);
+    display:flex;
+    justify-content:space-between;
+    padding:24px;
+}
+
+.rp-eyebrow {
+    color:#2f6f63;
+    font-size:12px;
+    font-weight:800;
+    letter-spacing:0;
+    margin:0 0 6px;
+    text-transform:uppercase;
+}
+
+.rp-hero h1 {
+    font-size:30px;
+    line-height:1.15;
+    margin:0;
+}
+
+.rp-hero p {
+    color:#6d665c;
+    margin:8px 0 0;
+    max-width:620px;
+}
+
+.rp-actions {
+    display:flex;
+    gap:10px;
+}
+
+.rp-actions a {
+    border:1px solid #cfc5b3;
+    border-radius:6px;
+    color:#1f544a;
+    font-weight:700;
+    padding:10px 12px;
+    text-decoration:none;
+    white-space:nowrap;
+}
+
+.rp-actions a.primary {
+    background:#2f6f63;
+    border-color:#2f6f63;
+    color:#ffffff;
+}
+
+.rp-metrics {
+    display:grid;
+    gap:16px;
+    grid-template-columns:repeat(4, minmax(0, 1fr));
+}
+
+.rp-card {
+    background:#ffffff;
+    border:1px solid #ded8cb;
+    border-radius:8px;
+    box-shadow:0 10px 28px rgba(24, 24, 24, 0.06);
+    padding:18px;
+}
+
+.rp-card span {
+    color:#6d665c;
+    display:block;
+    font-size:13px;
+    margin-bottom:10px;
+}
+
+.rp-card strong {
+    color:#181818;
+    display:block;
+    font-size:28px;
+    line-height:1;
+}
+
+.rp-card small {
+    color:#b8812d;
+    display:block;
+    margin-top:10px;
+}
+
+.rp-main-grid {
+    align-items:start;
+    display:grid;
+    gap:24px;
+    grid-template-columns:minmax(0, 2fr) minmax(280px, 1fr);
+}
+
+.rp-panel {
+    background:#ffffff;
+    border:1px solid #ded8cb;
+    border-radius:8px;
+    box-shadow:0 10px 28px rgba(24, 24, 24, 0.06);
+    padding:22px;
+}
+
+.rp-panel-header {
+    align-items:flex-start;
+    display:flex;
+    justify-content:space-between;
+    gap:16px;
+    margin-bottom:18px;
+}
+
+.rp-panel h2 {
+    font-size:20px;
+    margin:0;
+}
+
+.rp-panel p {
+    color:#6d665c;
+    margin:6px 0 0;
+}
+
+.rp-chart {
+    height:380px;
+    margin:auto;
+    max-width:520px;
+}
+
+.rp-list {
+    display:grid;
+    gap:12px;
+    margin:0;
+    padding:0;
+}
+
+.rp-list li {
+    border-bottom:1px solid #eee7db;
+    display:grid;
+    gap:4px;
+    list-style:none;
+    padding:0 0 12px;
+}
+
+.rp-list li:last-child {
+    border-bottom:0;
+    padding-bottom:0;
+}
+
+.rp-list strong {
+    color:#181818;
+}
+
+.rp-list span {
+    color:#6d665c;
+}
+
+.rp-top-category {
+    background:#f6efe3;
+    border:1px solid #e2d3bb;
+    border-radius:8px;
+    margin-top:18px;
+    padding:16px;
+}
+
+.rp-admin-models {
+    display:grid;
+    gap:16px;
+    grid-template-columns:repeat(2, minmax(0, 1fr));
+}
+
+.rp-model-card {
+    background:#ffffff;
+    border:1px solid #ded8cb;
+    border-radius:8px;
+    box-shadow:0 10px 28px rgba(24, 24, 24, 0.06);
+    overflow:hidden;
+}
+
+.rp-model-card h2 {
+    background:#181818;
+    color:#ffffff !important;
+    font-size:15px;
+    margin:0;
+    padding:12px 16px;
+}
+
+.rp-model-card table {
+    margin:0;
+    width:100%;
+}
+
+.rp-model-card th,
+.rp-model-card td {
+    border-bottom:1px solid #eee7db;
+    padding:12px 16px;
+}
+
+.rp-model-card tr:last-child th,
+.rp-model-card tr:last-child td {
+    border-bottom:0;
+}
+
+.rp-model-card td {
+    text-align:right;
+}
+
+@media (max-width: 980px) {
+    .rp-hero,
+    .rp-panel-header {
+        align-items:flex-start;
+        flex-direction:column;
+    }
+
+    .rp-metrics,
+    .rp-main-grid,
+    .rp-admin-models {
+        grid-template-columns:1fr;
+    }
+
+    .rp-actions {
+        flex-wrap:wrap;
+    }
+}
+</style>
+
+
+<div class="rp-dashboard">
+<section class="rp-hero">
+<div>
+<p class="rp-eyebrow">Publishing Operations</p>
+<h1>Rumi Press Dashboard</h1>
+<p>
+Monitor catalog size, category coverage, publisher diversity, and distribution expenses from one focused admin workspace.
+</p>
+</div>
+
+<div class="rp-actions">
+<a class="primary" href="{% url 'admin:books_book_add' %}">Add Book</a>
+<a href="{% url 'admin:books_book_changelist' %}">Manage Books</a>
+<a href="{% url 'admin:books_category_changelist' %}">Categories</a>
+</div>
+</section>
+
+
+<section class="rp-metrics">
+<div class="rp-card">
+<span>Total Books</span>
+<strong>{{ total_books }}</strong>
+<small>Catalog records</small>
+</div>
+
+<div class="rp-card">
+<span>Categories</span>
+<strong>{{ total_categories }}</strong>
+<small>Reporting groups</small>
+</div>
+
+<div class="rp-card">
+<span>Publishers</span>
+<strong>{{ publisher_count }}</strong>
+<small>Distinct imprints</small>
+</div>
+
+<div class="rp-card">
+<span>Total Expenses</span>
+<strong>{{ total_expenses }}</strong>
+<small>Distribution spend</small>
+</div>
+</section>
+
+
+<section class="rp-main-grid">
+<div class="rp-panel">
+<div class="rp-panel-header">
+<div>
+<h2>Distribution Expenses</h2>
+<p>Totals grouped by book category.</p>
+</div>
+<a href="{% url 'report' %}">Open report</a>
+</div>
+
+<div class="rp-chart">
+<canvas id="expenseChart"></canvas>
+</div>
+</div>
+
+
+<aside class="rp-panel">
+<div class="rp-panel-header">
+<div>
+<h2>Latest Books</h2>
+<p>Recently added catalog entries.</p>
+</div>
+</div>
+
+<ul class="rp-list">
+{% for book in latest_books %}
+<li>
+<strong>{{ book.title }}</strong>
+<span>{{ book.category }} | {{ book.publisher }}</span>
+</li>
+{% empty %}
+<li>
+<strong>No books yet</strong>
+<span>Add your first book to populate this panel.</span>
+</li>
+{% endfor %}
+</ul>
+
+{% if top_category %}
+<div class="rp-top-category">
+<p class="rp-eyebrow">Highest Expense Category</p>
+<strong>{{ top_category.category__name }}</strong>
+<p>{{ top_category.total }}</p>
+</div>
+{% endif %}
+</aside>
+</section>
+
+
+{% if app_list %}
+<section class="rp-admin-models">
+{% for app in app_list %}
+<div class="rp-model-card">
+<h2>{{ app.name }}</h2>
+<table>
+{% for model in app.models %}
+<tr>
+<th scope="row">
+{% if model.admin_url %}
+<a href="{{ model.admin_url }}">{{ model.name }}</a>
+{% else %}
+{{ model.name }}
+{% endif %}
+</th>
+<td>
+{% if model.add_url %}
+<a href="{{ model.add_url }}">Add</a>
+{% endif %}
+{% if model.admin_url %}
+<a href="{{ model.admin_url }}">Change</a>
+{% endif %}
+</td>
+</tr>
+{% endfor %}
+</table>
+</div>
+{% endfor %}
+</section>
+{% endif %}
+</div>
+
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+const expenseLabels = {{ labels|safe }};
+const expenseValues = {{ values|safe }};
+const chartCanvas = document.getElementById("expenseChart");
+
+if (chartCanvas && expenseLabels.length) {
+    new Chart(chartCanvas, {
+        type:"doughnut",
+        data:{
+            labels: expenseLabels,
+            datasets:[
+                {
+                    label:"Distribution Expenses",
+                    data: expenseValues,
+                    backgroundColor:[
+                        "#2f6f63",
+                        "#b8812d",
+                        "#6f4a8e",
+                        "#b84b3a",
+                        "#3f6f9f",
+                        "#6f7d3c"
+                    ],
+                    borderColor:"#ffffff",
+                    borderWidth:2
+                }
+            ]
+        },
+        options:{
+            responsive:true,
+            maintainAspectRatio:false,
+            plugins:{
+                legend:{
+                    position:"bottom"
+                }
+            },
+            cutout:"58%"
+        }
+    });
+}
+</script>
+
+
+{% endblock %}

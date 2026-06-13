@@ -1,0 +1,146 @@
+{% extends "base.html" %}
+
+
+{% block content %}
+
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+<div>
+<h1 class="mb-1">Distribution Report</h1>
+<p class="muted-text mb-0">
+Review distribution expenses by category.
+</p>
+</div>
+
+<div class="d-flex gap-2">
+<a class="btn btn-outline-light" href="{% url 'export_books_csv' %}?{{ query_string }}">
+CSV
+</a>
+
+<a class="btn btn-outline-light" href="{% url 'export_books_excel' %}?{{ query_string }}">
+Excel
+</a>
+
+<a class="btn btn-outline-light" href="{% url 'export_books_pdf' %}?{{ query_string }}">
+PDF
+</a>
+</div>
+</div>
+
+
+<form class="filter-panel mb-3" method="get">
+<div class="row g-3 align-items-end">
+
+<div class="col-md-2">
+<label class="form-label" for="category">Category</label>
+<select id="category" name="category" class="form-select">
+<option value="">All categories</option>
+{% for category in categories %}
+<option value="{{ category.id }}" {% if filters.category == category.id|stringformat:"s" %}selected{% endif %}>
+{{ category.name }}
+</option>
+{% endfor %}
+</select>
+</div>
+
+<div class="col-md-2">
+<label class="form-label" for="publisher">Publisher</label>
+<select id="publisher" name="publisher" class="form-select">
+<option value="">All publishers</option>
+{% for publisher in publishers %}
+<option value="{{ publisher }}" {% if filters.publisher == publisher %}selected{% endif %}>
+{{ publisher }}
+</option>
+{% endfor %}
+</select>
+</div>
+
+<div class="col-md-2">
+<label class="form-label" for="year">Year</label>
+<select id="year" name="year" class="form-select">
+<option value="">All years</option>
+{% for year in years %}
+<option value="{{ year|date:'Y' }}" {% if filters.year == year|date:'Y' %}selected{% endif %}>
+{{ year|date:"Y" }}
+</option>
+{% endfor %}
+</select>
+</div>
+
+<div class="col-md-2">
+<label class="form-label" for="start_date">From</label>
+<input id="start_date" type="date" name="start_date" class="form-control" value="{{ filters.start_date }}">
+</div>
+
+<div class="col-md-2">
+<label class="form-label" for="end_date">To</label>
+<input id="end_date" type="date" name="end_date" class="form-control" value="{{ filters.end_date }}">
+</div>
+
+<div class="col-md-2 d-flex gap-2">
+<button class="btn btn-success" type="submit">Apply</button>
+<a class="btn btn-outline-light" href="{% url 'report' %}">Reset</a>
+</div>
+
+</div>
+</form>
+
+
+<div class="row g-3 mb-3">
+<div class="col-md-6">
+<div class="page-panel">
+<p class="muted-text mb-1">Books in report</p>
+<h2 class="mb-0">{{ total_books }}</h2>
+</div>
+</div>
+
+<div class="col-md-6">
+<div class="page-panel">
+<p class="muted-text mb-1">Total expense</p>
+<h2 class="mb-0">{{ total_expense }}</h2>
+</div>
+</div>
+</div>
+
+
+<div class="page-panel">
+<div style="width:450px;height:450px;margin:auto;max-width:100%;">
+<canvas id="expenseChart"></canvas>
+</div>
+</div>
+
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+const ctx = document.getElementById("expenseChart");
+
+new Chart(ctx, {
+    type: "pie",
+    data: {
+        labels: {{ labels|safe }},
+        datasets: [
+            {
+                label: "Distribution Expenses",
+                data: {{ values|safe }}
+            }
+        ]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                position: "bottom"
+            },
+            title: {
+                display: true,
+                text: "Expenses by Category"
+            }
+        }
+    }
+});
+</script>
+
+
+{% endblock %}

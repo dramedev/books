@@ -1,0 +1,226 @@
+{% extends "admin/base.html" %}
+{% load i18n %}
+
+
+{% block title %}
+{% if subtitle %}{{ subtitle }} | {% endif %}{{ title }} | Rumi Press Admin
+{% endblock %}
+
+
+{% block branding %}
+<div class="rp-brand">
+<h1 id="site-name">
+<a href="{% url 'admin:index' %}">Rumi Press</a>
+</h1>
+<span>Publishing Operations</span>
+</div>
+{% endblock %}
+
+
+{% block nav-global %}
+<div class="rp-admin-links">
+<a href="{% url 'admin:books_book_changelist' %}">Books</a>
+<a href="{% url 'admin:books_category_changelist' %}">Categories</a>
+<a href="{% url 'book_list' %}">Public App</a>
+</div>
+{% endblock %}
+
+
+{% block extrastyle %}
+{{ block.super }}
+<style>
+:root {
+    --rp-ink:#181818;
+    --rp-paper:#f7f4ed;
+    --rp-panel:#ffffff;
+    --rp-border:#ded8cb;
+    --rp-muted:#6d665c;
+    --rp-accent:#2f6f63;
+    --rp-accent-strong:#1f544a;
+    --rp-gold:#b8812d;
+    --rp-danger:#a33d36;
+}
+
+body {
+    background:var(--rp-paper);
+    color:var(--rp-ink);
+    font-family:Inter, "Segoe UI", Arial, sans-serif;
+}
+
+#container {
+    background:transparent;
+}
+
+#header {
+    background:var(--rp-ink);
+    color:#ffffff;
+    min-height:64px;
+    padding:0 28px;
+    box-shadow:0 8px 24px rgba(24, 24, 24, 0.12);
+}
+
+#branding {
+    display:flex;
+    align-items:center;
+}
+
+.rp-brand {
+    display:flex;
+    flex-direction:column;
+    gap:2px;
+}
+
+.rp-brand h1 {
+    margin:0;
+    font-size:22px;
+    font-weight:700;
+    line-height:1.1;
+}
+
+.rp-brand h1 a:link,
+.rp-brand h1 a:visited {
+    color:#ffffff;
+}
+
+.rp-brand span {
+    color:#d8cab0;
+    font-size:12px;
+    letter-spacing:0;
+}
+
+.rp-admin-links {
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin-left:24px;
+}
+
+.rp-admin-links a:link,
+.rp-admin-links a:visited {
+    border:1px solid rgba(255, 255, 255, 0.18);
+    border-radius:6px;
+    color:#ffffff;
+    padding:8px 10px;
+    text-decoration:none;
+}
+
+.rp-admin-links a:hover {
+    background:rgba(255, 255, 255, 0.12);
+}
+
+div.breadcrumbs {
+    background:#e7dfd1;
+    color:var(--rp-muted);
+    padding:12px 28px;
+}
+
+div.breadcrumbs a {
+    color:var(--rp-accent-strong);
+}
+
+#content {
+    padding:28px;
+}
+
+#content h1,
+#content h2 {
+    color:var(--rp-ink);
+}
+
+.module,
+#content-related,
+.inline-group {
+    background:var(--rp-panel);
+    border:1px solid var(--rp-border);
+    border-radius:8px;
+    box-shadow:0 10px 28px rgba(24, 24, 24, 0.06);
+    overflow:hidden;
+}
+
+.module h2,
+.module caption,
+.inline-group h2 {
+    background:var(--rp-ink);
+    color:#ffffff;
+    font-weight:700;
+    letter-spacing:0;
+}
+
+a:link,
+a:visited {
+    color:var(--rp-accent-strong);
+}
+
+.button,
+input[type=submit],
+input[type=button],
+.submit-row input,
+a.button {
+    background:var(--rp-accent);
+    border-radius:6px;
+    border:0;
+    color:#ffffff;
+    font-weight:700;
+}
+
+.button:hover,
+input[type=submit]:hover,
+input[type=button]:hover,
+.submit-row input:hover,
+a.button:hover {
+    background:var(--rp-accent-strong);
+}
+
+.button.default,
+input[type=submit].default,
+.submit-row input.default {
+    background:var(--rp-gold);
+}
+
+.deletelink {
+    background:var(--rp-danger) !important;
+    border-radius:6px;
+}
+
+#changelist-filter {
+    border-radius:8px;
+}
+
+#changelist table thead th {
+    background:#efe7da;
+}
+
+.object-tools a:link,
+.object-tools a:visited {
+    background:var(--rp-accent);
+    border-radius:6px;
+    font-weight:700;
+}
+
+input,
+textarea,
+select,
+.vTextField {
+    border:1px solid var(--rp-border);
+    border-radius:6px;
+}
+
+@media (max-width: 760px) {
+    #header {
+        align-items:flex-start;
+        flex-direction:column;
+        gap:12px;
+        padding:18px;
+    }
+
+    .rp-admin-links {
+        flex-wrap:wrap;
+        margin-left:0;
+    }
+
+    #content {
+        padding:18px;
+    }
+}
+</style>
+{% endblock %}

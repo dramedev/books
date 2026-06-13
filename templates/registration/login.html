@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+
+
+{% block content %}
+
+
+<div class="row justify-content-center">
+<div class="col-md-5">
+<div class="page-panel">
+<h1 class="mb-3">Login</h1>
+
+{% if form.errors %}
+<div class="alert alert-danger">
+Your username and password did not match.
+</div>
+{% endif %}
+
+<form method="post">
+{% csrf_token %}
+
+<div class="mb-3">
+<label class="form-label" for="{{ form.username.id_for_label }}">
+Username
+</label>
+{{ form.username }}
+</div>
+
+<div class="mb-3">
+<label class="form-label" for="{{ form.password.id_for_label }}">
+Password
+</label>
+{{ form.password }}
+</div>
+
+<button class="btn btn-primary">
+Login
+</button>
+
+{% if next %}
+<input type="hidden" name="next" value="{{ next }}">
+{% endif %}
+</form>
+</div>
+</div>
+</div>
+
+
+{% endblock %}

@@ -1,0 +1,185 @@
+{% extends "admin/base_site.html" %}
+
+
+{% block extrahead %}
+
+{{ block.super }}
+
+
+<style>
+
+
+body.light-theme {
+
+
+    --primary:#79aec8;
+
+    --secondary:#417690;
+
+    --body-bg:white;
+
+    --body-fg:#111;
+
+    --header-bg:#f5f5f5;
+
+    --header-color:#111;
+
+    --breadcrumbs-bg:#ddd;
+
+}
+
+
+
+body.dark-theme {
+
+
+    --body-bg:#121212;
+
+    --body-fg:white;
+
+    --header-bg:#111;
+
+    --header-color:white;
+
+}
+
+
+
+.theme-toggle {
+
+    position:fixed;
+
+    right:20px;
+
+    bottom:20px;
+
+    z-index:9999;
+
+    padding:12px 20px;
+
+    border-radius:30px;
+
+    cursor:pointer;
+
+}
+
+
+
+</style>
+
+
+
+{% endblock %}
+
+
+
+
+
+{% block footer %}
+
+
+{{ block.super }}
+
+
+<button 
+class="theme-toggle"
+onclick="toggleTheme()">
+
+🌙 / ☀️
+
+</button>
+
+
+
+
+
+<script>
+
+
+function toggleTheme(){
+
+
+let body = document.body;
+
+
+if(
+body.classList.contains("light-theme")
+){
+
+
+body.classList.remove(
+"light-theme"
+);
+
+
+body.classList.add(
+"dark-theme"
+);
+
+
+localStorage.setItem(
+"theme",
+"dark"
+);
+
+
+}
+
+else{
+
+
+body.classList.remove(
+"dark-theme"
+);
+
+
+body.classList.add(
+"light-theme"
+);
+
+
+localStorage.setItem(
+"theme",
+"light"
+);
+
+
+}
+
+
+}
+
+
+
+
+let saved = localStorage.getItem(
+"theme"
+);
+
+
+
+if(saved){
+
+
+document.body.classList.add(
+saved + "-theme"
+);
+
+
+}
+
+else{
+
+
+document.body.classList.add(
+"dark-theme"
+);
+
+
+}
+
+
+</script>
+
+
+{% endblock %}
