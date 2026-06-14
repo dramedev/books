@@ -47,6 +47,26 @@ TOOL_SPECS = [
         "permission": "books.view_book",
     },
     {
+        "name": "list_books",
+        "description": (
+            "List every book in the catalog (optionally filtered by "
+            "category), with category, stock on hand, reorder threshold "
+            "and distribution expense. Use this to browse or count the "
+            "whole catalog, e.g. when asked 'what books do you have' or "
+            "'how many books are there'."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "category": {
+                    "type": "string",
+                    "description": "Only include books in this category (optional).",
+                },
+            },
+        },
+        "permission": "books.view_book",
+    },
+    {
         "name": "search_books",
         "description": (
             "Search the book catalog by title, subtitle, author name or "
@@ -159,6 +179,16 @@ def get_dashboard_overview(_input):
     }
 
 
+def list_books(tool_input):
+    books = Book.objects.all()
+
+    category = (tool_input.get("category") or "").strip()
+    if category:
+        books = books.filter(category__name__iexact=category)
+
+    return {"books": [_book_summary(book) for book in books]}
+
+
 def search_books(tool_input):
     query = (tool_input.get("query") or "").strip()
     if not query:
@@ -251,6 +281,7 @@ def get_categories(_input):
 
 TOOL_FUNCTIONS = {
     "get_dashboard_overview": get_dashboard_overview,
+    "list_books": list_books,
     "search_books": search_books,
     "get_low_stock_books": get_low_stock_books,
     "get_sales_summary": get_sales_summary,

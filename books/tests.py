@@ -511,9 +511,32 @@ class AiChatToolTests(TestCase):
 
         tool_names = {tool["name"] for tool in ai_chat.build_tools_for_user(self.user)}
         self.assertIn("get_low_stock_books", tool_names)
+        self.assertIn("list_books", tool_names)
         self.assertIn("search_books", tool_names)
         self.assertNotIn("get_sales_summary", tool_names)
         self.assertNotIn("get_categories", tool_names)
+
+    def test_list_books_returns_everything(self):
+        result = ai_chat.list_books({})
+        titles = {book["title"] for book in result["books"]}
+        self.assertEqual(titles, {"Low Stock Book", "Well Stocked Book"})
+
+    def test_list_books_filters_by_category(self):
+        other = Category.objects.create(name="Non-Fiction")
+        Book.objects.create(
+            title="Other Category Book",
+            isbn="333",
+            publisher="Acme",
+            published_date=date(2024, 1, 1),
+            category=other,
+            distribution_expense=Decimal("10.00"),
+            stock_on_hand=10,
+            reorder_threshold=5,
+        )
+
+        result = ai_chat.list_books({"category": "Fiction"})
+        titles = {book["title"] for book in result["books"]}
+        self.assertEqual(titles, {"Low Stock Book", "Well Stocked Book"})
 
     def test_get_low_stock_books(self):
         result = ai_chat.get_low_stock_books({})
