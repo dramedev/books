@@ -16,6 +16,8 @@ class BookForm(forms.ModelForm):
             "published_date",
             "category",
             "distribution_expense",
+            "stock_on_hand",
+            "reorder_threshold",
         ]
 
         widgets = {
@@ -62,6 +64,18 @@ class BookForm(forms.ModelForm):
                 attrs={
                     "class": "form-control",
                     "step": "0.01"
+                }
+            ),
+            "stock_on_hand": forms.NumberInput(
+                attrs={
+                    "class": "form-control",
+                    "min": "0"
+                }
+            ),
+            "reorder_threshold": forms.NumberInput(
+                attrs={
+                    "class": "form-control",
+                    "min": "0"
                 }
             ),
         }

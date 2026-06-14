@@ -71,8 +71,23 @@ class Book(models.Model):
     )
 
 
+    stock_on_hand = models.PositiveIntegerField(
+        default=0
+    )
+
+
+    reorder_threshold = models.PositiveIntegerField(
+        default=0
+    )
+
+
     def __str__(self):
         return self.title
+
+
+    @property
+    def is_low_stock(self):
+        return self.stock_on_hand <= self.reorder_threshold
 
 
 

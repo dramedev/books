@@ -189,6 +189,24 @@ def book_delete(request, id):
 
 
 @login_required
+@permission_required("books.view_book", raise_exception=True)
+def stock_list(request):
+    books = Book.objects.select_related("category").order_by("stock_on_hand", "title")
+
+    if request.GET.get("low") == "1":
+        books = books.filter(stock_on_hand__lte=F("reorder_threshold"))
+
+    return render(
+        request,
+        "books/stock_list.html",
+        {
+            "books": books,
+            "low_only": request.GET.get("low") == "1",
+        },
+    )
+
+
+@login_required
 @permission_required("books.view_category", raise_exception=True)
 def category_list(request):
     categories = Category.objects.annotate(book_count=Count("book")).order_by("name")
@@ -427,6 +445,12 @@ def report(request):
     return render(request, "books/report.html", context)
 
 
+def _adjust_stock(book_id, delta):
+    book = Book.objects.get(id=book_id)
+    book.stock_on_hand = max(0, book.stock_on_hand + delta)
+    book.save(update_fields=["stock_on_hand"])
+
+
 @login_required
 @permission_required("books.view_sale", raise_exception=True)
 def sale_list(request):
@@ -454,7 +478,8 @@ def sale_create(request):
         form = SaleForm(request.POST)
 
         if form.is_valid():
-            form.save()
+            sale = form.save()
+            _adjust_stock(sale.book_id, -sale.quantity)
             messages.success(request, "Sale recorded.")
             return redirect("sale_list")
 
@@ -468,10 +493,15 @@ def sale_update(request, id):
     form = SaleForm(instance=sale)
 
     if request.method == "POST":
+        previous_book_id = sale.book_id
+        previous_quantity = sale.quantity
+
         form = SaleForm(request.POST, instance=sale)
 
         if form.is_valid():
-            form.save()
+            sale = form.save()
+            _adjust_stock(previous_book_id, previous_quantity)
+            _adjust_stock(sale.book_id, -sale.quantity)
             messages.success(request, "Sale updated.")
             return redirect("sale_list")
 
@@ -491,6 +521,7 @@ def sale_delete(request, id):
     sale = get_object_or_404(Sale, id=id)
 
     if request.method == "POST":
+        _adjust_stock(sale.book_id, sale.quantity)
         sale.delete()
         messages.success(request, "Sale deleted.")
         return redirect("sale_list")

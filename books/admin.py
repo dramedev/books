@@ -1,7 +1,7 @@
 import json
 
 from django.contrib import admin
-from django.db.models import Count, Sum
+from django.db.models import Count, F, Sum
 
 from .models import Author, Book, Category, Sale
 
@@ -66,6 +66,8 @@ class BookAdmin(admin.ModelAdmin):
         "publisher",
         "published_date",
         "distribution_expense",
+        "stock_on_hand",
+        "reorder_threshold",
     )
 
 
@@ -81,6 +83,11 @@ class BookAdmin(admin.ModelAdmin):
         "category",
         "publisher",
         "published_date",
+    )
+
+    list_editable = (
+        "stock_on_hand",
+        "reorder_threshold",
     )
 
     autocomplete_fields = (
@@ -229,6 +236,21 @@ def custom_index(request, extra_context=None):
             "publisher"
         )
         .distinct()
+        .count()
+    )
+
+
+    extra_context["low_stock_books"] = (
+        Book.objects
+        .filter(stock_on_hand__lte=F("reorder_threshold"))
+        .select_related("category")
+        .order_by("stock_on_hand")[:5]
+    )
+
+
+    extra_context["low_stock_count"] = (
+        Book.objects
+        .filter(stock_on_hand__lte=F("reorder_threshold"))
         .count()
     )
 

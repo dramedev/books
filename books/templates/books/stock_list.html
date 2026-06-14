@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+
+
+{% block content %}
+
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+<div>
+<h1 class="mb-1">Stock</h1>
+<p class="muted-text mb-0">
+Review stock on hand and reorder thresholds.
+</p>
+</div>
+
+<div class="d-flex gap-2">
+{% if low_only %}
+<a class="btn btn-outline-light" href="{% url 'stock_list' %}">
+Show all
+</a>
+{% else %}
+<a class="btn btn-outline-light" href="{% url 'stock_list' %}?low=1">
+Low stock only
+</a>
+{% endif %}
+</div>
+</div>
+
+
+<div class="table-responsive">
+<table class="table table-striped align-middle">
+<tr>
+<th>Title</th>
+<th>Category</th>
+<th>Stock on hand</th>
+<th>Reorder threshold</th>
+<th>Status</th>
+<th>Actions</th>
+</tr>
+
+{% for book in books %}
+<tr>
+<td>{{ book.title }}</td>
+<td>{{ book.category }}</td>
+<td>{{ book.stock_on_hand }}</td>
+<td>{{ book.reorder_threshold }}</td>
+<td>
+{% if book.is_low_stock %}
+<span class="badge bg-danger">Low stock</span>
+{% else %}
+<span class="badge bg-success">OK</span>
+{% endif %}
+</td>
+<td>
+{% if perms.books.change_book %}
+<a class="btn btn-warning btn-sm" href="{% url 'book_update' book.id %}">
+Edit
+</a>
+{% endif %}
+</td>
+</tr>
+
+{% empty %}
+<tr>
+<td colspan="6" class="text-center muted-text py-4">
+No books to show.
+</td>
+</tr>
+{% endfor %}
+</table>
+</div>
+
+
+{% endblock %}

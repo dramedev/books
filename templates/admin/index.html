@@ -66,7 +66,7 @@
 .rp-metrics {
     display:grid;
     gap:16px;
-    grid-template-columns:repeat(4, minmax(0, 1fr));
+    grid-template-columns:repeat(auto-fit, minmax(180px, 1fr));
 }
 
 .rp-card {
@@ -276,6 +276,12 @@ Monitor catalog size, category coverage, publisher diversity, and distribution e
 <strong>{{ total_expenses }}</strong>
 <small>Distribution spend</small>
 </div>
+
+<div class="rp-card">
+<span>Low Stock</span>
+<strong>{{ low_stock_count }}</strong>
+<small>Books at or below reorder threshold</small>
+</div>
 </section>
 
 
@@ -322,6 +328,20 @@ Monitor catalog size, category coverage, publisher diversity, and distribution e
 <p class="rp-eyebrow">Highest Expense Category</p>
 <strong>{{ top_category.category__name }}</strong>
 <p>{{ top_category.total }}</p>
+</div>
+{% endif %}
+
+{% if low_stock_books %}
+<div class="rp-top-category">
+<p class="rp-eyebrow">Low Stock</p>
+<ul class="rp-list">
+{% for book in low_stock_books %}
+<li>
+<strong>{{ book.title }}</strong>
+<span>{{ book.stock_on_hand }} on hand | reorder at {{ book.reorder_threshold }}</span>
+</li>
+{% endfor %}
+</ul>
 </div>
 {% endif %}
 </aside>

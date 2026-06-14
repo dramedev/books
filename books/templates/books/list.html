@@ -98,6 +98,7 @@ Add Book
 <th>Publisher</th>
 <th>Category</th>
 <th>Expense</th>
+<th>Stock</th>
 <th>Actions</th>
 </tr>
 
@@ -116,6 +117,12 @@ Add Book
 <td>{{ book.category }}</td>
 <td>{{ book.distribution_expense }}</td>
 <td>
+{{ book.stock_on_hand }}
+{% if book.is_low_stock %}
+<span class="badge bg-danger">Low</span>
+{% endif %}
+</td>
+<td>
 {% if perms.books.change_book %}
 <a class="btn btn-warning btn-sm" href="{% url 'book_update' book.id %}">
 Edit
@@ -132,7 +139,7 @@ Delete
 
 {% empty %}
 <tr>
-<td colspan="7" class="text-center muted-text py-4">
+<td colspan="8" class="text-center muted-text py-4">
 No books match the current filters.
 </td>
 </tr>
