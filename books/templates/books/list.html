@@ -105,7 +105,7 @@ Add Book
 {% for book in books %}
 <tr>
 <td>{{ book.isbn|default:"-" }}</td>
-<td>{{ book.title }}</td>
+<td><a href="{% url 'book_detail' book.id %}">{{ book.title }}</a></td>
 <td>
 {% for author in book.authors.all %}
 {{ author.name }}{% if not forloop.last %}, {% endif %}

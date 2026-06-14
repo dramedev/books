@@ -135,6 +135,30 @@ def book_list(request):
 
 
 @login_required
+@permission_required("books.view_book", raise_exception=True)
+def book_detail(request, id):
+    book = get_object_or_404(
+        Book.objects.select_related("category").prefetch_related("authors"),
+        id=id,
+    )
+
+    sales = book.sales.all()
+    totals = sales.aggregate(
+        total_quantity=Sum("quantity"),
+        total_revenue=Sum(REVENUE_EXPRESSION),
+    )
+
+    context = {
+        "book": book,
+        "sales": sales[:10],
+        "total_quantity_sold": totals["total_quantity"] or 0,
+        "total_revenue": totals["total_revenue"] or 0,
+    }
+
+    return render(request, "books/detail.html", context)
+
+
+@login_required
 @permission_required("books.add_book", raise_exception=True)
 def book_create(request):
     form = BookForm()
