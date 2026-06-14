@@ -7,10 +7,12 @@ from django.contrib.auth.decorators import login_required, permission_required
 from django.core.paginator import Paginator
 from django.db.models import Count, DecimalField, ExpressionWrapper, F, Q, Sum
 from django.db.models.functions import TruncMonth
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
+from django.views.decorators.http import require_POST
 
+from . import ai_chat
 from .forms import AuthorForm, BookForm, CategoryForm, ProfileForm, SaleForm
 from .models import Author, Book, Category, Profile, Sale
 
@@ -621,6 +623,29 @@ def profile_update(request):
 @login_required
 def about(request):
     return render(request, "books/about.html")
+
+
+@login_required
+@require_POST
+def chat_api(request):
+    try:
+        payload = json.loads(request.body)
+    except ValueError:
+        return JsonResponse({"error": "Invalid JSON."}, status=400)
+
+    message = (payload.get("message") or "").strip()
+    history = payload.get("history") or []
+
+    if not message:
+        return JsonResponse({"error": "Message is required."}, status=400)
+
+    try:
+        reply, updated_history = ai_chat.get_chat_reply(request.user, message, history)
+    except Exception:
+        reply = "Sorry, something went wrong talking to the AI assistant. Please try again."
+        updated_history = history
+
+    return JsonResponse({"reply": reply, "history": updated_history})
 
 
 def _adjust_stock(book_id, delta):

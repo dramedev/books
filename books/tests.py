@@ -1,6 +1,7 @@
 import json
 from datetime import date
 from decimal import Decimal
+from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Permission
@@ -8,6 +9,7 @@ from django.core.management import call_command
 from django.test import TestCase
 from django.urls import reverse
 
+from . import ai_chat
 from .models import Author, Book, Category, Sale
 
 
@@ -401,6 +403,149 @@ class ReportViewTests(TestCase):
             json.loads(response.context["trend_revenues"]),
             [125.0, 40.0],
         )
+
+
+class ChatApiTests(TestCase):
+
+    def setUp(self):
+        User = get_user_model()
+        self.user = User.objects.create_user(username="chatter", password="pass1234")
+
+    def test_anonymous_post_redirects_to_login(self):
+        response = self.client.post(
+            reverse("chat_api"),
+            data=json.dumps({"message": "hello"}),
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 302)
+        self.assertIn(reverse("login"), response.url)
+
+    def test_get_not_allowed(self):
+        self.client.force_login(self.user)
+        response = self.client.get(reverse("chat_api"))
+        self.assertEqual(response.status_code, 405)
+
+    def test_missing_message_returns_400(self):
+        self.client.force_login(self.user)
+        response = self.client.post(
+            reverse("chat_api"),
+            data=json.dumps({"message": "  "}),
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 400)
+
+    def test_not_configured_without_api_key(self):
+        self.client.force_login(self.user)
+        with self.settings(ANTHROPIC_API_KEY=""):
+            response = self.client.post(
+                reverse("chat_api"),
+                data=json.dumps({"message": "What does the Stock page show?"}),
+                content_type="application/json",
+            )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["reply"], ai_chat.NOT_CONFIGURED_REPLY)
+
+    def test_chat_reply_uses_ai_chat_module(self):
+        self.client.force_login(self.user)
+
+        with patch.object(ai_chat, "get_chat_reply", return_value=("Hello!", [])) as mocked:
+            response = self.client.post(
+                reverse("chat_api"),
+                data=json.dumps({"message": "Hi there", "history": []}),
+                content_type="application/json",
+            )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["reply"], "Hello!")
+        mocked.assert_called_once_with(self.user, "Hi there", [])
+
+
+class AiChatToolTests(TestCase):
+
+    def setUp(self):
+        User = get_user_model()
+        self.user = User.objects.create_user(username="tooluser", password="pass1234")
+
+        self.fiction = Category.objects.create(name="Fiction")
+        self.author = Author.objects.create(name="Jane Doe")
+
+        self.low_book = Book.objects.create(
+            title="Low Stock Book",
+            isbn="111",
+            publisher="Acme",
+            published_date=date(2024, 1, 1),
+            category=self.fiction,
+            distribution_expense=Decimal("10.00"),
+            stock_on_hand=1,
+            reorder_threshold=5,
+        )
+        self.low_book.authors.add(self.author)
+
+        self.ok_book = Book.objects.create(
+            title="Well Stocked Book",
+            isbn="222",
+            publisher="Acme",
+            published_date=date(2024, 1, 1),
+            category=self.fiction,
+            distribution_expense=Decimal("10.00"),
+            stock_on_hand=50,
+            reorder_threshold=5,
+        )
+
+        Sale.objects.create(
+            book=self.low_book,
+            quantity=3,
+            unit_price=Decimal("10.00"),
+            sale_date=date(2024, 1, 15),
+        )
+        Sale.objects.create(
+            book=self.ok_book,
+            quantity=1,
+            unit_price=Decimal("20.00"),
+            sale_date=date(2024, 2, 1),
+        )
+
+    def test_build_tools_for_user_filters_by_permission(self):
+        grant(self.user, "view_book")
+
+        tool_names = {tool["name"] for tool in ai_chat.build_tools_for_user(self.user)}
+        self.assertIn("get_low_stock_books", tool_names)
+        self.assertIn("search_books", tool_names)
+        self.assertNotIn("get_sales_summary", tool_names)
+        self.assertNotIn("get_categories", tool_names)
+
+    def test_get_low_stock_books(self):
+        result = ai_chat.get_low_stock_books({})
+        titles = {book["title"] for book in result["books"]}
+        self.assertEqual(titles, {"Low Stock Book"})
+
+    def test_search_books_matches_author(self):
+        result = ai_chat.search_books({"query": "Jane"})
+        titles = {book["title"] for book in result["books"]}
+        self.assertEqual(titles, {"Low Stock Book"})
+
+    def test_get_sales_summary_filters_by_date(self):
+        result = ai_chat.get_sales_summary({"start_date": "2024-02-01"})
+        self.assertEqual(result["total_units_sold"], 1)
+        self.assertEqual(result["sale_count"], 1)
+
+    def test_get_top_selling_books(self):
+        result = ai_chat.get_top_selling_books({"limit": 1})
+        self.assertEqual(len(result["books"]), 1)
+        self.assertEqual(result["books"][0]["title"], "Low Stock Book")
+        self.assertEqual(result["books"][0]["units_sold"], 3)
+
+    def test_get_categories(self):
+        result = ai_chat.get_categories({})
+        self.assertEqual(
+            result["categories"],
+            [{"name": "Fiction", "book_count": 2}],
+        )
+
+    def test_execute_tool_denies_without_permission(self):
+        result = ai_chat.execute_tool("get_categories", {}, self.user)
+        self.assertIn("error", result)
 
 
 class SetupRolesCommandTests(TestCase):

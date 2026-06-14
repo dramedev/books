@@ -26,6 +26,7 @@ urlpatterns = [
     path("sales/delete/<int:id>/", views.sale_delete, name="sale_delete"),
     path("report/", views.report, name="report"),
     path("about/", views.about, name="about"),
+    path("chat/", views.chat_api, name="chat_api"),
     path("export/csv/", views.export_books_csv, name="export_books_csv"),
     path("export/excel/", views.export_books_excel, name="export_books_excel"),
     path("export/pdf/", views.export_books_pdf, name="export_books_pdf"),
