@@ -49,11 +49,13 @@ TOOL_SPECS = [
     {
         "name": "list_books",
         "description": (
-            "List every book in the catalog (optionally filtered by "
-            "category), with category, stock on hand, reorder threshold "
-            "and distribution expense. Use this to browse or count the "
-            "whole catalog, e.g. when asked 'what books do you have' or "
-            "'how many books are there'."
+            "List books in the catalog, with category, authors, stock on "
+            "hand, reorder threshold and distribution expense. Supports "
+            "optional filters by category, author, stock on hand range and "
+            "distribution expense (price) range. Use this to browse, count "
+            "or filter the catalog, e.g. 'what books do you have', 'books "
+            "by Jane Doe', 'books under $20', 'books with more than 100 in "
+            "stock'."
         ),
         "input_schema": {
             "type": "object",
@@ -61,6 +63,26 @@ TOOL_SPECS = [
                 "category": {
                     "type": "string",
                     "description": "Only include books in this category (optional).",
+                },
+                "author": {
+                    "type": "string",
+                    "description": "Only include books with an author whose name contains this text (optional).",
+                },
+                "min_stock": {
+                    "type": "integer",
+                    "description": "Only include books with at least this much stock on hand (optional).",
+                },
+                "max_stock": {
+                    "type": "integer",
+                    "description": "Only include books with at most this much stock on hand (optional).",
+                },
+                "min_price": {
+                    "type": "number",
+                    "description": "Only include books with a distribution expense (price) at least this much (optional).",
+                },
+                "max_price": {
+                    "type": "number",
+                    "description": "Only include books with a distribution expense (price) at most this much (optional).",
                 },
             },
         },
@@ -186,7 +208,21 @@ def list_books(tool_input):
     if category:
         books = books.filter(category__name__iexact=category)
 
-    return {"books": [_book_summary(book) for book in books]}
+    author = (tool_input.get("author") or "").strip()
+    if author:
+        books = books.filter(authors__name__icontains=author)
+
+    if tool_input.get("min_stock") is not None:
+        books = books.filter(stock_on_hand__gte=tool_input["min_stock"])
+    if tool_input.get("max_stock") is not None:
+        books = books.filter(stock_on_hand__lte=tool_input["max_stock"])
+
+    if tool_input.get("min_price") is not None:
+        books = books.filter(distribution_expense__gte=tool_input["min_price"])
+    if tool_input.get("max_price") is not None:
+        books = books.filter(distribution_expense__lte=tool_input["max_price"])
+
+    return {"books": [_book_summary(book) for book in books.distinct()]}
 
 
 def search_books(tool_input):

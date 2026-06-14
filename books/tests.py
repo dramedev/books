@@ -538,6 +538,40 @@ class AiChatToolTests(TestCase):
         titles = {book["title"] for book in result["books"]}
         self.assertEqual(titles, {"Low Stock Book", "Well Stocked Book"})
 
+    def test_list_books_filters_by_author(self):
+        result = ai_chat.list_books({"author": "Jane"})
+        titles = {book["title"] for book in result["books"]}
+        self.assertEqual(titles, {"Low Stock Book"})
+
+    def test_list_books_filters_by_stock_range(self):
+        result = ai_chat.list_books({"min_stock": 10})
+        titles = {book["title"] for book in result["books"]}
+        self.assertEqual(titles, {"Well Stocked Book"})
+
+        result = ai_chat.list_books({"max_stock": 10})
+        titles = {book["title"] for book in result["books"]}
+        self.assertEqual(titles, {"Low Stock Book"})
+
+    def test_list_books_filters_by_price_range(self):
+        Book.objects.create(
+            title="Pricey Book",
+            isbn="444",
+            publisher="Acme",
+            published_date=date(2024, 1, 1),
+            category=self.fiction,
+            distribution_expense=Decimal("50.00"),
+            stock_on_hand=5,
+            reorder_threshold=5,
+        )
+
+        result = ai_chat.list_books({"max_price": 20})
+        titles = {book["title"] for book in result["books"]}
+        self.assertEqual(titles, {"Low Stock Book", "Well Stocked Book"})
+
+        result = ai_chat.list_books({"min_price": 20})
+        titles = {book["title"] for book in result["books"]}
+        self.assertEqual(titles, {"Pricey Book"})
+
     def test_get_low_stock_books(self):
         result = ai_chat.get_low_stock_books({})
         titles = {book["title"] for book in result["books"]}
