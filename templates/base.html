@@ -382,6 +382,12 @@ textarea{
 </a>
 {% endif %}
 
+<div class="sidebar-section">Help</div>
+
+<a class="sidebar-link {% if url_name == 'about' %}active{% endif %}" href="{% url 'about' %}">
+<i class="bi bi-info-circle"></i> About
+</a>
+
 {% endif %}
 </nav>
 

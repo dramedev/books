@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+
+
+{% block content %}
+
+
+<div class="mb-3">
+<h1 class="mb-1">About Rumi Press</h1>
+<p class="muted-text mb-0">
+What each part of the system does.
+</p>
+</div>
+
+
+<div class="row g-3">
+
+<div class="col-md-6">
+<div class="page-panel h-100">
+<h2 class="mb-2"><i class="bi bi-speedometer2"></i> Dashboard</h2>
+<p class="mb-0">
+A quick overview of the whole catalog: total books, total units sold,
+low stock count, total revenue and profit, a revenue/profit-by-category
+chart, a sales trend chart, the books currently low on stock, the top
+sellers, and the most recent sales.
+</p>
+</div>
+</div>
+
+<div class="col-md-6">
+<div class="page-panel h-100">
+<h2 class="mb-2"><i class="bi bi-journal-bookmark"></i> Books</h2>
+<p class="mb-0">
+The catalog of titles: ISBN, title, subtitle, authors, publisher,
+publish date, category and distribution expense. Search, filter by
+category/publisher, sort, and export the list to CSV, Excel or PDF.
+</p>
+</div>
+</div>
+
+<div class="col-md-6">
+<div class="page-panel h-100">
+<h2 class="mb-2"><i class="bi bi-boxes"></i> Stock</h2>
+<p class="mb-0">
+Stock on hand and reorder thresholds for every book. Books at or below
+their threshold are flagged "Low stock" and can be filtered to a
+low-stock-only view.
+</p>
+</div>
+</div>
+
+<div class="col-md-6">
+<div class="page-panel h-100">
+<h2 class="mb-2"><i class="bi bi-tags"></i> Categories</h2>
+<p class="mb-0">
+Groupings used to organize books for filtering and reporting. Each
+category shows how many books belong to it, and can be added, edited
+or deleted (categories still in use can't be deleted).
+</p>
+</div>
+</div>
+
+<div class="col-md-6">
+<div class="page-panel h-100">
+<h2 class="mb-2"><i class="bi bi-people"></i> Authors</h2>
+<p class="mb-0">
+The list of authors linked to books, with a count of how many books
+each author has. Authors can be added, edited or removed once they are
+no longer linked to any book.
+</p>
+</div>
+</div>
+
+<div class="col-md-6">
+<div class="page-panel h-100">
+<h2 class="mb-2"><i class="bi bi-cart3"></i> Sales</h2>
+<p class="mb-0">
+Every sale transaction: book, quantity, unit price, revenue, date and
+channel. Recording a sale reduces the book's stock on hand and shows a
+remaining-stock notification; a sale is refused if it would exceed
+available stock. The list can be exported to CSV, Excel or PDF.
+</p>
+</div>
+</div>
+
+<div class="col-md-6">
+<div class="page-panel h-100">
+<h2 class="mb-2"><i class="bi bi-graph-up"></i> Reports</h2>
+<p class="mb-0">
+A filterable distribution report: total books, expense, revenue and
+profit, with charts for expenses and revenue/profit by category and a
+sales trend over time. Results can be exported to CSV, Excel or PDF.
+</p>
+</div>
+</div>
+
+<div class="col-md-6">
+<div class="page-panel h-100">
+<h2 class="mb-2"><i class="bi bi-person-circle"></i> Profile</h2>
+<p class="mb-0">
+Each user can upload a profile photo, shown in the sidebar. Access to
+each section above is controlled by permissions, so what you see
+depends on your assigned role.
+</p>
+</div>
+</div>
+
+</div>
+
+
+{% endblock %}

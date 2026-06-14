@@ -618,6 +618,11 @@ def profile_update(request):
     return render(request, "books/profile_form.html", {"form": form, "profile": profile})
 
 
+@login_required
+def about(request):
+    return render(request, "books/about.html")
+
+
 def _adjust_stock(book_id, delta):
     book = Book.objects.get(id=book_id)
     book.stock_on_hand = max(0, book.stock_on_hand + delta)
