@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+
+{% block content %}
+
+
+<div class="page-panel">
+<h1 class="mb-3">Author Form</h1>
+
+<form method="POST">
+{% csrf_token %}
+
+{{ form.non_field_errors }}
+
+{% for field in form %}
+<div class="mb-3">
+<label class="form-label" for="{{ field.id_for_label }}">
+{{ field.label }}
+</label>
+{{ field }}
+
+{% for error in field.errors %}
+<div class="text-danger small">{{ error }}</div>
+{% endfor %}
+</div>
+{% endfor %}
+
+<button class="btn btn-success">
+Save
+</button>
+
+<a class="btn btn-outline-light" href="{% url 'author_list' %}">
+Cancel
+</a>
+</form>
+</div>
+
+
+{% endblock %}

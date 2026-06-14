@@ -87,25 +87,51 @@ PDF
 
 
 <div class="row g-3 mb-3">
-<div class="col-md-6">
+<div class="col-md-3">
 <div class="page-panel">
 <p class="muted-text mb-1">Books in report</p>
 <h2 class="mb-0">{{ total_books }}</h2>
 </div>
 </div>
 
-<div class="col-md-6">
+<div class="col-md-3">
 <div class="page-panel">
 <p class="muted-text mb-1">Total expense</p>
 <h2 class="mb-0">{{ total_expense }}</h2>
 </div>
 </div>
+
+<div class="col-md-3">
+<div class="page-panel">
+<p class="muted-text mb-1">Total revenue</p>
+<h2 class="mb-0">{{ total_revenue }}</h2>
+</div>
+</div>
+
+<div class="col-md-3">
+<div class="page-panel">
+<p class="muted-text mb-1">Total profit</p>
+<h2 class="mb-0">{{ total_profit }}</h2>
+</div>
+</div>
 </div>
 
 
+<div class="row g-3">
+<div class="col-md-6">
 <div class="page-panel">
 <div style="width:450px;height:450px;margin:auto;max-width:100%;">
 <canvas id="expenseChart"></canvas>
+</div>
+</div>
+</div>
+
+<div class="col-md-6">
+<div class="page-panel">
+<div style="width:450px;height:450px;margin:auto;max-width:100%;">
+<canvas id="revenueChart"></canvas>
+</div>
+</div>
 </div>
 </div>
 
@@ -136,6 +162,38 @@ new Chart(ctx, {
             title: {
                 display: true,
                 text: "Expenses by Category"
+            }
+        }
+    }
+});
+
+const revenueCtx = document.getElementById("revenueChart");
+
+new Chart(revenueCtx, {
+    type: "bar",
+    data: {
+        labels: {{ labels|safe }},
+        datasets: [
+            {
+                label: "Revenue",
+                data: {{ revenues|safe }}
+            },
+            {
+                label: "Profit",
+                data: {{ profits|safe }}
+            }
+        ]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                position: "bottom"
+            },
+            title: {
+                display: true,
+                text: "Revenue & Profit by Category"
             }
         }
     }

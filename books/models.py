@@ -10,6 +10,20 @@ class Category(models.Model):
 
 
 
+class Author(models.Model):
+
+    name = models.CharField(max_length=200, unique=True)
+
+
+    class Meta:
+        ordering = ["name"]
+
+
+    def __str__(self):
+        return self.name
+
+
+
 class Book(models.Model):
 
     isbn = models.CharField(
@@ -30,8 +44,10 @@ class Book(models.Model):
     )
 
 
-    authors = models.CharField(
-        max_length=200
+    authors = models.ManyToManyField(
+        Author,
+        related_name="books",
+        blank=True
     )
 
 
@@ -57,3 +73,44 @@ class Book(models.Model):
 
     def __str__(self):
         return self.title
+
+
+
+class Sale(models.Model):
+
+    book = models.ForeignKey(
+        Book,
+        on_delete=models.CASCADE,
+        related_name="sales"
+    )
+
+
+    quantity = models.PositiveIntegerField()
+
+
+    unit_price = models.DecimalField(
+        max_digits=8,
+        decimal_places=2
+    )
+
+
+    sale_date = models.DateField()
+
+
+    channel = models.CharField(
+        max_length=100,
+        blank=True
+    )
+
+
+    class Meta:
+        ordering = ["-sale_date"]
+
+
+    def __str__(self):
+        return f"{self.book.title} - {self.sale_date}"
+
+
+    @property
+    def revenue(self):
+        return self.quantity * self.unit_price

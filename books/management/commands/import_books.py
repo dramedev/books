@@ -8,7 +8,7 @@ from django.db import transaction
 
 from openpyxl import load_workbook
 
-from books.models import Book, Category
+from books.models import Author, Book, Category
 
 
 class Command(BaseCommand):
@@ -171,11 +171,6 @@ class Command(BaseCommand):
                             "subtitle"
                         )
                     ),
-                    "authors": self.clean_text(
-                        record.get(
-                            "authors"
-                        )
-                    ),
                     "publisher": self.clean_text(
                         record.get(
                             "publisher"
@@ -198,12 +193,24 @@ class Command(BaseCommand):
                 if isbn:
                     defaults["isbn"] = isbn
 
-                _, was_created = Book.objects.update_or_create(
+                book, was_created = Book.objects.update_or_create(
                     title=defaults["title"],
-                    authors=defaults["authors"],
                     publisher=defaults["publisher"],
                     defaults=defaults
                 )
+
+                author_names = self.split_authors(
+                    record.get(
+                        "authors"
+                    )
+                )
+
+                authors = [
+                    Author.objects.get_or_create(name=name)[0]
+                    for name in author_names
+                ]
+
+                book.authors.set(authors)
 
                 if was_created:
                     created += 1
@@ -222,6 +229,15 @@ class Command(BaseCommand):
                 f"{mode}: {created} created, {updated} updated, {skipped} skipped."
             )
         )
+
+    def split_authors(self, value):
+        text = self.clean_text(value)
+
+        return [
+            name.strip()
+            for name in re.split(r"\s*(?:,|;|&|/| and )\s*", text, flags=re.IGNORECASE)
+            if name.strip()
+        ]
 
     def normalize_header(self, value):
         return str(

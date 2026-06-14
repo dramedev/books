@@ -1,5 +1,5 @@
 from django import forms
-from .models import Book, Category
+from .models import Author, Book, Category, Sale
 
 
 class BookForm(forms.ModelForm):
@@ -35,9 +35,10 @@ class BookForm(forms.ModelForm):
                     "class": "form-control"
                 }
             ),
-            "authors": forms.TextInput(
+            "authors": forms.SelectMultiple(
                 attrs={
-                    "class": "form-control"
+                    "class": "form-select",
+                    "size": 6
                 }
             ),
             "publisher": forms.TextInput(
@@ -80,6 +81,72 @@ class CategoryForm(forms.ModelForm):
                 attrs={
                     "class": "form-control",
                     "placeholder": "Category name"
+                }
+            ),
+        }
+
+
+class AuthorForm(forms.ModelForm):
+
+    class Meta:
+        model = Author
+
+        fields = [
+            "name",
+        ]
+
+        widgets = {
+            "name": forms.TextInput(
+                attrs={
+                    "class": "form-control",
+                    "placeholder": "Author name"
+                }
+            ),
+        }
+
+
+class SaleForm(forms.ModelForm):
+
+    class Meta:
+        model = Sale
+
+        fields = [
+            "book",
+            "quantity",
+            "unit_price",
+            "sale_date",
+            "channel",
+        ]
+
+        widgets = {
+            "book": forms.Select(
+                attrs={
+                    "class": "form-select"
+                }
+            ),
+            "quantity": forms.NumberInput(
+                attrs={
+                    "class": "form-control",
+                    "min": "1"
+                }
+            ),
+            "unit_price": forms.NumberInput(
+                attrs={
+                    "class": "form-control",
+                    "step": "0.01"
+                }
+            ),
+            "sale_date": forms.DateInput(
+                format="%Y-%m-%d",
+                attrs={
+                    "class": "form-control",
+                    "type": "date"
+                }
+            ),
+            "channel": forms.TextInput(
+                attrs={
+                    "class": "form-control",
+                    "placeholder": "Channel (optional)"
                 }
             ),
         }

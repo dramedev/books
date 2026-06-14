@@ -5,13 +5,13 @@ from io import BytesIO
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required, permission_required
 from django.core.paginator import Paginator
-from django.db.models import Count, Q, Sum
+from django.db.models import Count, DecimalField, ExpressionWrapper, F, Q, Sum
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 
-from .forms import BookForm, CategoryForm
-from .models import Book, Category
+from .forms import AuthorForm, BookForm, CategoryForm, SaleForm
+from .models import Author, Book, Category, Sale
 
 
 BOOK_EXPORT_HEADERS = [
@@ -32,7 +32,7 @@ def _book_export_rows(books):
             book.isbn or "",
             book.title,
             book.subtitle,
-            book.authors,
+            ", ".join(author.name for author in book.authors.all()),
             book.publisher,
             book.published_date.isoformat(),
             book.category.name,
@@ -41,7 +41,7 @@ def _book_export_rows(books):
 
 
 def _book_filters(request):
-    books = Book.objects.select_related("category")
+    books = Book.objects.select_related("category").prefetch_related("authors")
 
     search = request.GET.get("q", "").strip()
     category = request.GET.get("category", "")
@@ -54,10 +54,10 @@ def _book_filters(request):
         books = books.filter(
             Q(title__icontains=search)
             | Q(subtitle__icontains=search)
-            | Q(authors__icontains=search)
+            | Q(authors__name__icontains=search)
             | Q(publisher__icontains=search)
             | Q(isbn__icontains=search)
-        )
+        ).distinct()
 
     if category and category.isdigit():
         books = books.filter(category_id=category)
@@ -78,7 +78,7 @@ def _book_filters(request):
 
 
 def _filtered_books_for_export(request):
-    return _book_filters(request).order_by("title", "authors")
+    return _book_filters(request).order_by("title")
 
 
 def _filter_context(request):
@@ -110,8 +110,6 @@ def book_list(request):
     allowed_sorts = {
         "title": "title",
         "-title": "-title",
-        "author": "authors",
-        "-author": "-authors",
         "category": "category__name",
         "-category": "-category__name",
         "date": "published_date",
@@ -273,28 +271,143 @@ def category_delete(request, id):
 
 
 @login_required
+@permission_required("books.view_author", raise_exception=True)
+def author_list(request):
+    authors = Author.objects.annotate(book_count=Count("books")).order_by("name")
+    return render(request, "books/author_list.html", {"authors": authors})
+
+
+@login_required
+@permission_required("books.add_author", raise_exception=True)
+def author_create(request):
+    form = AuthorForm()
+
+    if request.method == "POST":
+        form = AuthorForm(request.POST)
+
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Author created.")
+            return redirect("author_list")
+
+    return render(request, "books/author_form.html", {"form": form})
+
+
+@login_required
+@permission_required("books.change_author", raise_exception=True)
+def author_update(request, id):
+    author = get_object_or_404(Author, id=id)
+    form = AuthorForm(instance=author)
+
+    if request.method == "POST":
+        form = AuthorForm(request.POST, instance=author)
+
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Author updated.")
+            return redirect("author_list")
+
+    return render(
+        request,
+        "books/author_form.html",
+        {
+            "form": form,
+            "author": author,
+        },
+    )
+
+
+@login_required
+@permission_required("books.delete_author", raise_exception=True)
+def author_delete(request, id):
+    author = get_object_or_404(Author, id=id)
+    book_count = author.books.count()
+
+    if request.method == "POST":
+        if book_count:
+            messages.error(
+                request,
+                "Remove this author from their books before deleting them.",
+            )
+            return redirect("author_list")
+
+        author.delete()
+        messages.success(request, "Author deleted.")
+        return redirect("author_list")
+
+    return render(
+        request,
+        "books/confirm_delete.html",
+        {
+            "object_type": "author",
+            "object_name": author.name,
+            "cancel_url": reverse("author_list"),
+            "warning": (
+                "This author is linked to books and cannot be deleted yet."
+                if book_count
+                else ""
+            ),
+            "disable_delete": bool(book_count),
+        },
+    )
+
+
+REVENUE_EXPRESSION = ExpressionWrapper(
+    F("quantity") * F("unit_price"),
+    output_field=DecimalField(max_digits=10, decimal_places=2),
+)
+
+
+@login_required
 @permission_required("books.view_book", raise_exception=True)
 def report(request):
+    filtered_books = _book_filters(request)
+
     data = (
-        _book_filters(request)
+        filtered_books
         .values("category__name")
         .annotate(total=Sum("distribution_expense"), count=Count("id"))
         .order_by("category__name")
     )
 
+    revenue_by_category = {
+        item["book__category__name"]: item["revenue"] or 0
+        for item in (
+            Sale.objects.filter(book__in=filtered_books)
+            .values("book__category__name")
+            .annotate(revenue=Sum(REVENUE_EXPRESSION))
+        )
+    }
+
     labels = []
     values = []
     counts = []
+    revenues = []
+    profits = []
 
     for item in data:
-        labels.append(item["category__name"])
-        values.append(float(item["total"]))
-        counts.append(item["count"])
+        category_name = item["category__name"]
+        expense = float(item["total"])
+        revenue = float(revenue_by_category.get(category_name, 0))
 
-    totals = _book_filters(request).aggregate(
+        labels.append(category_name)
+        values.append(expense)
+        counts.append(item["count"])
+        revenues.append(revenue)
+        profits.append(revenue - expense)
+
+    totals = filtered_books.aggregate(
         total=Sum("distribution_expense"),
         count=Count("id"),
     )
+
+    total_revenue = (
+        Sale.objects.filter(book__in=filtered_books).aggregate(
+            total=Sum(REVENUE_EXPRESSION)
+        )["total"]
+        or 0
+    )
+    total_expense = totals["total"] or 0
 
     context = _filter_context(request)
     context.update(
@@ -302,12 +415,95 @@ def report(request):
             "values": json.dumps(values),
             "counts": json.dumps(counts),
             "labels": json.dumps(labels),
-            "total_expense": totals["total"] or 0,
+            "revenues": json.dumps(revenues),
+            "profits": json.dumps(profits),
+            "total_expense": total_expense,
             "total_books": totals["count"],
+            "total_revenue": total_revenue,
+            "total_profit": total_revenue - total_expense,
         }
     )
 
     return render(request, "books/report.html", context)
+
+
+@login_required
+@permission_required("books.view_sale", raise_exception=True)
+def sale_list(request):
+    sales = Sale.objects.select_related("book", "book__category").order_by("-sale_date")
+
+    paginator = Paginator(sales, 10)
+    page_obj = paginator.get_page(request.GET.get("page"))
+
+    return render(
+        request,
+        "books/sale_list.html",
+        {
+            "sales": page_obj.object_list,
+            "page_obj": page_obj,
+        },
+    )
+
+
+@login_required
+@permission_required("books.add_sale", raise_exception=True)
+def sale_create(request):
+    form = SaleForm()
+
+    if request.method == "POST":
+        form = SaleForm(request.POST)
+
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Sale recorded.")
+            return redirect("sale_list")
+
+    return render(request, "books/sale_form.html", {"form": form})
+
+
+@login_required
+@permission_required("books.change_sale", raise_exception=True)
+def sale_update(request, id):
+    sale = get_object_or_404(Sale, id=id)
+    form = SaleForm(instance=sale)
+
+    if request.method == "POST":
+        form = SaleForm(request.POST, instance=sale)
+
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Sale updated.")
+            return redirect("sale_list")
+
+    return render(
+        request,
+        "books/sale_form.html",
+        {
+            "form": form,
+            "sale": sale,
+        },
+    )
+
+
+@login_required
+@permission_required("books.delete_sale", raise_exception=True)
+def sale_delete(request, id):
+    sale = get_object_or_404(Sale, id=id)
+
+    if request.method == "POST":
+        sale.delete()
+        messages.success(request, "Sale deleted.")
+        return redirect("sale_list")
+
+    return render(
+        request,
+        "books/confirm_delete.html",
+        {
+            "object_type": "sale",
+            "object_name": f"{sale.book.title} ({sale.sale_date})",
+            "cancel_url": reverse("sale_list"),
+        },
+    )
 
 
 @login_required

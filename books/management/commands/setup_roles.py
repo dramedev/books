@@ -13,6 +13,14 @@ ROLE_PERMISSIONS = {
         "change_category",
         "delete_category",
         "view_category",
+        "add_author",
+        "change_author",
+        "delete_author",
+        "view_author",
+        "add_sale",
+        "change_sale",
+        "delete_sale",
+        "view_sale",
     ],
     "Staff": [
         "add_book",
@@ -21,10 +29,18 @@ ROLE_PERMISSIONS = {
         "add_category",
         "change_category",
         "view_category",
+        "add_author",
+        "change_author",
+        "view_author",
+        "add_sale",
+        "change_sale",
+        "view_sale",
     ],
     "Viewer": [
         "view_book",
         "view_category",
+        "view_author",
+        "view_sale",
     ],
 }
 

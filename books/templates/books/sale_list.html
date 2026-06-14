@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+
+
+{% block content %}
+
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+<div>
+<h1 class="mb-1">Sales</h1>
+<p class="muted-text mb-0">
+Track book sales and revenue.
+</p>
+</div>
+
+{% if perms.books.add_sale %}
+<a class="btn btn-primary" href="{% url 'sale_create' %}">
+Add Sale
+</a>
+{% endif %}
+</div>
+
+
+<div class="table-responsive">
+<table class="table table-striped align-middle">
+<tr>
+<th>Date</th>
+<th>Book</th>
+<th>Category</th>
+<th>Quantity</th>
+<th>Unit Price</th>
+<th>Revenue</th>
+<th>Channel</th>
+<th>Actions</th>
+</tr>
+
+{% for sale in sales %}
+<tr>
+<td>{{ sale.sale_date }}</td>
+<td>{{ sale.book.title }}</td>
+<td>{{ sale.book.category }}</td>
+<td>{{ sale.quantity }}</td>
+<td>{{ sale.unit_price }}</td>
+<td>{{ sale.revenue }}</td>
+<td>{{ sale.channel|default:"-" }}</td>
+<td>
+{% if perms.books.change_sale %}
+<a class="btn btn-warning btn-sm" href="{% url 'sale_update' sale.id %}">
+Edit
+</a>
+{% endif %}
+
+{% if perms.books.delete_sale %}
+<a class="btn btn-danger btn-sm" href="{% url 'sale_delete' sale.id %}">
+Delete
+</a>
+{% endif %}
+</td>
+</tr>
+
+{% empty %}
+<tr>
+<td colspan="8" class="text-center muted-text py-4">
+No sales recorded yet.
+</td>
+</tr>
+{% endfor %}
+</table>
+</div>
+
+
+{% if page_obj.paginator.num_pages > 1 %}
+<nav aria-label="Sale pages">
+<ul class="pagination">
+
+{% if page_obj.has_previous %}
+<li class="page-item">
+<a class="page-link" href="?page={{ page_obj.previous_page_number }}">Previous</a>
+</li>
+{% endif %}
+
+<li class="page-item disabled">
+<span class="page-link">
+Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+</span>
+</li>
+
+{% if page_obj.has_next %}
+<li class="page-item">
+<a class="page-link" href="?page={{ page_obj.next_page_number }}">Next</a>
+</li>
+{% endif %}
+
+</ul>
+</nav>
+{% endif %}
+
+
+{% endblock %}

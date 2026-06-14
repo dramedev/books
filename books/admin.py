@@ -3,7 +3,7 @@ import json
 from django.contrib import admin
 from django.db.models import Count, Sum
 
-from .models import Book, Category
+from .models import Author, Book, Category, Sale
 
 
 
@@ -31,13 +31,37 @@ class CategoryAdmin(admin.ModelAdmin):
 
 
 
+@admin.register(Author)
+class AuthorAdmin(admin.ModelAdmin):
+
+    list_display = (
+        "id",
+        "name",
+        "book_count",
+    )
+
+    search_fields = (
+        "name",
+    )
+
+    ordering = (
+        "name",
+    )
+
+    def book_count(self, obj):
+        return obj.books.count()
+
+    book_count.short_description = "Books"
+
+
+
 @admin.register(Book)
 class BookAdmin(admin.ModelAdmin):
 
     list_display = (
         "isbn",
         "title",
-        "authors",
+        "author_names",
         "category",
         "publisher",
         "published_date",
@@ -48,7 +72,7 @@ class BookAdmin(admin.ModelAdmin):
     search_fields = (
         "isbn",
         "title",
-        "authors",
+        "authors__name",
         "publisher",
     )
 
@@ -61,6 +85,7 @@ class BookAdmin(admin.ModelAdmin):
 
     autocomplete_fields = (
         "category",
+        "authors",
     )
 
     date_hierarchy = "published_date"
@@ -70,6 +95,53 @@ class BookAdmin(admin.ModelAdmin):
     )
 
     list_per_page = 25
+
+    def author_names(self, obj):
+        return ", ".join(obj.authors.values_list("name", flat=True))
+
+    author_names.short_description = "Authors"
+
+
+
+@admin.register(Sale)
+class SaleAdmin(admin.ModelAdmin):
+
+    list_display = (
+        "id",
+        "book",
+        "quantity",
+        "unit_price",
+        "revenue",
+        "sale_date",
+        "channel",
+    )
+
+    search_fields = (
+        "book__title",
+        "channel",
+    )
+
+    list_filter = (
+        "channel",
+        "sale_date",
+    )
+
+    autocomplete_fields = (
+        "book",
+    )
+
+    date_hierarchy = "sale_date"
+
+    ordering = (
+        "-sale_date",
+    )
+
+    list_per_page = 25
+
+    def revenue(self, obj):
+        return obj.revenue
+
+    revenue.short_description = "Revenue"
 
 
 

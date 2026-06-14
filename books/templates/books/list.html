@@ -105,7 +105,13 @@ Add Book
 <tr>
 <td>{{ book.isbn|default:"-" }}</td>
 <td>{{ book.title }}</td>
-<td>{{ book.authors }}</td>
+<td>
+{% for author in book.authors.all %}
+{{ author.name }}{% if not forloop.last %}, {% endif %}
+{% empty %}
+-
+{% endfor %}
+</td>
 <td>{{ book.publisher }}</td>
 <td>{{ book.category }}</td>
 <td>{{ book.distribution_expense }}</td>

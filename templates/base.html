@@ -110,6 +110,18 @@ Categories
 </a>
 {% endif %}
 
+{% if perms.books.view_author %}
+<a class="btn btn-outline-light" href="{% url 'author_list' %}">
+Authors
+</a>
+{% endif %}
+
+{% if perms.books.view_sale %}
+<a class="btn btn-outline-light" href="{% url 'sale_list' %}">
+Sales
+</a>
+{% endif %}
+
 {% if perms.books.view_book %}
 <a class="btn btn-primary" href="{% url 'report' %}">
 Report
