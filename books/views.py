@@ -1,5 +1,6 @@
 import csv
 import json
+import random
 from io import BytesIO
 
 from django.contrib import messages
@@ -10,6 +11,7 @@ from django.db.models.functions import TruncMonth
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
+from django.utils import timezone
 from django.views.decorators.http import require_POST
 
 from . import ai_chat
@@ -27,6 +29,30 @@ BOOK_EXPORT_HEADERS = [
     "Category",
     "Distribution Expense",
 ]
+
+
+LEARNING_QUOTES = [
+    '"The beautiful thing about learning is that no one can take it away from you." — B.B. King',
+    '"Live as if you were to die tomorrow. Learn as if you were to live forever." — Mahatma Gandhi',
+    '"An investment in knowledge always pays the best interest." — Benjamin Franklin',
+    '"The capacity to learn is a gift; the ability to learn is a skill; the willingness to learn is a choice." — Brian Herbert',
+    '"Develop a passion for learning. If you do, you will never cease to grow." — Anthony J. D\'Angelo',
+    '"Each small task of everyday life is part of the total harmony of the universe." — Saint Therese',
+    '"Growth is painful. Change is painful. But nothing is as painful as staying stuck somewhere you don\'t belong." — N.R. Narayana Murthy',
+    '"The expert in anything was once a beginner." — Helen Hayes',
+    '"Success is the sum of small efforts repeated day in and day out." — Robert Collier',
+    '"You don\'t have to be great to start, but you have to start to be great." — Zig Ziglar',
+]
+
+
+def _time_based_greeting():
+    hour = timezone.localtime().hour
+
+    if hour < 12:
+        return "Good morning"
+    if hour < 18:
+        return "Good afternoon"
+    return "Good evening"
 
 
 def _book_export_rows(books):
@@ -582,6 +608,8 @@ def dashboard(request):
     recent_sales = Sale.objects.select_related("book", "book__category")[:5]
 
     context = {
+        "greeting": _time_based_greeting(),
+        "quote": random.choice(LEARNING_QUOTES),
         "total_books": books.count(),
         "total_authors": Author.objects.count(),
         "total_categories": Category.objects.count(),
