@@ -136,6 +136,17 @@ PDF
 </div>
 
 
+<div class="row g-3 mt-3">
+<div class="col-12">
+<div class="page-panel">
+<div style="width:100%;height:350px;">
+<canvas id="trendChart"></canvas>
+</div>
+</div>
+</div>
+</div>
+
+
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <script>
@@ -194,6 +205,67 @@ new Chart(revenueCtx, {
             title: {
                 display: true,
                 text: "Revenue & Profit by Category"
+            }
+        }
+    }
+});
+
+const trendCtx = document.getElementById("trendChart");
+
+new Chart(trendCtx, {
+    type: "line",
+    data: {
+        labels: {{ trend_labels|safe }},
+        datasets: [
+            {
+                label: "Units Sold",
+                data: {{ trend_units|safe }},
+                yAxisID: "units",
+                borderColor: "#3f6f9f",
+                backgroundColor: "#3f6f9f",
+                tension: 0.3
+            },
+            {
+                label: "Revenue",
+                data: {{ trend_revenues|safe }},
+                yAxisID: "revenue",
+                borderColor: "#2f6f63",
+                backgroundColor: "#2f6f63",
+                tension: 0.3
+            }
+        ]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                position: "bottom"
+            },
+            title: {
+                display: true,
+                text: "Sales Trend"
+            }
+        },
+        scales: {
+            units: {
+                type: "linear",
+                position: "left",
+                title: {
+                    display: true,
+                    text: "Units Sold"
+                }
+            },
+            revenue: {
+                type: "linear",
+                position: "right",
+                title: {
+                    display: true,
+                    text: "Revenue"
+                },
+                grid: {
+                    drawOnChartArea: false
+                }
             }
         }
     }

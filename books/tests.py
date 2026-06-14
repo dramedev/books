@@ -1,3 +1,4 @@
+import json
 from datetime import date
 from decimal import Decimal
 
@@ -249,11 +250,13 @@ class SaleStockAdjustmentTests(TestCase):
         self.book.refresh_from_db()
         self.assertEqual(self.book.stock_on_hand, 7)
 
-    def test_create_sale_clamps_stock_at_zero(self):
-        self.client.post(reverse("sale_create"), self._sale_form_data(quantity=50))
+    def test_create_sale_rejected_when_quantity_exceeds_stock(self):
+        response = self.client.post(reverse("sale_create"), self._sale_form_data(quantity=50))
 
+        self.assertEqual(response.status_code, 200)
         self.book.refresh_from_db()
-        self.assertEqual(self.book.stock_on_hand, 0)
+        self.assertEqual(self.book.stock_on_hand, 10)
+        self.assertFalse(Sale.objects.filter(book=self.book).exists())
 
     def test_update_sale_adjusts_stock_by_delta(self):
         self.client.post(reverse("sale_create"), self._sale_form_data(quantity=3))
@@ -377,6 +380,27 @@ class ReportViewTests(TestCase):
         self.assertEqual(response.context["total_expense"], Decimal("100.00"))
         self.assertEqual(response.context["total_revenue"], Decimal("125.00"))
         self.assertEqual(response.context["total_profit"], Decimal("25.00"))
+
+    def test_report_sales_trend(self):
+        Sale.objects.create(
+            book=self.book,
+            quantity=4,
+            unit_price=Decimal("10.00"),
+            sale_date=date(2024, 2, 15),
+        )
+
+        response = self.client.get(reverse("report"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            json.loads(response.context["trend_labels"]),
+            ["Jan 2024", "Feb 2024"],
+        )
+        self.assertEqual(json.loads(response.context["trend_units"]), [10, 4])
+        self.assertEqual(
+            json.loads(response.context["trend_revenues"]),
+            [125.0, 40.0],
+        )
 
 
 class SetupRolesCommandTests(TestCase):

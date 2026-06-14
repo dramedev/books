@@ -12,11 +12,25 @@ Track book sales and revenue.
 </p>
 </div>
 
+<div class="d-flex gap-2">
+<a class="btn btn-outline-light" href="{% url 'export_sales_csv' %}">
+CSV
+</a>
+
+<a class="btn btn-outline-light" href="{% url 'export_sales_excel' %}">
+Excel
+</a>
+
+<a class="btn btn-outline-light" href="{% url 'export_sales_pdf' %}">
+PDF
+</a>
+
 {% if perms.books.add_sale %}
 <a class="btn btn-primary" href="{% url 'sale_create' %}">
 Add Sale
 </a>
 {% endif %}
+</div>
 </div>
 
 

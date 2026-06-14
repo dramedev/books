@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+
+
+{% block content %}
+
+
+<div class="page-panel" style="max-width:480px;">
+<h1 class="mb-3">Profile Photo</h1>
+
+<div class="d-flex align-items-center gap-3 mb-3">
+{% if profile.avatar %}
+<img src="{{ profile.avatar.url }}" class="sidebar-avatar" style="width:64px;height:64px;" alt="">
+{% else %}
+<div class="sidebar-avatar-placeholder" style="width:64px;height:64px;font-size:1.8rem;">
+<i class="bi bi-person-circle"></i>
+</div>
+{% endif %}
+
+<div class="muted-text">
+{{ request.user.username }}
+</div>
+</div>
+
+<form method="POST" enctype="multipart/form-data">
+{% csrf_token %}
+
+{{ form.non_field_errors }}
+
+{% for field in form %}
+<div class="mb-3">
+<label class="form-label" for="{{ field.id_for_label }}">
+{{ field.label }}
+</label>
+{{ field }}
+
+{% if field.help_text %}
+<div class="form-text">{{ field.help_text }}</div>
+{% endif %}
+
+{% for error in field.errors %}
+<div class="text-danger small">{{ error }}</div>
+{% endfor %}
+</div>
+{% endfor %}
+
+<button class="btn btn-success">
+Save
+</button>
+
+<a class="btn btn-outline-light" href="{% url 'dashboard' %}">
+Cancel
+</a>
+</form>
+</div>
+
+
+{% endblock %}

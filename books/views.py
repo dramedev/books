@@ -6,12 +6,13 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required, permission_required
 from django.core.paginator import Paginator
 from django.db.models import Count, DecimalField, ExpressionWrapper, F, Q, Sum
+from django.db.models.functions import TruncMonth
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 
-from .forms import AuthorForm, BookForm, CategoryForm, SaleForm
-from .models import Author, Book, Category, Sale
+from .forms import AuthorForm, BookForm, CategoryForm, ProfileForm, SaleForm
+from .models import Author, Book, Category, Profile, Sale
 
 
 BOOK_EXPORT_HEADERS = [
@@ -37,6 +38,30 @@ def _book_export_rows(books):
             book.published_date.isoformat(),
             book.category.name,
             book.distribution_expense,
+        ]
+
+
+SALE_EXPORT_HEADERS = [
+    "Date",
+    "Book",
+    "Category",
+    "Quantity",
+    "Unit Price",
+    "Revenue",
+    "Channel",
+]
+
+
+def _sale_export_rows(sales):
+    for sale in sales:
+        yield [
+            sale.sale_date.isoformat(),
+            sale.book.title,
+            sale.book.category.name,
+            sale.quantity,
+            sale.unit_price,
+            sale.revenue,
+            sale.channel,
         ]
 
 
@@ -451,6 +476,23 @@ def report(request):
     )
     total_expense = totals["total"] or 0
 
+    trend_data = (
+        Sale.objects.filter(book__in=filtered_books)
+        .annotate(month=TruncMonth("sale_date"))
+        .values("month")
+        .annotate(units=Sum("quantity"), revenue=Sum(REVENUE_EXPRESSION))
+        .order_by("month")
+    )
+
+    trend_labels = []
+    trend_units = []
+    trend_revenues = []
+
+    for item in trend_data:
+        trend_labels.append(item["month"].strftime("%b %Y"))
+        trend_units.append(item["units"] or 0)
+        trend_revenues.append(float(item["revenue"] or 0))
+
     context = _filter_context(request)
     context.update(
         {
@@ -459,6 +501,9 @@ def report(request):
             "labels": json.dumps(labels),
             "revenues": json.dumps(revenues),
             "profits": json.dumps(profits),
+            "trend_labels": json.dumps(trend_labels),
+            "trend_units": json.dumps(trend_units),
+            "trend_revenues": json.dumps(trend_revenues),
             "total_expense": total_expense,
             "total_books": totals["count"],
             "total_revenue": total_revenue,
@@ -469,10 +514,129 @@ def report(request):
     return render(request, "books/report.html", context)
 
 
+@login_required
+@permission_required("books.view_book", raise_exception=True)
+def dashboard(request):
+    books = Book.objects.select_related("category")
+
+    total_expense = books.aggregate(total=Sum("distribution_expense"))["total"] or 0
+    total_revenue = Sale.objects.aggregate(total=Sum(REVENUE_EXPRESSION))["total"] or 0
+    total_profit = total_revenue - total_expense
+    total_units_sold = Sale.objects.aggregate(total=Sum("quantity"))["total"] or 0
+
+    low_stock_books = books.filter(
+        stock_on_hand__lte=F("reorder_threshold")
+    ).order_by("stock_on_hand", "title")
+
+    category_expenses = (
+        books.values("category__name")
+        .annotate(expense=Sum("distribution_expense"))
+        .order_by("category__name")
+    )
+
+    revenue_by_category = {
+        item["book__category__name"]: item["revenue"] or 0
+        for item in (
+            Sale.objects.values("book__category__name")
+            .annotate(revenue=Sum(REVENUE_EXPRESSION))
+        )
+    }
+
+    labels = []
+    revenues = []
+    profits = []
+
+    for item in category_expenses:
+        category_name = item["category__name"]
+        expense = float(item["expense"] or 0)
+        revenue = float(revenue_by_category.get(category_name, 0))
+
+        labels.append(category_name)
+        revenues.append(revenue)
+        profits.append(revenue - expense)
+
+    trend_data = (
+        Sale.objects.annotate(month=TruncMonth("sale_date"))
+        .values("month")
+        .annotate(units=Sum("quantity"), revenue=Sum(REVENUE_EXPRESSION))
+        .order_by("month")
+    )
+
+    trend_labels = []
+    trend_units = []
+    trend_revenues = []
+
+    for item in trend_data:
+        trend_labels.append(item["month"].strftime("%b %Y"))
+        trend_units.append(item["units"] or 0)
+        trend_revenues.append(float(item["revenue"] or 0))
+
+    top_books = (
+        books.annotate(units_sold=Sum("sales__quantity"))
+        .filter(units_sold__gt=0)
+        .order_by("-units_sold")[:5]
+    )
+
+    recent_sales = Sale.objects.select_related("book", "book__category")[:5]
+
+    context = {
+        "total_books": books.count(),
+        "total_authors": Author.objects.count(),
+        "total_categories": Category.objects.count(),
+        "low_stock_count": low_stock_books.count(),
+        "low_stock_books": low_stock_books[:5],
+        "total_revenue": total_revenue,
+        "total_expense": total_expense,
+        "total_profit": total_profit,
+        "total_units_sold": total_units_sold,
+        "labels": json.dumps(labels),
+        "revenues": json.dumps(revenues),
+        "profits": json.dumps(profits),
+        "trend_labels": json.dumps(trend_labels),
+        "trend_units": json.dumps(trend_units),
+        "trend_revenues": json.dumps(trend_revenues),
+        "top_books": top_books,
+        "recent_sales": recent_sales,
+    }
+
+    return render(request, "books/dashboard.html", context)
+
+
+@login_required
+def profile_update(request):
+    profile, _ = Profile.objects.get_or_create(user=request.user)
+    form = ProfileForm(instance=profile)
+
+    if request.method == "POST":
+        form = ProfileForm(request.POST, request.FILES, instance=profile)
+
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Profile photo updated.")
+            return redirect("dashboard")
+
+    return render(request, "books/profile_form.html", {"form": form, "profile": profile})
+
+
 def _adjust_stock(book_id, delta):
     book = Book.objects.get(id=book_id)
     book.stock_on_hand = max(0, book.stock_on_hand + delta)
     book.save(update_fields=["stock_on_hand"])
+    return book
+
+
+def _notify_stock_level(request, book):
+    if book.is_low_stock:
+        messages.warning(
+            request,
+            f"Low stock: '{book.title}' has {book.stock_on_hand} remaining "
+            f"(reorder threshold {book.reorder_threshold}).",
+        )
+    else:
+        messages.info(
+            request,
+            f"'{book.title}' now has {book.stock_on_hand} in stock.",
+        )
 
 
 @login_required
@@ -502,10 +666,21 @@ def sale_create(request):
         form = SaleForm(request.POST)
 
         if form.is_valid():
-            sale = form.save()
-            _adjust_stock(sale.book_id, -sale.quantity)
-            messages.success(request, "Sale recorded.")
-            return redirect("sale_list")
+            book = form.cleaned_data["book"]
+            quantity = form.cleaned_data["quantity"]
+
+            if book.stock_on_hand < quantity:
+                messages.error(
+                    request,
+                    f"Cannot record sale: '{book.title}' only has "
+                    f"{book.stock_on_hand} in stock.",
+                )
+            else:
+                sale = form.save()
+                book = _adjust_stock(sale.book_id, -sale.quantity)
+                messages.success(request, "Sale recorded.")
+                _notify_stock_level(request, book)
+                return redirect("sale_list")
 
     return render(request, "books/sale_form.html", {"form": form})
 
@@ -523,11 +698,26 @@ def sale_update(request, id):
         form = SaleForm(request.POST, instance=sale)
 
         if form.is_valid():
-            sale = form.save()
-            _adjust_stock(previous_book_id, previous_quantity)
-            _adjust_stock(sale.book_id, -sale.quantity)
-            messages.success(request, "Sale updated.")
-            return redirect("sale_list")
+            new_book = form.cleaned_data["book"]
+            new_quantity = form.cleaned_data["quantity"]
+
+            available = new_book.stock_on_hand
+            if new_book.id == previous_book_id:
+                available += previous_quantity
+
+            if available < new_quantity:
+                messages.error(
+                    request,
+                    f"Cannot update sale: '{new_book.title}' only has "
+                    f"{available} available.",
+                )
+            else:
+                sale = form.save()
+                _adjust_stock(previous_book_id, previous_quantity)
+                book = _adjust_stock(sale.book_id, -sale.quantity)
+                messages.success(request, "Sale updated.")
+                _notify_stock_level(request, book)
+                return redirect("sale_list")
 
     return render(
         request,
@@ -662,5 +852,116 @@ def export_books_pdf(request):
 
     response = HttpResponse(buffer.getvalue(), content_type="application/pdf")
     response["Content-Disposition"] = 'attachment; filename="rumi-press-books.pdf"'
+
+    return response
+
+
+@login_required
+@permission_required("books.view_sale", raise_exception=True)
+def export_sales_csv(request):
+    response = HttpResponse(content_type="text/csv")
+    response["Content-Disposition"] = 'attachment; filename="rumi-press-sales.csv"'
+
+    writer = csv.writer(response)
+    writer.writerow(SALE_EXPORT_HEADERS)
+
+    sales = Sale.objects.select_related("book", "book__category")
+
+    for row in _sale_export_rows(sales):
+        writer.writerow(row)
+
+    return response
+
+
+@login_required
+@permission_required("books.view_sale", raise_exception=True)
+def export_sales_excel(request):
+    from openpyxl import Workbook
+
+    workbook = Workbook()
+    worksheet = workbook.active
+    worksheet.title = "Sales"
+    worksheet.append(SALE_EXPORT_HEADERS)
+
+    sales = Sale.objects.select_related("book", "book__category")
+
+    for row in _sale_export_rows(sales):
+        worksheet.append(row)
+
+    for column in worksheet.columns:
+        max_length = max(len(str(cell.value or "")) for cell in column)
+        worksheet.column_dimensions[column[0].column_letter].width = min(
+            max_length + 2,
+            40,
+        )
+
+    buffer = BytesIO()
+    workbook.save(buffer)
+    buffer.seek(0)
+
+    response = HttpResponse(
+        buffer.getvalue(),
+        content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    )
+    response["Content-Disposition"] = 'attachment; filename="rumi-press-sales.xlsx"'
+
+    return response
+
+
+@login_required
+@permission_required("books.view_sale", raise_exception=True)
+def export_sales_pdf(request):
+    from reportlab.lib import colors
+    from reportlab.lib.pagesizes import landscape, letter
+    from reportlab.lib.styles import getSampleStyleSheet
+    from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
+
+    buffer = BytesIO()
+    document = SimpleDocTemplate(
+        buffer,
+        pagesize=landscape(letter),
+        leftMargin=24,
+        rightMargin=24,
+        topMargin=24,
+        bottomMargin=24,
+    )
+
+    styles = getSampleStyleSheet()
+    elements = [
+        Paragraph("Rumi Press Sales", styles["Title"]),
+        Spacer(1, 12),
+    ]
+
+    sales = Sale.objects.select_related("book", "book__category")
+
+    rows = [SALE_EXPORT_HEADERS]
+
+    for row in _sale_export_rows(sales):
+        rows.append([str(value) for value in row])
+
+    table = Table(
+        rows,
+        repeatRows=1,
+        colWidths=[70, 160, 100, 70, 70, 70, 100],
+    )
+    table.setStyle(
+        TableStyle(
+            [
+                ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#1f1f1f")),
+                ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+                ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+                ("FONTSIZE", (0, 0), (-1, -1), 7),
+                ("GRID", (0, 0), (-1, -1), 0.25, colors.grey),
+                ("VALIGN", (0, 0), (-1, -1), "TOP"),
+            ]
+        )
+    )
+
+    elements.append(table)
+    document.build(elements)
+    buffer.seek(0)
+
+    response = HttpResponse(buffer.getvalue(), content_type="application/pdf")
+    response["Content-Disposition"] = 'attachment; filename="rumi-press-sales.pdf"'
 
     return response

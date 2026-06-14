@@ -1,5 +1,5 @@
 from django import forms
-from .models import Author, Book, Category, Sale
+from .models import Author, Book, Category, Profile, Sale
 
 
 class BookForm(forms.ModelForm):
@@ -161,6 +161,25 @@ class SaleForm(forms.ModelForm):
                 attrs={
                     "class": "form-control",
                     "placeholder": "Channel (optional)"
+                }
+            ),
+        }
+
+
+
+class ProfileForm(forms.ModelForm):
+
+    class Meta:
+        model = Profile
+
+        fields = [
+            "avatar",
+        ]
+
+        widgets = {
+            "avatar": forms.FileInput(
+                attrs={
+                    "class": "form-control"
                 }
             ),
         }

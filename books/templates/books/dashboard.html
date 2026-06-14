@@ -1,0 +1,309 @@
+{% extends "base.html" %}
+
+
+{% block content %}
+
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+<div>
+<h1 class="mb-1">Dashboard</h1>
+<p class="muted-text mb-0">
+Overview of catalog, stock, and sales performance.
+</p>
+</div>
+
+<a class="btn btn-primary" href="{% url 'report' %}">
+Full Report
+</a>
+</div>
+
+
+<div class="row g-3 mb-3">
+<div class="col-6 col-lg-3">
+<div class="kpi-card">
+<div class="kpi-icon"><i class="bi bi-journal-bookmark"></i></div>
+<div>
+<p class="muted-text mb-1">Total books</p>
+<div class="kpi-value">{{ total_books }}</div>
+</div>
+</div>
+</div>
+
+<div class="col-6 col-lg-3">
+<div class="kpi-card">
+<div class="kpi-icon"><i class="bi bi-bag-check"></i></div>
+<div>
+<p class="muted-text mb-1">Total units sold</p>
+<div class="kpi-value">{{ total_units_sold }}</div>
+</div>
+</div>
+</div>
+
+<div class="col-6 col-lg-3">
+<div class="kpi-card">
+<div class="kpi-icon"><i class="bi bi-exclamation-triangle"></i></div>
+<div>
+<p class="muted-text mb-1">Low stock items</p>
+<div class="kpi-value">{{ low_stock_count }}</div>
+</div>
+</div>
+</div>
+
+<div class="col-6 col-lg-3">
+<div class="kpi-card">
+<div class="kpi-icon"><i class="bi bi-cash-coin"></i></div>
+<div>
+<p class="muted-text mb-1">Total revenue</p>
+<div class="kpi-value">{{ total_revenue }}</div>
+</div>
+</div>
+</div>
+
+<div class="col-6 col-lg-3">
+<div class="kpi-card">
+<div class="kpi-icon"><i class="bi bi-graph-up-arrow"></i></div>
+<div>
+<p class="muted-text mb-1">Total profit</p>
+<div class="kpi-value">{{ total_profit }}</div>
+</div>
+</div>
+</div>
+</div>
+
+
+<div class="row g-3 mb-3">
+<div class="col-md-6">
+<div class="page-panel">
+<div style="width:100%;height:320px;">
+<canvas id="revenueChart"></canvas>
+</div>
+</div>
+</div>
+
+<div class="col-md-6">
+<div class="page-panel">
+<div style="width:100%;height:320px;">
+<canvas id="trendChart"></canvas>
+</div>
+</div>
+</div>
+</div>
+
+
+<div class="row g-3">
+<div class="col-md-6">
+<div class="page-panel">
+<h2 class="mb-3">Low Stock</h2>
+
+<div class="table-responsive">
+<table class="table table-striped align-middle mb-0">
+<tr>
+<th>Title</th>
+<th>Stock</th>
+<th>Threshold</th>
+<th></th>
+</tr>
+
+{% for book in low_stock_books %}
+<tr>
+<td><a href="{% url 'book_detail' book.id %}">{{ book.title }}</a></td>
+<td>{{ book.stock_on_hand }}</td>
+<td>{{ book.reorder_threshold }}</td>
+<td><span class="badge bg-danger">Low</span></td>
+</tr>
+{% empty %}
+<tr>
+<td colspan="4" class="text-center muted-text py-4">
+Nothing is below its reorder threshold.
+</td>
+</tr>
+{% endfor %}
+</table>
+</div>
+
+{% if low_stock_count > 5 %}
+<div class="mt-2">
+<a class="btn btn-outline-light btn-sm" href="{% url 'stock_list' %}?low=1">
+View all {{ low_stock_count }} low stock books
+</a>
+</div>
+{% endif %}
+</div>
+</div>
+
+<div class="col-md-6">
+<div class="page-panel">
+<h2 class="mb-3">Top Sellers</h2>
+
+<div class="table-responsive">
+<table class="table table-striped align-middle mb-0">
+<tr>
+<th>Title</th>
+<th>Category</th>
+<th>Units sold</th>
+</tr>
+
+{% for book in top_books %}
+<tr>
+<td><a href="{% url 'book_detail' book.id %}">{{ book.title }}</a></td>
+<td>{{ book.category }}</td>
+<td>{{ book.units_sold }}</td>
+</tr>
+{% empty %}
+<tr>
+<td colspan="3" class="text-center muted-text py-4">
+No sales recorded yet.
+</td>
+</tr>
+{% endfor %}
+</table>
+</div>
+</div>
+</div>
+</div>
+
+
+<div class="row g-3 mt-3">
+<div class="col-12">
+<div class="page-panel">
+<h2 class="mb-3">Recent Sales</h2>
+
+<div class="table-responsive">
+<table class="table table-striped align-middle mb-0">
+<tr>
+<th>Date</th>
+<th>Book</th>
+<th>Category</th>
+<th>Quantity</th>
+<th>Revenue</th>
+<th>Channel</th>
+</tr>
+
+{% for sale in recent_sales %}
+<tr>
+<td>{{ sale.sale_date }}</td>
+<td><a href="{% url 'book_detail' sale.book.id %}">{{ sale.book.title }}</a></td>
+<td>{{ sale.book.category }}</td>
+<td>{{ sale.quantity }}</td>
+<td>{{ sale.revenue }}</td>
+<td>{{ sale.channel|default:"-" }}</td>
+</tr>
+{% empty %}
+<tr>
+<td colspan="6" class="text-center muted-text py-4">
+No sales recorded yet.
+</td>
+</tr>
+{% endfor %}
+</table>
+</div>
+
+<div class="mt-2">
+<a class="btn btn-outline-light btn-sm" href="{% url 'sale_list' %}">
+View all sales
+</a>
+</div>
+</div>
+</div>
+</div>
+
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+const revenueCtx = document.getElementById("revenueChart");
+
+new Chart(revenueCtx, {
+    type: "bar",
+    data: {
+        labels: {{ labels|safe }},
+        datasets: [
+            {
+                label: "Revenue",
+                data: {{ revenues|safe }}
+            },
+            {
+                label: "Profit",
+                data: {{ profits|safe }}
+            }
+        ]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                position: "bottom"
+            },
+            title: {
+                display: true,
+                text: "Revenue & Profit by Category"
+            }
+        }
+    }
+});
+
+const trendCtx = document.getElementById("trendChart");
+
+new Chart(trendCtx, {
+    type: "line",
+    data: {
+        labels: {{ trend_labels|safe }},
+        datasets: [
+            {
+                label: "Units Sold",
+                data: {{ trend_units|safe }},
+                yAxisID: "units",
+                borderColor: "#3f6f9f",
+                backgroundColor: "#3f6f9f",
+                tension: 0.3
+            },
+            {
+                label: "Revenue",
+                data: {{ trend_revenues|safe }},
+                yAxisID: "revenue",
+                borderColor: "#2f6f63",
+                backgroundColor: "#2f6f63",
+                tension: 0.3
+            }
+        ]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                position: "bottom"
+            },
+            title: {
+                display: true,
+                text: "Sales Trend"
+            }
+        },
+        scales: {
+            units: {
+                type: "linear",
+                position: "left",
+                title: {
+                    display: true,
+                    text: "Units Sold"
+                }
+            },
+            revenue: {
+                type: "linear",
+                position: "right",
+                title: {
+                    display: true,
+                    text: "Revenue"
+                },
+                grid: {
+                    drawOnChartArea: false
+                }
+            }
+        }
+    }
+});
+</script>
+
+
+{% endblock %}

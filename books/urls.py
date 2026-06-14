@@ -4,7 +4,9 @@ from . import views
 
 
 urlpatterns = [
-    path("", views.book_list, name="book_list"),
+    path("", views.dashboard, name="dashboard"),
+    path("profile/", views.profile_update, name="profile_update"),
+    path("books/", views.book_list, name="book_list"),
     path("book/<int:id>/", views.book_detail, name="book_detail"),
     path("add/", views.book_create, name="book_create"),
     path("edit/<int:id>/", views.book_update, name="book_update"),
@@ -26,4 +28,7 @@ urlpatterns = [
     path("export/csv/", views.export_books_csv, name="export_books_csv"),
     path("export/excel/", views.export_books_excel, name="export_books_excel"),
     path("export/pdf/", views.export_books_pdf, name="export_books_pdf"),
+    path("sales/export/csv/", views.export_sales_csv, name="export_sales_csv"),
+    path("sales/export/excel/", views.export_sales_excel, name="export_sales_excel"),
+    path("sales/export/pdf/", views.export_sales_pdf, name="export_sales_pdf"),
 ]
