@@ -1,11 +1,12 @@
 {% extends "base.html" %}
+{% load i18n %}
 
 
 {% block content %}
 
 
 <div class="page-panel" style="max-width:480px;">
-<h1 class="mb-3">Profile Photo</h1>
+<h1 class="mb-3">{% translate "Profile Photo" %}</h1>
 
 <div class="d-flex align-items-center gap-3 mb-3">
 {% if profile.avatar %}
@@ -44,11 +45,11 @@
 {% endfor %}
 
 <button class="btn btn-success">
-Save
+{% translate "Save" %}
 </button>
 
 <a class="btn btn-outline-light" href="{% url 'dashboard' %}">
-Cancel
+{% translate "Cancel" %}
 </a>
 </form>
 </div>

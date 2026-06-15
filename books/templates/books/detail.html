@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load i18n %}
 
 
 {% block content %}
@@ -15,18 +16,18 @@
 <div class="d-flex gap-2">
 {% if perms.books.change_book %}
 <a class="btn btn-warning" href="{% url 'book_update' book.id %}">
-Edit
+{% translate "Edit" %}
 </a>
 {% endif %}
 
 {% if perms.books.delete_book %}
 <a class="btn btn-danger" href="{% url 'book_delete' book.id %}">
-Delete
+{% translate "Delete" %}
 </a>
 {% endif %}
 
 <a class="btn btn-outline-light" href="{% url 'book_list' %}">
-Back to Books
+{% translate "Back to Books" %}
 </a>
 </div>
 </div>
@@ -35,13 +36,13 @@ Back to Books
 <div class="row g-3 mb-3">
 <div class="col-md-6">
 <div class="page-panel">
-<h2 class="mb-3">Details</h2>
+<h2 class="mb-3">{% translate "Details" %}</h2>
 
 <dl class="row mb-0">
-<dt class="col-sm-4">ISBN</dt>
+<dt class="col-sm-4">{% translate "ISBN" %}</dt>
 <dd class="col-sm-8">{{ book.isbn|default:"-" }}</dd>
 
-<dt class="col-sm-4">Authors</dt>
+<dt class="col-sm-4">{% translate "Authors" %}</dt>
 <dd class="col-sm-8">
 {% for author in book.authors.all %}
 {{ author.name }}{% if not forloop.last %}, {% endif %}
@@ -50,16 +51,16 @@ Back to Books
 {% endfor %}
 </dd>
 
-<dt class="col-sm-4">Publisher</dt>
+<dt class="col-sm-4">{% translate "Publisher" %}</dt>
 <dd class="col-sm-8">{{ book.publisher }}</dd>
 
-<dt class="col-sm-4">Category</dt>
+<dt class="col-sm-4">{% translate "Category" %}</dt>
 <dd class="col-sm-8">{{ book.category }}</dd>
 
-<dt class="col-sm-4">Published</dt>
+<dt class="col-sm-4">{% translate "Published" %}</dt>
 <dd class="col-sm-8">{{ book.published_date }}</dd>
 
-<dt class="col-sm-4">Distribution Expense</dt>
+<dt class="col-sm-4">{% translate "Distribution Expense" %}</dt>
 <dd class="col-sm-8">{{ book.distribution_expense }}</dd>
 </dl>
 </div>
@@ -67,24 +68,24 @@ Back to Books
 
 <div class="col-md-6">
 <div class="page-panel">
-<h2 class="mb-3">Inventory & Sales</h2>
+<h2 class="mb-3">{% translate "Inventory & Sales" %}</h2>
 
 <dl class="row mb-0">
-<dt class="col-sm-6">Stock on hand</dt>
+<dt class="col-sm-6">{% translate "Stock on hand" %}</dt>
 <dd class="col-sm-6">
 {{ book.stock_on_hand }}
 {% if book.is_low_stock %}
-<span class="badge bg-danger">Low</span>
+<span class="badge bg-danger">{% translate "Low" %}</span>
 {% endif %}
 </dd>
 
-<dt class="col-sm-6">Reorder threshold</dt>
+<dt class="col-sm-6">{% translate "Reorder threshold" %}</dt>
 <dd class="col-sm-6">{{ book.reorder_threshold }}</dd>
 
-<dt class="col-sm-6">Units sold</dt>
+<dt class="col-sm-6">{% translate "Units sold" %}</dt>
 <dd class="col-sm-6">{{ total_quantity_sold }}</dd>
 
-<dt class="col-sm-6">Total revenue</dt>
+<dt class="col-sm-6">{% translate "Total revenue" %}</dt>
 <dd class="col-sm-6">{{ total_revenue }}</dd>
 </dl>
 </div>
@@ -93,16 +94,16 @@ Back to Books
 
 
 <div class="page-panel">
-<h2 class="mb-3">Recent Sales</h2>
+<h2 class="mb-3">{% translate "Recent Sales" %}</h2>
 
 <div class="table-responsive">
 <table class="table table-striped align-middle">
 <tr>
-<th>Date</th>
-<th>Quantity</th>
-<th>Unit Price</th>
-<th>Revenue</th>
-<th>Channel</th>
+<th>{% translate "Date" %}</th>
+<th>{% translate "Quantity" %}</th>
+<th>{% translate "Unit Price" %}</th>
+<th>{% translate "Revenue" %}</th>
+<th>{% translate "Channel" %}</th>
 </tr>
 
 {% for sale in sales %}
@@ -117,7 +118,7 @@ Back to Books
 {% empty %}
 <tr>
 <td colspan="5" class="text-center muted-text py-4">
-No sales recorded for this book yet.
+{% translate "No sales recorded for this book yet." %}
 </td>
 </tr>
 {% endfor %}

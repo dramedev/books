@@ -1,6 +1,7 @@
 from django import forms
 from django.contrib.auth import get_user_model
 from django.contrib.auth.password_validation import validate_password
+from django.utils.translation import gettext_lazy as _
 
 from .models import Author, Book, Category, Profile, Sale
 
@@ -34,7 +35,7 @@ class BookForm(forms.ModelForm):
             "isbn": forms.TextInput(
                 attrs={
                     "class": "form-control",
-                    "placeholder": "ISBN"
+                    "placeholder": _("ISBN")
                 }
             ),
             "title": forms.TextInput(
@@ -104,7 +105,7 @@ class CategoryForm(forms.ModelForm):
             "name": forms.TextInput(
                 attrs={
                     "class": "form-control",
-                    "placeholder": "Category name"
+                    "placeholder": _("Category name")
                 }
             ),
         }
@@ -123,7 +124,7 @@ class AuthorForm(forms.ModelForm):
             "name": forms.TextInput(
                 attrs={
                     "class": "form-control",
-                    "placeholder": "Author name"
+                    "placeholder": _("Author name")
                 }
             ),
         }
@@ -176,7 +177,7 @@ class SaleForm(forms.ModelForm):
             "channel": forms.TextInput(
                 attrs={
                     "class": "form-control",
-                    "placeholder": "Channel (optional)"
+                    "placeholder": _("Channel (optional)")
                 }
             ),
         }
@@ -206,20 +207,22 @@ class SignupForm(forms.Form):
 
     username = forms.CharField(
         max_length=150,
+        label=_("Username"),
         widget=forms.TextInput(attrs={"class": "form-control", "autofocus": True}),
     )
 
     email = forms.EmailField(
+        label=_("Email"),
         widget=forms.EmailInput(attrs={"class": "form-control"}),
     )
 
     password1 = forms.CharField(
-        label="Password",
+        label=_("Password"),
         widget=forms.PasswordInput(attrs={"class": "form-control"}),
     )
 
     password2 = forms.CharField(
-        label="Confirm password",
+        label=_("Confirm password"),
         widget=forms.PasswordInput(attrs={"class": "form-control"}),
     )
 
@@ -227,7 +230,7 @@ class SignupForm(forms.Form):
         username = self.cleaned_data["username"]
 
         if get_user_model().objects.filter(username__iexact=username).exists():
-            raise forms.ValidationError("That username is already taken.")
+            raise forms.ValidationError(_("That username is already taken."))
 
         return username
 
@@ -235,7 +238,7 @@ class SignupForm(forms.Form):
         email = self.cleaned_data["email"]
 
         if get_user_model().objects.filter(email__iexact=email).exists():
-            raise forms.ValidationError("An account with that email already exists.")
+            raise forms.ValidationError(_("An account with that email already exists."))
 
         return email
 
@@ -245,7 +248,7 @@ class SignupForm(forms.Form):
         password2 = cleaned_data.get("password2")
 
         if password1 and password2 and password1 != password2:
-            raise forms.ValidationError("The two password fields didn't match.")
+            raise forms.ValidationError(_("The two password fields didn't match."))
 
         if password1:
             validate_password(password1)
@@ -258,6 +261,7 @@ class VerifyEmailForm(forms.Form):
 
     code = forms.CharField(
         max_length=6,
+        label=_("Verification code"),
         widget=forms.TextInput(attrs={"class": "form-control", "autofocus": True}),
     )
 
@@ -267,5 +271,6 @@ class RedeemAccessCodeForm(forms.Form):
 
     code = forms.CharField(
         max_length=12,
+        label=_("Access code"),
         widget=forms.TextInput(attrs={"class": "form-control", "autofocus": True}),
     )

@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load i18n %}
 
 
 {% block content %}
@@ -7,11 +8,10 @@
 <div class="row justify-content-center">
 <div class="col-md-5">
 <div class="page-panel">
-<h1 class="mb-3">Activate your account</h1>
+<h1 class="mb-3">{% translate "Activate your account" %}</h1>
 
 <p class="muted-text">
-Your email is verified. Enter the access code you received from the
-RumiPress owner to activate your account and start using RumiPress.
+{% blocktranslate %}Your email is verified. Enter the access code you received from the RumiPress owner to activate your account and start using RumiPress.{% endblocktranslate %}
 </p>
 
 {% if form.non_field_errors %}
@@ -27,7 +27,7 @@ RumiPress owner to activate your account and start using RumiPress.
 
 <div class="mb-3">
 <label class="form-label" for="{{ form.code.id_for_label }}">
-Access code
+{% translate "Access code" %}
 </label>
 {{ form.code }}
 {% for error in form.code.errors %}
@@ -36,7 +36,7 @@ Access code
 </div>
 
 <button class="btn btn-primary">
-Activate
+{% translate "Activate" %}
 </button>
 </form>
 </div>

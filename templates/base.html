@@ -1,5 +1,6 @@
+{% load i18n %}
 <!DOCTYPE html>
-<html>
+<html lang="{{ LANGUAGE_CODE }}" dir="{% if LANGUAGE_BIDI %}rtl{% else %}ltr{% endif %}">
 <head>
 <title>Rumi Press</title>
 
@@ -417,6 +418,65 @@ textarea{
     border-radius:6px;
     padding:0.4rem 0.6rem;
 }
+
+.language-switcher select{
+    background:var(--surface-alt);
+    color:var(--text);
+    border:1px solid var(--border);
+    border-radius:6px;
+    padding:6px 10px;
+    width:100%;
+}
+
+.quote-text{
+    display:inline-block;
+    transition:opacity 0.4s ease;
+    opacity:1;
+}
+
+.quote-text.quote-fade-out{
+    opacity:0;
+}
+
+.quote-panel{
+    background-color:color-mix(in srgb, var(--accent) 10%, var(--surface));
+    border:1px solid color-mix(in srgb, var(--accent) 25%, transparent);
+    transition:background-color 0.4s ease;
+}
+
+.quote-panel.quote-flash{
+    background-color:color-mix(in srgb, var(--accent) 25%, var(--surface));
+}
+
+html[dir="rtl"] .sidebar{
+    left:auto;
+    right:0;
+    border-right:none;
+    border-left:1px solid var(--border);
+}
+
+html[dir="rtl"] .app-main{
+    margin-left:0;
+    margin-right:240px;
+}
+
+html[dir="rtl"] .chat-toggle,
+html[dir="rtl"] .chat-panel{
+    right:auto;
+    left:24px;
+}
+
+@media (max-width:991.98px){
+    html[dir="rtl"] .sidebar{
+        transform:translateX(100%);
+    }
+    html[dir="rtl"] .sidebar.show{
+        transform:translateX(0);
+    }
+    html[dir="rtl"] .app-main{
+        margin-right:0;
+    }
+}
 </style>
 </head>
 
@@ -436,56 +496,68 @@ textarea{
 
 {% if perms.books.view_book %}
 <a class="sidebar-link {% if url_name == 'dashboard' %}active{% endif %}" href="{% url 'dashboard' %}">
-<i class="bi bi-speedometer2"></i> Dashboard
+<i class="bi bi-speedometer2"></i> {% translate "Dashboard" %}
 </a>
 
-<div class="sidebar-section">Catalog</div>
+<div class="sidebar-section">{% translate "Catalog" %}</div>
 
 <a class="sidebar-link {% if url_name == 'book_list' or url_name == 'book_detail' or url_name == 'book_create' or url_name == 'book_update' or url_name == 'book_delete' %}active{% endif %}" href="{% url 'book_list' %}">
-<i class="bi bi-journal-bookmark"></i> Books
+<i class="bi bi-journal-bookmark"></i> {% translate "Books" %}
 </a>
 
 <a class="sidebar-link {% if url_name == 'stock_list' %}active{% endif %}" href="{% url 'stock_list' %}">
-<i class="bi bi-boxes"></i> Stock
+<i class="bi bi-boxes"></i> {% translate "Stock" %}
 </a>
 {% endif %}
 
 {% if perms.books.view_category %}
 <a class="sidebar-link {% if url_name == 'category_list' or url_name == 'category_create' or url_name == 'category_update' or url_name == 'category_delete' %}active{% endif %}" href="{% url 'category_list' %}">
-<i class="bi bi-tags"></i> Categories
+<i class="bi bi-tags"></i> {% translate "Categories" %}
 </a>
 {% endif %}
 
 {% if perms.books.view_author %}
 <a class="sidebar-link {% if url_name == 'author_list' or url_name == 'author_create' or url_name == 'author_update' or url_name == 'author_delete' %}active{% endif %}" href="{% url 'author_list' %}">
-<i class="bi bi-people"></i> Authors
+<i class="bi bi-people"></i> {% translate "Authors" %}
 </a>
 {% endif %}
 
 {% if perms.books.view_sale %}
-<div class="sidebar-section">Sales</div>
+<div class="sidebar-section">{% translate "Sales" %}</div>
 
 <a class="sidebar-link {% if url_name == 'sale_list' or url_name == 'sale_create' or url_name == 'sale_update' or url_name == 'sale_delete' %}active{% endif %}" href="{% url 'sale_list' %}">
-<i class="bi bi-cart3"></i> Sales
+<i class="bi bi-cart3"></i> {% translate "Sales" %}
 </a>
 {% endif %}
 
 {% if perms.books.view_book %}
 <a class="sidebar-link {% if url_name == 'report' %}active{% endif %}" href="{% url 'report' %}">
-<i class="bi bi-graph-up"></i> Reports
+<i class="bi bi-graph-up"></i> {% translate "Reports" %}
 </a>
 {% endif %}
 
-<div class="sidebar-section">Help</div>
+<div class="sidebar-section">{% translate "Help" %}</div>
 
 <a class="sidebar-link {% if url_name == 'about' %}active{% endif %}" href="{% url 'about' %}">
-<i class="bi bi-info-circle"></i> About
+<i class="bi bi-info-circle"></i> {% translate "About" %}
 </a>
 
 {% endif %}
 </nav>
 
 <div class="sidebar-footer">
+<form action="{% url 'set_language' %}" method="post" class="language-switcher mb-2">
+{% csrf_token %}
+<input name="next" type="hidden" value="{{ request.path }}">
+<select name="language" onchange="this.form.submit()" aria-label="{% translate 'Language' %}">
+{% get_current_language as LANGUAGE_CODE %}
+{% get_available_languages as LANGUAGES %}
+{% for lang_code, lang_name in LANGUAGES %}
+<option value="{{ lang_code }}" {% if lang_code == LANGUAGE_CODE %}selected{% endif %}>{{ lang_name }}</option>
+{% endfor %}
+</select>
+</form>
+
 {% if user.is_authenticated %}
 <a class="sidebar-user" href="{% url 'profile_update' %}">
 {% if user.profile.avatar %}
@@ -499,20 +571,20 @@ textarea{
 <div class="sidebar-footer-actions">
 <form method="post" action="{% url 'logout' %}" class="m-0">
 {% csrf_token %}
-<button class="btn btn-outline-secondary btn-sm w-100">Logout</button>
+<button class="btn btn-outline-secondary btn-sm w-100">{% translate "Logout" %}</button>
 </form>
 
 <button class="theme-toggle btn-sm" onclick="changeTheme()" style="flex:1;">
-<i class="bi bi-circle-half"></i> Theme
+<i class="bi bi-circle-half"></i> {% translate "Theme" %}
 </button>
 </div>
 {% else %}
 <a class="btn btn-outline-secondary btn-sm w-100 mb-2" href="{% url 'login' %}">
-Login
+{% translate "Login" %}
 </a>
 
 <button class="theme-toggle btn-sm" onclick="changeTheme()">
-<i class="bi bi-circle-half"></i> Theme
+<i class="bi bi-circle-half"></i> {% translate "Theme" %}
 </button>
 {% endif %}
 </div>
@@ -522,7 +594,7 @@ Login
 
 <div class="app-main">
 <header class="topbar">
-<button class="sidebar-toggle" id="sidebarToggle" aria-label="Toggle navigation">
+<button class="sidebar-toggle" id="sidebarToggle" aria-label="{% translate 'Toggle navigation' %}">
 <i class="bi bi-list"></i>
 </button>
 
@@ -551,16 +623,16 @@ Login
 {% endwith %}
 
 {% if user.is_authenticated %}
-<button class="chat-toggle" id="chatToggle" aria-label="Open AI assistant">
+<button class="chat-toggle" id="chatToggle" aria-label="{% translate 'Open AI assistant' %}">
 <i class="bi bi-chat-dots"></i>
 </button>
 
 <div class="chat-panel" id="chatPanel">
-<div class="chat-panel-header">RumiPress Assistant</div>
+<div class="chat-panel-header">{% translate "RumiPress Assistant" %}</div>
 <div class="chat-panel-messages" id="chatMessages"></div>
 <form class="chat-panel-form" id="chatForm">
 {% csrf_token %}
-<input type="text" id="chatInput" placeholder="Ask a question..." autocomplete="off">
+<input type="text" id="chatInput" placeholder="{% translate 'Ask a question...' %}" autocomplete="off">
 <button type="submit" class="btn btn-sm" style="background:var(--accent);color:var(--accent-text);border:none;">
 <i class="bi bi-send"></i>
 </button>
@@ -606,6 +678,8 @@ const chatInput = document.getElementById("chatInput");
 
 if(chatToggle){
     let chatHistory = [];
+    const i18nThinking = "{% translate 'Thinking...' %}";
+    const i18nChatError = "{% translate 'Sorry, something went wrong.' %}";
 
     chatToggle.addEventListener("click", function(){
         chatPanel.classList.toggle("show");
@@ -631,7 +705,7 @@ if(chatToggle){
         addChatMessage("user", text);
         chatInput.value = "";
         chatInput.disabled = true;
-        const pending = addChatMessage("assistant", "Thinking...");
+        const pending = addChatMessage("assistant", i18nThinking);
 
         const csrfToken = chatForm.querySelector("[name=csrfmiddlewaretoken]").value;
 
@@ -649,14 +723,14 @@ if(chatToggle){
                 pending.textContent = data.reply;
             }
             else{
-                pending.textContent = "Sorry, something went wrong.";
+                pending.textContent = i18nChatError;
             }
             if(data.history){
                 chatHistory = data.history;
             }
         })
         .catch(function(){
-            pending.textContent = "Sorry, something went wrong.";
+            pending.textContent = i18nChatError;
         })
         .finally(function(){
             chatInput.disabled = false;

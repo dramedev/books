@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load i18n %}
 
 
 {% block content %}
@@ -8,18 +9,20 @@
 <div>
 <h1 class="mb-1">{{ greeting }}, {{ user.username }}</h1>
 <p class="muted-text mb-0">
-Overview of catalog, stock, and sales performance.
+{% translate "Overview of catalog, stock, and sales performance." %}
 </p>
 </div>
 
 <a class="btn btn-primary" href="{% url 'report' %}">
-Full Report
+{% translate "Full Report" %}
 </a>
 </div>
 
-<div class="page-panel mb-3">
-<i class="bi bi-quote"></i> {{ quote }}
+<div class="page-panel quote-panel mb-3" id="dashboard-quote-panel">
+<i class="bi bi-quote"></i> <span id="dashboard-quote" class="quote-text">{{ quote }}</span>
 </div>
+
+{{ all_quotes|json_script:"dashboard-quotes-data" }}
 
 
 <div class="row g-3 mb-3">
@@ -27,7 +30,7 @@ Full Report
 <div class="kpi-card">
 <div class="kpi-icon"><i class="bi bi-journal-bookmark"></i></div>
 <div>
-<p class="muted-text mb-1">Total books</p>
+<p class="muted-text mb-1">{% translate "Total books" %}</p>
 <div class="kpi-value">{{ total_books }}</div>
 </div>
 </div>
@@ -37,7 +40,7 @@ Full Report
 <div class="kpi-card">
 <div class="kpi-icon"><i class="bi bi-bag-check"></i></div>
 <div>
-<p class="muted-text mb-1">Total units sold</p>
+<p class="muted-text mb-1">{% translate "Total units sold" %}</p>
 <div class="kpi-value">{{ total_units_sold }}</div>
 </div>
 </div>
@@ -47,7 +50,7 @@ Full Report
 <div class="kpi-card">
 <div class="kpi-icon"><i class="bi bi-exclamation-triangle"></i></div>
 <div>
-<p class="muted-text mb-1">Low stock items</p>
+<p class="muted-text mb-1">{% translate "Low stock items" %}</p>
 <div class="kpi-value">{{ low_stock_count }}</div>
 </div>
 </div>
@@ -57,7 +60,7 @@ Full Report
 <div class="kpi-card">
 <div class="kpi-icon"><i class="bi bi-cash-coin"></i></div>
 <div>
-<p class="muted-text mb-1">Total revenue</p>
+<p class="muted-text mb-1">{% translate "Total revenue" %}</p>
 <div class="kpi-value">{{ total_revenue }}</div>
 </div>
 </div>
@@ -67,7 +70,7 @@ Full Report
 <div class="kpi-card">
 <div class="kpi-icon"><i class="bi bi-graph-up-arrow"></i></div>
 <div>
-<p class="muted-text mb-1">Total profit</p>
+<p class="muted-text mb-1">{% translate "Total profit" %}</p>
 <div class="kpi-value">{{ total_profit }}</div>
 </div>
 </div>
@@ -97,14 +100,14 @@ Full Report
 <div class="row g-3">
 <div class="col-md-6">
 <div class="page-panel">
-<h2 class="mb-3">Low Stock</h2>
+<h2 class="mb-3">{% translate "Low Stock" %}</h2>
 
 <div class="table-responsive">
 <table class="table table-striped align-middle mb-0">
 <tr>
-<th>Title</th>
-<th>Stock</th>
-<th>Threshold</th>
+<th>{% translate "Title" %}</th>
+<th>{% translate "Stock" %}</th>
+<th>{% translate "Threshold" %}</th>
 <th></th>
 </tr>
 
@@ -113,12 +116,12 @@ Full Report
 <td><a href="{% url 'book_detail' book.id %}">{{ book.title }}</a></td>
 <td>{{ book.stock_on_hand }}</td>
 <td>{{ book.reorder_threshold }}</td>
-<td><span class="badge bg-danger">Low</span></td>
+<td><span class="badge bg-danger">{% translate "Low" %}</span></td>
 </tr>
 {% empty %}
 <tr>
 <td colspan="4" class="text-center muted-text py-4">
-Nothing is below its reorder threshold.
+{% translate "Nothing is below its reorder threshold." %}
 </td>
 </tr>
 {% endfor %}
@@ -128,7 +131,7 @@ Nothing is below its reorder threshold.
 {% if low_stock_count > 5 %}
 <div class="mt-2">
 <a class="btn btn-outline-light btn-sm" href="{% url 'stock_list' %}?low=1">
-View all {{ low_stock_count }} low stock books
+{% blocktranslate %}View all {{ low_stock_count }} low stock books{% endblocktranslate %}
 </a>
 </div>
 {% endif %}
@@ -137,14 +140,14 @@ View all {{ low_stock_count }} low stock books
 
 <div class="col-md-6">
 <div class="page-panel">
-<h2 class="mb-3">Top Sellers</h2>
+<h2 class="mb-3">{% translate "Top Sellers" %}</h2>
 
 <div class="table-responsive">
 <table class="table table-striped align-middle mb-0">
 <tr>
-<th>Title</th>
-<th>Category</th>
-<th>Units sold</th>
+<th>{% translate "Title" %}</th>
+<th>{% translate "Category" %}</th>
+<th>{% translate "Units sold" %}</th>
 </tr>
 
 {% for book in top_books %}
@@ -156,7 +159,7 @@ View all {{ low_stock_count }} low stock books
 {% empty %}
 <tr>
 <td colspan="3" class="text-center muted-text py-4">
-No sales recorded yet.
+{% translate "No sales recorded yet." %}
 </td>
 </tr>
 {% endfor %}
@@ -170,17 +173,17 @@ No sales recorded yet.
 <div class="row g-3 mt-3">
 <div class="col-12">
 <div class="page-panel">
-<h2 class="mb-3">Recent Sales</h2>
+<h2 class="mb-3">{% translate "Recent Sales" %}</h2>
 
 <div class="table-responsive">
 <table class="table table-striped align-middle mb-0">
 <tr>
-<th>Date</th>
-<th>Book</th>
-<th>Category</th>
-<th>Quantity</th>
-<th>Revenue</th>
-<th>Channel</th>
+<th>{% translate "Date" %}</th>
+<th>{% translate "Book" %}</th>
+<th>{% translate "Category" %}</th>
+<th>{% translate "Quantity" %}</th>
+<th>{% translate "Revenue" %}</th>
+<th>{% translate "Channel" %}</th>
 </tr>
 
 {% for sale in recent_sales %}
@@ -195,7 +198,7 @@ No sales recorded yet.
 {% empty %}
 <tr>
 <td colspan="6" class="text-center muted-text py-4">
-No sales recorded yet.
+{% translate "No sales recorded yet." %}
 </td>
 </tr>
 {% endfor %}
@@ -204,7 +207,7 @@ No sales recorded yet.
 
 <div class="mt-2">
 <a class="btn btn-outline-light btn-sm" href="{% url 'sale_list' %}">
-View all sales
+{% translate "View all sales" %}
 </a>
 </div>
 </div>
@@ -223,11 +226,11 @@ new Chart(revenueCtx, {
         labels: {{ labels|safe }},
         datasets: [
             {
-                label: "Revenue",
+                label: "{% translate 'Revenue' %}",
                 data: {{ revenues|safe }}
             },
             {
-                label: "Profit",
+                label: "{% translate 'Profit' %}",
                 data: {{ profits|safe }}
             }
         ]
@@ -241,7 +244,7 @@ new Chart(revenueCtx, {
             },
             title: {
                 display: true,
-                text: "Revenue & Profit by Category"
+                text: "{% translate 'Revenue & Profit by Category' %}"
             }
         }
     }
@@ -255,7 +258,7 @@ new Chart(trendCtx, {
         labels: {{ trend_labels|safe }},
         datasets: [
             {
-                label: "Units Sold",
+                label: "{% translate 'Units Sold' %}",
                 data: {{ trend_units|safe }},
                 yAxisID: "units",
                 borderColor: "#3f6f9f",
@@ -263,7 +266,7 @@ new Chart(trendCtx, {
                 tension: 0.3
             },
             {
-                label: "Revenue",
+                label: "{% translate 'Revenue' %}",
                 data: {{ trend_revenues|safe }},
                 yAxisID: "revenue",
                 borderColor: "#2f6f63",
@@ -281,7 +284,7 @@ new Chart(trendCtx, {
             },
             title: {
                 display: true,
-                text: "Sales Trend"
+                text: "{% translate 'Sales Trend' %}"
             }
         },
         scales: {
@@ -290,7 +293,7 @@ new Chart(trendCtx, {
                 position: "left",
                 title: {
                     display: true,
-                    text: "Units Sold"
+                    text: "{% translate 'Units Sold' %}"
                 }
             },
             revenue: {
@@ -298,7 +301,7 @@ new Chart(trendCtx, {
                 position: "right",
                 title: {
                     display: true,
-                    text: "Revenue"
+                    text: "{% translate 'Revenue' %}"
                 },
                 grid: {
                     drawOnChartArea: false
@@ -307,6 +310,43 @@ new Chart(trendCtx, {
         }
     }
 });
+
+
+(function () {
+    const quoteEl = document.getElementById("dashboard-quote");
+    const panelEl = document.getElementById("dashboard-quote-panel");
+    const dataEl = document.getElementById("dashboard-quotes-data");
+
+    if (!quoteEl || !panelEl || !dataEl) {
+        return;
+    }
+
+    const quotes = JSON.parse(dataEl.textContent);
+
+    if (quotes.length < 2) {
+        return;
+    }
+
+    setInterval(function () {
+        let next;
+
+        do {
+            next = quotes[Math.floor(Math.random() * quotes.length)];
+        } while (next === quoteEl.textContent.trim());
+
+        quoteEl.classList.add("quote-fade-out");
+        panelEl.classList.add("quote-flash");
+
+        setTimeout(function () {
+            quoteEl.textContent = next;
+            quoteEl.classList.remove("quote-fade-out");
+        }, 400);
+
+        setTimeout(function () {
+            panelEl.classList.remove("quote-flash");
+        }, 1200);
+    }, 10 * 1000);
+})();
 </script>
 
 

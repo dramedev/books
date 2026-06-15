@@ -1,0 +1,720 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: RumiPress\n"
+"Report-Msgid-Bugs-To: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Language: ar\n"
+
+msgid "Dashboard"
+msgstr "لوحة التحكم"
+
+msgid "Catalog"
+msgstr "الكتالوج"
+
+msgid "Books"
+msgstr "الكتب"
+
+msgid "Stock"
+msgstr "المخزون"
+
+msgid "Categories"
+msgstr "التصنيفات"
+
+msgid "Authors"
+msgstr "المؤلفون"
+
+msgid "Sales"
+msgstr "المبيعات"
+
+msgid "Reports"
+msgstr "التقارير"
+
+msgid "Help"
+msgstr "المساعدة"
+
+msgid "About"
+msgstr "حول"
+
+msgid "Logout"
+msgstr "تسجيل الخروج"
+
+msgid "Theme"
+msgstr "المظهر"
+
+msgid "Login"
+msgstr "تسجيل الدخول"
+
+msgid "Language"
+msgstr "اللغة"
+
+msgid "RumiPress Assistant"
+msgstr "مساعد روومي برِس"
+
+msgid "Ask a question..."
+msgstr "اطرح سؤالاً..."
+
+msgid "Toggle navigation"
+msgstr "إظهار/إخفاء التنقل"
+
+msgid "Open AI assistant"
+msgstr "فتح المساعد الذكي"
+
+msgid "Thinking..."
+msgstr "جارٍ التفكير..."
+
+msgid "Sorry, something went wrong."
+msgstr "عذرًا، حدث خطأ ما."
+
+msgid "About Rumi Press"
+msgstr "حول روومي برِس"
+
+msgid "What each part of the system does."
+msgstr "ما تقوم به كل وحدة من النظام."
+
+msgid "Profile"
+msgstr "الملف الشخصي"
+
+msgid "A quick overview of the whole catalog: total books, total units sold, low stock count, total revenue and profit, a revenue/profit-by-category chart, a sales trend chart, the books currently low on stock, the top sellers, and the most recent sales."
+msgstr "نظرة سريعة على الكتالوج بالكامل: إجمالي الكتب، إجمالي الوحدات المباعة، عدد الأصناف منخفضة المخزون، إجمالي الإيرادات والأرباح، رسم بياني للإيرادات/الأرباح حسب التصنيف، رسم بياني لاتجاه المبيعات، الكتب منخفضة المخزون حاليًا، الأكثر مبيعًا، وأحدث المبيعات."
+
+msgid "The catalog of titles: ISBN, title, subtitle, authors, publisher, publish date, category and distribution expense. Search, filter by category/publisher, sort, and export the list to CSV, Excel or PDF."
+msgstr "كتالوج العناوين: الرقم الدولي، العنوان، العنوان الفرعي، المؤلفون، الناشر، تاريخ النشر، التصنيف ومصاريف التوزيع. يمكنك البحث والتصفية حسب التصنيف/الناشر والترتيب وتصدير القائمة إلى CSV أو Excel أو PDF."
+
+msgid "Stock on hand and reorder thresholds for every book. Books at or below their threshold are flagged \"Low stock\" and can be filtered to a low-stock-only view."
+msgstr "المخزون المتاح وحدود إعادة الطلب لكل كتاب. توضع علامة \"مخزون منخفض\" على الكتب التي تساوي حدها أو تقل عنه، ويمكن تصفيتها في عرض خاص بالمخزون المنخفض فقط."
+
+msgid "Groupings used to organize books for filtering and reporting. Each category shows how many books belong to it, and can be added, edited or deleted (categories still in use can't be deleted)."
+msgstr "تجميعات تُستخدم لتنظيم الكتب لأغراض التصفية والتقارير. تعرض كل فئة عدد الكتب التابعة لها، ويمكن إضافتها أو تعديلها أو حذفها (لا يمكن حذف الفئات المستخدمة حاليًا)."
+
+msgid "The list of authors linked to books, with a count of how many books each author has. Authors can be added, edited or removed once they are no longer linked to any book."
+msgstr "قائمة المؤلفين المرتبطين بالكتب، مع عدد الكتب لكل مؤلف. يمكن إضافة المؤلفين أو تعديلهم أو إزالتهم بعد أن لا يعودوا مرتبطين بأي كتاب."
+
+msgid "Every sale transaction: book, quantity, unit price, revenue, date and channel. Recording a sale reduces the book's stock on hand and shows a remaining-stock notification; a sale is refused if it would exceed available stock. The list can be exported to CSV, Excel or PDF."
+msgstr "كل معاملة بيع: الكتاب، الكمية، سعر الوحدة، الإيراد، التاريخ والقناة. يؤدي تسجيل عملية بيع إلى تقليل المخزون المتاح للكتاب وإظهار إشعار بالمخزون المتبقي؛ ويُرفض البيع إذا كان يتجاوز المخزون المتاح. يمكن تصدير القائمة إلى CSV أو Excel أو PDF."
+
+msgid "A filterable distribution report: total books, expense, revenue and profit, with charts for expenses and revenue/profit by category and a sales trend over time. Results can be exported to CSV, Excel or PDF."
+msgstr "تقرير توزيع قابل للتصفية: إجمالي الكتب والمصاريف والإيرادات والأرباح، مع رسوم بيانية للمصاريف والإيرادات/الأرباح حسب التصنيف واتجاه المبيعات بمرور الوقت. يمكن تصدير النتائج إلى CSV أو Excel أو PDF."
+
+msgid "Each user can upload a profile photo, shown in the sidebar. Access to each section above is controlled by permissions, so what you see depends on your assigned role."
+msgstr "يمكن لكل مستخدم رفع صورة شخصية تُعرض في الشريط الجانبي. يتم التحكم في الوصول إلى كل قسم أعلاه عبر الصلاحيات، فما تراه يعتمد على دورك المعيّن."
+
+msgid "Edit"
+msgstr "تعديل"
+
+msgid "Delete"
+msgstr "حذف"
+
+msgid "Save"
+msgstr "حفظ"
+
+msgid "Cancel"
+msgstr "إلغاء"
+
+msgid "Name"
+msgstr "الاسم"
+
+msgid "Actions"
+msgstr "إجراءات"
+
+msgid "Add Author"
+msgstr "إضافة مؤلف"
+
+msgid "Add Category"
+msgstr "إضافة تصنيف"
+
+msgid "Add Book"
+msgstr "إضافة كتاب"
+
+msgid "Add Sale"
+msgstr "إضافة عملية بيع"
+
+msgid "No authors yet."
+msgstr "لا يوجد مؤلفون حتى الآن."
+
+msgid "No categories yet."
+msgstr "لا توجد تصنيفات حتى الآن."
+
+msgid "Manage the authors linked to your books."
+msgstr "إدارة المؤلفين المرتبطين بكتبك."
+
+msgid "Manage the catalog, filter records, and open reports."
+msgstr "إدارة الكتالوج وتصفية السجلات وفتح التقارير."
+
+msgid "Group books for reporting and filtering."
+msgstr "تجميع الكتب لأغراض التقارير والتصفية."
+
+msgid "Delete %(object_type)s"
+msgstr "حذف %(object_type)s"
+
+msgid "Are you sure you want to delete <strong>%(object_name)s</strong>?"
+msgstr "هل أنت متأكد من حذف <strong>%(object_name)s</strong>؟"
+
+msgid "book"
+msgstr "الكتاب"
+
+msgid "category"
+msgstr "التصنيف"
+
+msgid "author"
+msgstr "المؤلف"
+
+msgid "sale"
+msgstr "عملية البيع"
+
+msgid "Author Form"
+msgstr "نموذج المؤلف"
+
+msgid "Category Form"
+msgstr "نموذج التصنيف"
+
+msgid "Book Form"
+msgstr "نموذج الكتاب"
+
+msgid "Sale Form"
+msgstr "نموذج البيع"
+
+msgid "Profile Photo"
+msgstr "الصورة الشخصية"
+
+msgid "ISBN"
+msgstr "الرقم الدولي ISBN"
+
+msgid "Category name"
+msgstr "اسم التصنيف"
+
+msgid "Author name"
+msgstr "اسم المؤلف"
+
+msgid "Channel (optional)"
+msgstr "القناة (اختياري)"
+
+msgid "Password"
+msgstr "كلمة المرور"
+
+msgid "Confirm password"
+msgstr "تأكيد كلمة المرور"
+
+msgid "Username"
+msgstr "اسم المستخدم"
+
+msgid "Email"
+msgstr "البريد الإلكتروني"
+
+msgid "Verification code"
+msgstr "رمز التحقق"
+
+msgid "Verify"
+msgstr "تحقق"
+
+msgid "Verify your email"
+msgstr "تحقق من بريدك الإلكتروني"
+
+msgid "Resend code"
+msgstr "إعادة إرسال الرمز"
+
+msgid "Access code"
+msgstr "رمز الدخول"
+
+msgid "Activate"
+msgstr "تفعيل"
+
+msgid "Activate your account"
+msgstr "فعّل حسابك"
+
+msgid "Create an account"
+msgstr "إنشاء حساب"
+
+msgid "Sign up"
+msgstr "تسجيل"
+
+msgid "Already have an account?"
+msgstr "هل لديك حساب بالفعل؟"
+
+msgid "Log in"
+msgstr "تسجيل الدخول"
+
+msgid "Don't have an account?"
+msgstr "ليس لديك حساب؟"
+
+msgid "Create one"
+msgstr "أنشئ حسابًا"
+
+msgid "Your username and password did not match."
+msgstr "اسم المستخدم وكلمة المرور غير متطابقين."
+
+msgid "We sent a 6-digit verification code to <strong>%(email)s</strong>. Enter it below to continue."
+msgstr "أرسلنا رمز تحقق مكونًا من 6 أرقام إلى <strong>%(email)s</strong>. أدخله أدناه للمتابعة."
+
+msgid "Your email is verified. Enter the access code you received from the RumiPress owner to activate your account and start using RumiPress."
+msgstr "تم التحقق من بريدك الإلكتروني. أدخل رمز الدخول الذي استلمته من مالك روومي برِس لتفعيل حسابك وبدء استخدام روومي برِس."
+
+msgid "Overview of catalog, stock, and sales performance."
+msgstr "نظرة عامة على الكتالوج والمخزون وأداء المبيعات."
+
+msgid "Full Report"
+msgstr "التقرير الكامل"
+
+msgid "Total books"
+msgstr "إجمالي الكتب"
+
+msgid "Total units sold"
+msgstr "إجمالي الوحدات المباعة"
+
+msgid "Low stock items"
+msgstr "أصناف منخفضة المخزون"
+
+msgid "Total revenue"
+msgstr "إجمالي الإيرادات"
+
+msgid "Total profit"
+msgstr "إجمالي الأرباح"
+
+msgid "Low Stock"
+msgstr "مخزون منخفض"
+
+msgid "Top Sellers"
+msgstr "الأكثر مبيعًا"
+
+msgid "Recent Sales"
+msgstr "أحدث المبيعات"
+
+msgid "Title"
+msgstr "العنوان"
+
+msgid "Threshold"
+msgstr "الحد"
+
+msgid "Low"
+msgstr "منخفض"
+
+msgid "Nothing is below its reorder threshold."
+msgstr "لا يوجد عنصر تحت حد إعادة الطلب."
+
+msgid "View all %(low_stock_count)s low stock books"
+msgstr "عرض جميع الكتب منخفضة المخزون (%(low_stock_count)s)"
+
+msgid "Category"
+msgstr "التصنيف"
+
+msgid "Units sold"
+msgstr "الوحدات المباعة"
+
+msgid "No sales recorded yet."
+msgstr "لا توجد مبيعات مسجلة حتى الآن."
+
+msgid "Date"
+msgstr "التاريخ"
+
+msgid "Book"
+msgstr "الكتاب"
+
+msgid "Quantity"
+msgstr "الكمية"
+
+msgid "Revenue"
+msgstr "الإيراد"
+
+msgid "Channel"
+msgstr "القناة"
+
+msgid "View all sales"
+msgstr "عرض جميع المبيعات"
+
+msgid "Revenue & Profit by Category"
+msgstr "الإيراد والأرباح حسب التصنيف"
+
+msgid "Sales Trend"
+msgstr "اتجاه المبيعات"
+
+msgid "Units Sold"
+msgstr "الوحدات المباعة"
+
+msgid "Profit"
+msgstr "الأرباح"
+
+msgid "Back to Books"
+msgstr "العودة إلى الكتب"
+
+msgid "Details"
+msgstr "التفاصيل"
+
+msgid "Publisher"
+msgstr "الناشر"
+
+msgid "Published"
+msgstr "تاريخ النشر"
+
+msgid "Distribution Expense"
+msgstr "مصاريف التوزيع"
+
+msgid "Inventory & Sales"
+msgstr "المخزون والمبيعات"
+
+msgid "Stock on hand"
+msgstr "المخزون المتاح"
+
+msgid "Reorder threshold"
+msgstr "حد إعادة الطلب"
+
+msgid "Unit Price"
+msgstr "سعر الوحدة"
+
+msgid "No sales recorded for this book yet."
+msgstr "لا توجد مبيعات مسجلة لهذا الكتاب حتى الآن."
+
+msgid "CSV"
+msgstr "CSV"
+
+msgid "Excel"
+msgstr "Excel"
+
+msgid "PDF"
+msgstr "PDF"
+
+msgid "Search"
+msgstr "بحث"
+
+msgid "Title, author, publisher, ISBN"
+msgstr "العنوان، المؤلف، الناشر، الرقم الدولي"
+
+msgid "All categories"
+msgstr "جميع التصنيفات"
+
+msgid "All publishers"
+msgstr "جميع الناشرين"
+
+msgid "Sort"
+msgstr "ترتيب"
+
+msgid "Title A-Z"
+msgstr "العنوان من أ إلى ي"
+
+msgid "Title Z-A"
+msgstr "العنوان من ي إلى أ"
+
+msgid "Oldest first"
+msgstr "الأقدم أولاً"
+
+msgid "Newest first"
+msgstr "الأحدث أولاً"
+
+msgid "Lowest expense"
+msgstr "أقل المصاريف"
+
+msgid "Highest expense"
+msgstr "أعلى المصاريف"
+
+msgid "Apply"
+msgstr "تطبيق"
+
+msgid "Reset"
+msgstr "إعادة تعيين"
+
+msgid "Author"
+msgstr "المؤلف"
+
+msgid "Expense"
+msgstr "المصاريف"
+
+msgid "No books match the current filters."
+msgstr "لا توجد كتب مطابقة للفلاتر الحالية."
+
+msgid "Book pages"
+msgstr "صفحات الكتب"
+
+msgid "Previous"
+msgstr "السابق"
+
+msgid "Next"
+msgstr "التالي"
+
+msgid "Page %(number)s of %(total)s"
+msgstr "صفحة %(number)s من %(total)s"
+
+msgid "Track book sales and revenue."
+msgstr "تتبع مبيعات الكتب والإيرادات."
+
+msgid "Sale pages"
+msgstr "صفحات المبيعات"
+
+msgid "Review stock on hand and reorder thresholds."
+msgstr "مراجعة المخزون المتاح وحدود إعادة الطلب."
+
+msgid "Show all"
+msgstr "عرض الكل"
+
+msgid "Low stock only"
+msgstr "المخزون المنخفض فقط"
+
+msgid "Status"
+msgstr "الحالة"
+
+msgid "Low stock"
+msgstr "مخزون منخفض"
+
+msgid "OK"
+msgstr "جيد"
+
+msgid "No books to show."
+msgstr "لا توجد كتب لعرضها."
+
+msgid "Distribution Report"
+msgstr "تقرير التوزيع"
+
+msgid "Review distribution expenses by category."
+msgstr "مراجعة مصاريف التوزيع حسب التصنيف."
+
+msgid "Year"
+msgstr "السنة"
+
+msgid "From"
+msgstr "من"
+
+msgid "To"
+msgstr "إلى"
+
+msgid "All years"
+msgstr "جميع السنوات"
+
+msgid "Books in report"
+msgstr "الكتب في التقرير"
+
+msgid "Total expense"
+msgstr "إجمالي المصاريف"
+
+msgid "Distribution Expenses"
+msgstr "مصاريف التوزيع"
+
+msgid "Expenses by Category"
+msgstr "المصاريف حسب التصنيف"
+
+msgid "Subtitle"
+msgstr "العنوان الفرعي"
+
+msgid "Published date"
+msgstr "تاريخ النشر"
+
+msgid "Distribution expense"
+msgstr "مصاريف التوزيع"
+
+msgid "Unit price"
+msgstr "سعر الوحدة"
+
+msgid "Sale date"
+msgstr "تاريخ البيع"
+
+msgid "Avatar"
+msgstr "الصورة الرمزية"
+
+msgid "Published Date"
+msgstr "تاريخ النشر"
+
+msgid "Rumi Press Books"
+msgstr "روومي برِس - الكتب"
+
+msgid "Rumi Press Sales"
+msgstr "روومي برِس - المبيعات"
+
+msgid "Good morning"
+msgstr "صباح الخير"
+
+msgid "Good afternoon"
+msgstr "مساء الخير"
+
+msgid "Good evening"
+msgstr "مساء الخير"
+
+msgid "Book created."
+msgstr "تم إنشاء الكتاب."
+
+msgid "Book updated."
+msgstr "تم تحديث الكتاب."
+
+msgid "Book deleted."
+msgstr "تم حذف الكتاب."
+
+msgid "Category created."
+msgstr "تم إنشاء التصنيف."
+
+msgid "Category updated."
+msgstr "تم تحديث التصنيف."
+
+msgid "Category deleted."
+msgstr "تم حذف التصنيف."
+
+msgid "Author created."
+msgstr "تم إنشاء المؤلف."
+
+msgid "Author updated."
+msgstr "تم تحديث المؤلف."
+
+msgid "Author deleted."
+msgstr "تم حذف المؤلف."
+
+msgid "Sale recorded."
+msgstr "تم تسجيل عملية البيع."
+
+msgid "Sale updated."
+msgstr "تم تحديث عملية البيع."
+
+msgid "Sale deleted."
+msgstr "تم حذف عملية البيع."
+
+msgid "Profile photo updated."
+msgstr "تم تحديث الصورة الشخصية."
+
+msgid "Move or delete this category's books before deleting the category."
+msgstr "انقل كتب هذا التصنيف أو احذفها قبل حذف التصنيف."
+
+msgid "This category contains books and cannot be deleted yet."
+msgstr "يحتوي هذا التصنيف على كتب ولا يمكن حذفه حتى الآن."
+
+msgid "Remove this author from their books before deleting them."
+msgstr "أزل هذا المؤلف من كتبه قبل حذفه."
+
+msgid "This author is linked to books and cannot be deleted yet."
+msgstr "هذا المؤلف مرتبط بكتب ولا يمكن حذفه حتى الآن."
+
+msgid "Cannot record sale: '%(title)s' only has %(stock)s in stock."
+msgstr "لا يمكن تسجيل البيع: '%(title)s' لديه %(stock)s فقط في المخزون."
+
+msgid "Cannot update sale: '%(title)s' only has %(stock)s available."
+msgstr "لا يمكن تحديث البيع: '%(title)s' لديه %(stock)s فقط متاح."
+
+msgid "Low stock: '%(title)s' has %(stock)s remaining (reorder threshold %(threshold)s)."
+msgstr "مخزون منخفض: '%(title)s' لديه %(stock)s متبقٍ (حد إعادة الطلب %(threshold)s)."
+
+msgid "'%(title)s' now has %(stock)s in stock."
+msgstr "'%(title)s' لديه الآن %(stock)s في المخزون."
+
+msgid "Sorry, something went wrong talking to the AI assistant. Please try again."
+msgstr "عذرًا، حدث خطأ أثناء التواصل مع المساعد الذكي. حاول مرة أخرى."
+
+msgid "A new verification code has been sent to your email."
+msgstr "تم إرسال رمز تحقق جديد إلى بريدك الإلكتروني."
+
+msgid "That code is invalid or has expired."
+msgstr "هذا الرمز غير صالح أو منتهي الصلاحية."
+
+msgid "That access code is invalid, used, or expired."
+msgstr "رمز الدخول هذا غير صالح أو مستخدم أو منتهي الصلاحية."
+
+msgid "Your account is active. Welcome to RumiPress!"
+msgstr "حسابك نشط الآن. مرحبًا بك في روومي برِس!"
+
+msgid "That username is already taken."
+msgstr "اسم المستخدم هذا مستخدم بالفعل."
+
+msgid "An account with that email already exists."
+msgstr "يوجد حساب بهذا البريد الإلكتروني مسبقًا."
+
+msgid "The two password fields didn't match."
+msgstr "حقلا كلمة المرور غير متطابقين."
+
+msgid "\"The beautiful thing about learning is that no one can take it away from you.\" — B.B. King"
+msgstr "«الشيء الجميل في التعلم هو أنه لا يمكن لأحد أن ينتزعه منك.» — بي بي كينغ"
+
+msgid "\"Live as if you were to die tomorrow. Learn as if you were to live forever.\" — Mahatma Gandhi"
+msgstr "«عش كما لو كنت ستموت غدًا. وتعلّم كما لو كنت ستعيش إلى الأبد.» — المهاتما غاندي"
+
+msgid "\"An investment in knowledge always pays the best interest.\" — Benjamin Franklin"
+msgstr "«الاستثمار في المعرفة يدفع دائمًا أفضل الفوائد.» — بنجامين فرانكلين"
+
+msgid "\"The capacity to learn is a gift; the ability to learn is a skill; the willingness to learn is a choice.\" — Brian Herbert"
+msgstr "«القدرة على التعلم هبة؛ والمهارة في التعلم موهبة؛ والرغبة في التعلم اختيار.» — براين هربرت"
+
+msgid "\"Develop a passion for learning. If you do, you will never cease to grow.\" — Anthony J. D'Angelo"
+msgstr "«طوّر شغفًا بالتعلم. فإن فعلت ذلك، لن تتوقف عن النمو أبدًا.» — أنتوني جي. دانجيلو"
+
+msgid "\"Each small task of everyday life is part of the total harmony of the universe.\" — Saint Therese"
+msgstr "«كل مهمة صغيرة في الحياة اليومية هي جزء من الانسجام الكامل للكون.» — القديسة تيريز"
+
+msgid "\"Growth is painful. Change is painful. But nothing is as painful as staying stuck somewhere you don't belong.\" — N.R. Narayana Murthy"
+msgstr "«النمو مؤلم. التغيير مؤلم. ولكن لا شيء مؤلم بقدر أن تبقى عالقًا في مكان لا تنتمي إليه.» — إن آر نارايانا مورثي"
+
+msgid "\"The expert in anything was once a beginner.\" — Helen Hayes"
+msgstr "«الخبير في أي شيء كان مبتدئًا في يوم ما.» — هيلين هايز"
+
+msgid "\"Success is the sum of small efforts repeated day in and day out.\" — Robert Collier"
+msgstr "«النجاح هو مجموع جهود صغيرة تتكرر يومًا بعد يوم.» — روبرت كولير"
+
+msgid "\"You don't have to be great to start, but you have to start to be great.\" — Zig Ziglar"
+msgstr "«لست مضطرًا لأن تكون عظيمًا لتبدأ، لكنك مضطر أن تبدأ لتكون عظيمًا.» — زيغ زيغلر"
+
+msgid "\"A room without books is like a body without a soul.\" — Marcus Tullius Cicero"
+msgstr "«غرفة بلا كتب مثل جسد بلا روح.» — ماركوس توليوس شيشرون"
+
+msgid "\"Books are a uniquely portable magic.\" — Stephen King"
+msgstr "«الكتب سحر فريد يمكن حمله في كل مكان.» — ستيفن كينغ"
+
+msgid "\"Today a reader, tomorrow a leader.\" — Margaret Fuller"
+msgstr "«قارئ اليوم، قائد الغد.» — مارغريت فولر"
+
+msgid "\"Reading is to the mind what exercise is to the body.\" — Joseph Addison"
+msgstr "«القراءة للعقل كالتمرين للجسد.» — جوزيف أديسون"
+
+msgid "\"Once you learn to read, you will be forever free.\" — Frederick Douglass"
+msgstr "«حين تتعلم القراءة، تصبح حرًا للأبد.» — فريدريك دوغلاس"
+
+msgid "\"I have always imagined that Paradise will be a kind of library.\" — Jorge Luis Borges"
+msgstr "«تخيلت دائمًا أن الجنة ستكون نوعًا من المكتبة.» — خورخي لويس بورخيس"
+
+msgid "\"So many books, so little time.\" — Frank Zappa"
+msgstr "«كتب كثيرة جدًا، ووقت قليل جدًا.» — فرانك زابا"
+
+msgid "\"There is no friend as loyal as a book.\" — Ernest Hemingway"
+msgstr "«لا يوجد صديق وفيّ كالكتاب.» — إرنست همنغواي"
+
+msgid "\"A reader lives a thousand lives before he dies. The man who never reads lives only one.\" — George R.R. Martin"
+msgstr "«القارئ يعيش ألف حياة قبل أن يموت. والشخص الذي لا يقرأ يعيش حياة واحدة فقط.» — جورج آر آر مارتن"
+
+msgid "\"Books are mirrors: you only see in them what you already have inside you.\" — Carlos Ruiz Zafón"
+msgstr "«الكتب مرايا: لا ترى فيها إلا ما تحمله بالفعل في داخلك.» — كارلوس رويث ثافون"
+
+msgid "\"Every book has a destination, and every reader has a journey.\" — Book Distribution Philosophy"
+msgstr "«كل كتاب له وجهة، وكل قارئ له رحلة.» — فلسفة توزيع الكتب"
+
+msgid "\"We do not simply move books; we move knowledge, ideas, and imagination.\" — Book Distribution Philosophy"
+msgstr "«نحن لا ننقل الكتب فقط؛ بل ننقل المعرفة والأفكار والخيال.» — فلسفة توزيع الكتب"
+
+msgid "\"A warehouse full of books is a warehouse full of possibilities.\" — Book Distribution Philosophy"
+msgstr "«مستودع مليء بالكتب هو مستودع مليء بالإمكانيات.» — فلسفة توزيع الكتب"
+
+msgid "\"Every delivered book is a new story beginning somewhere.\" — Book Distribution Philosophy"
+msgstr "«كل كتاب يتم تسليمه هو قصة جديدة تبدأ في مكان ما.» — فلسفة توزيع الكتب"
+
+msgid "\"Behind every order is a reader waiting for discovery.\" — Book Distribution Philosophy"
+msgstr "«خلف كل طلب يوجد قارئ في انتظار الاكتشاف.» — فلسفة توزيع الكتب"
+
+msgid "\"Distribution turns printed pages into shared experiences.\" — Book Distribution Philosophy"
+msgstr "«التوزيع يحوّل الصفحات المطبوعة إلى تجارب مشتركة.» — فلسفة توزيع الكتب"
+
+msgid "\"Every package carries imagination, knowledge, and opportunity.\" — Book Distribution Philosophy"
+msgstr "«كل طرد يحمل خيالًا ومعرفة وفرصة.» — فلسفة توزيع الكتب"
+
+msgid "\"A distributor is the bridge between authors and readers.\" — Book Distribution Philosophy"
+msgstr "«الموزّع هو الجسر بين المؤلفين والقراء.» — فلسفة توزيع الكتب"
+
+msgid "\"The journey of knowledge begins with accessibility.\" — Book Distribution Philosophy"
+msgstr "«رحلة المعرفة تبدأ بسهولة الوصول إليها.» — فلسفة توزيع الكتب"
+
+msgid "\"Books travel so minds can explore.\" — Book Distribution Philosophy"
+msgstr "«الكتب تسافر لتتمكن العقول من الاستكشاف.» — فلسفة توزيع الكتب"
+
+msgid "\"The goal as a company is to have customer service that is not just the best but legendary.\" — Sam Walton"
+msgstr "«هدف الشركة هو تقديم خدمة عملاء ليست الأفضل فقط، بل أسطورية.» — سام والتون"
+
+msgid "\"Quality is the best business plan.\" — John Lasseter"
+msgstr "«الجودة هي أفضل خطة عمل.» — جون لاسيتر"
+
+msgid "\"Great things in business are never done by one person. They are done by a team of people.\" — Steve Jobs"
+msgstr "«الأشياء العظيمة في العمل لا يحققها شخص واحد، بل يحققها فريق من الأشخاص.» — ستيف جوبز"
+
+msgid "\"Efficiency is doing better what is already being done.\" — Peter Drucker"
+msgstr "«الكفاءة هي أن تؤدي بشكل أفضل ما يُؤدى بالفعل.» — بيتر دراكر"
+
+msgid "\"The best way to predict the future is to create it.\" — Peter Drucker"
+msgstr "«أفضل طريقة للتنبؤ بالمستقبل هي صنعه.» — بيتر دراكر"
+

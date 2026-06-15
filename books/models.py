@@ -1,6 +1,7 @@
 from django.conf import settings
 from django.db import models
 from django.utils import timezone
+from django.utils.translation import gettext_lazy as _
 
 
 class Category(models.Model):
@@ -10,7 +11,7 @@ class Category(models.Model):
         related_name="owned_categories",
     )
 
-    name = models.CharField(max_length=100)
+    name = models.CharField(max_length=100, verbose_name=_("Name"))
 
 
     def __str__(self):
@@ -26,7 +27,7 @@ class Author(models.Model):
         related_name="owned_authors",
     )
 
-    name = models.CharField(max_length=200)
+    name = models.CharField(max_length=200, verbose_name=_("Name"))
 
 
     class Meta:
@@ -50,55 +51,64 @@ class Book(models.Model):
     isbn = models.CharField(
         max_length=20,
         blank=True,
-        null=True
+        null=True,
+        verbose_name=_("ISBN")
     )
 
 
     title = models.CharField(
-        max_length=200
+        max_length=200,
+        verbose_name=_("Title")
     )
 
 
     subtitle = models.CharField(
         max_length=200,
-        blank=True
+        blank=True,
+        verbose_name=_("Subtitle")
     )
 
 
     authors = models.ManyToManyField(
         Author,
         related_name="books",
-        blank=True
+        blank=True,
+        verbose_name=_("Authors")
     )
 
 
     publisher = models.CharField(
-        max_length=200
+        max_length=200,
+        verbose_name=_("Publisher")
     )
 
 
-    published_date = models.DateField()
+    published_date = models.DateField(verbose_name=_("Published date"))
 
 
     category = models.ForeignKey(
         Category,
-        on_delete=models.CASCADE
+        on_delete=models.CASCADE,
+        verbose_name=_("Category")
     )
 
 
     distribution_expense = models.DecimalField(
         max_digits=8,
-        decimal_places=2
+        decimal_places=2,
+        verbose_name=_("Distribution expense")
     )
 
 
     stock_on_hand = models.PositiveIntegerField(
-        default=0
+        default=0,
+        verbose_name=_("Stock on hand")
     )
 
 
     reorder_threshold = models.PositiveIntegerField(
-        default=0
+        default=0,
+        verbose_name=_("Reorder threshold")
     )
 
 
@@ -123,25 +133,28 @@ class Sale(models.Model):
     book = models.ForeignKey(
         Book,
         on_delete=models.CASCADE,
-        related_name="sales"
+        related_name="sales",
+        verbose_name=_("Book")
     )
 
 
-    quantity = models.PositiveIntegerField()
+    quantity = models.PositiveIntegerField(verbose_name=_("Quantity"))
 
 
     unit_price = models.DecimalField(
         max_digits=8,
-        decimal_places=2
+        decimal_places=2,
+        verbose_name=_("Unit price")
     )
 
 
-    sale_date = models.DateField()
+    sale_date = models.DateField(verbose_name=_("Sale date"))
 
 
     channel = models.CharField(
         max_length=100,
-        blank=True
+        blank=True,
+        verbose_name=_("Channel")
     )
 
 
@@ -171,7 +184,8 @@ class Profile(models.Model):
     avatar = models.ImageField(
         upload_to="avatars/",
         blank=True,
-        null=True
+        null=True,
+        verbose_name=_("Avatar")
     )
 
 

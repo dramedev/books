@@ -1,11 +1,12 @@
 {% extends "base.html" %}
+{% load i18n %}
 
 
 {% block content %}
 
 
 <div class="page-panel">
-<h1 class="mb-3">Sale Form</h1>
+<h1 class="mb-3">{% translate "Sale Form" %}</h1>
 
 <form method="POST">
 {% csrf_token %}
@@ -30,11 +31,11 @@
 {% endfor %}
 
 <button class="btn btn-success">
-Save
+{% translate "Save" %}
 </button>
 
 <a class="btn btn-outline-light" href="{% url 'sale_list' %}">
-Cancel
+{% translate "Cancel" %}
 </a>
 </form>
 </div>

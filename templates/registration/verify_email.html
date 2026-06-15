@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load i18n %}
 
 
 {% block content %}
@@ -7,11 +8,10 @@
 <div class="row justify-content-center">
 <div class="col-md-5">
 <div class="page-panel">
-<h1 class="mb-3">Verify your email</h1>
+<h1 class="mb-3">{% translate "Verify your email" %}</h1>
 
 <p class="muted-text">
-We sent a 6-digit verification code to <strong>{{ email }}</strong>.
-Enter it below to continue.
+{% blocktranslate %}We sent a 6-digit verification code to <strong>{{ email }}</strong>. Enter it below to continue.{% endblocktranslate %}
 </p>
 
 {% if form.non_field_errors %}
@@ -27,7 +27,7 @@ Enter it below to continue.
 
 <div class="mb-3">
 <label class="form-label" for="{{ form.code.id_for_label }}">
-Verification code
+{% translate "Verification code" %}
 </label>
 {{ form.code }}
 {% for error in form.code.errors %}
@@ -36,7 +36,7 @@ Verification code
 </div>
 
 <button class="btn btn-primary">
-Verify
+{% translate "Verify" %}
 </button>
 </form>
 
@@ -44,7 +44,7 @@ Verify
 {% csrf_token %}
 <input type="hidden" name="action" value="resend">
 <button class="btn btn-link p-0">
-Resend code
+{% translate "Resend code" %}
 </button>
 </form>
 </div>

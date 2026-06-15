@@ -16,7 +16,8 @@ from django.db.models.functions import TruncMonth
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
-from django.utils import timezone
+from django.utils import timezone, translation
+from django.utils.translation import gettext, gettext_lazy
 from django.views.decorators.http import require_POST
 
 from . import ai_chat
@@ -34,61 +35,62 @@ from .models import AccessCode, Author, Book, Category, Profile, Sale
 from .permissions import ensure_roles
 
 
-BOOK_EXPORT_HEADERS = [
-    "ISBN",
-    "Title",
-    "Subtitle",
-    "Authors",
-    "Publisher",
-    "Published Date",
-    "Category",
-    "Distribution Expense",
-]
+def _book_export_headers():
+    return [
+        gettext("ISBN"),
+        gettext("Title"),
+        gettext("Subtitle"),
+        gettext("Authors"),
+        gettext("Publisher"),
+        gettext("Published Date"),
+        gettext("Category"),
+        gettext("Distribution Expense"),
+    ]
 
 
 LEARNING_QUOTES = [
     # Learning & growth
-    '"The beautiful thing about learning is that no one can take it away from you." — B.B. King',
-    '"Live as if you were to die tomorrow. Learn as if you were to live forever." — Mahatma Gandhi',
-    '"An investment in knowledge always pays the best interest." — Benjamin Franklin',
-    '"The capacity to learn is a gift; the ability to learn is a skill; the willingness to learn is a choice." — Brian Herbert',
-    '"Develop a passion for learning. If you do, you will never cease to grow." — Anthony J. D\'Angelo',
-    '"Each small task of everyday life is part of the total harmony of the universe." — Saint Therese',
-    '"Growth is painful. Change is painful. But nothing is as painful as staying stuck somewhere you don\'t belong." — N.R. Narayana Murthy',
-    '"The expert in anything was once a beginner." — Helen Hayes',
-    '"Success is the sum of small efforts repeated day in and day out." — Robert Collier',
-    '"You don\'t have to be great to start, but you have to start to be great." — Zig Ziglar',
+    gettext_lazy('"The beautiful thing about learning is that no one can take it away from you." — B.B. King'),
+    gettext_lazy('"Live as if you were to die tomorrow. Learn as if you were to live forever." — Mahatma Gandhi'),
+    gettext_lazy('"An investment in knowledge always pays the best interest." — Benjamin Franklin'),
+    gettext_lazy('"The capacity to learn is a gift; the ability to learn is a skill; the willingness to learn is a choice." — Brian Herbert'),
+    gettext_lazy('"Develop a passion for learning. If you do, you will never cease to grow." — Anthony J. D\'Angelo'),
+    gettext_lazy('"Each small task of everyday life is part of the total harmony of the universe." — Saint Therese'),
+    gettext_lazy('"Growth is painful. Change is painful. But nothing is as painful as staying stuck somewhere you don\'t belong." — N.R. Narayana Murthy'),
+    gettext_lazy('"The expert in anything was once a beginner." — Helen Hayes'),
+    gettext_lazy('"Success is the sum of small efforts repeated day in and day out." — Robert Collier'),
+    gettext_lazy('"You don\'t have to be great to start, but you have to start to be great." — Zig Ziglar'),
 
     # Books & reading
-    '"A room without books is like a body without a soul." — Marcus Tullius Cicero',
-    '"Books are a uniquely portable magic." — Stephen King',
-    '"Today a reader, tomorrow a leader." — Margaret Fuller',
-    '"Reading is to the mind what exercise is to the body." — Joseph Addison',
-    '"Once you learn to read, you will be forever free." — Frederick Douglass',
-    '"I have always imagined that Paradise will be a kind of library." — Jorge Luis Borges',
-    '"So many books, so little time." — Frank Zappa',
-    '"There is no friend as loyal as a book." — Ernest Hemingway',
-    '"A reader lives a thousand lives before he dies. The man who never reads lives only one." — George R.R. Martin',
-    '"Books are mirrors: you only see in them what you already have inside you." — Carlos Ruiz Zafón',
+    gettext_lazy('"A room without books is like a body without a soul." — Marcus Tullius Cicero'),
+    gettext_lazy('"Books are a uniquely portable magic." — Stephen King'),
+    gettext_lazy('"Today a reader, tomorrow a leader." — Margaret Fuller'),
+    gettext_lazy('"Reading is to the mind what exercise is to the body." — Joseph Addison'),
+    gettext_lazy('"Once you learn to read, you will be forever free." — Frederick Douglass'),
+    gettext_lazy('"I have always imagined that Paradise will be a kind of library." — Jorge Luis Borges'),
+    gettext_lazy('"So many books, so little time." — Frank Zappa'),
+    gettext_lazy('"There is no friend as loyal as a book." — Ernest Hemingway'),
+    gettext_lazy('"A reader lives a thousand lives before he dies. The man who never reads lives only one." — George R.R. Martin'),
+    gettext_lazy('"Books are mirrors: you only see in them what you already have inside you." — Carlos Ruiz Zafón'),
 
     # Book distribution mission
-    '"Every book has a destination, and every reader has a journey." — Book Distribution Philosophy',
-    '"We do not simply move books; we move knowledge, ideas, and imagination." — Book Distribution Philosophy',
-    '"A warehouse full of books is a warehouse full of possibilities." — Book Distribution Philosophy',
-    '"Every delivered book is a new story beginning somewhere." — Book Distribution Philosophy',
-    '"Behind every order is a reader waiting for discovery." — Book Distribution Philosophy',
-    '"Distribution turns printed pages into shared experiences." — Book Distribution Philosophy',
-    '"Every package carries imagination, knowledge, and opportunity." — Book Distribution Philosophy',
-    '"A distributor is the bridge between authors and readers." — Book Distribution Philosophy',
-    '"The journey of knowledge begins with accessibility." — Book Distribution Philosophy',
-    '"Books travel so minds can explore." — Book Distribution Philosophy',
+    gettext_lazy('"Every book has a destination, and every reader has a journey." — Book Distribution Philosophy'),
+    gettext_lazy('"We do not simply move books; we move knowledge, ideas, and imagination." — Book Distribution Philosophy'),
+    gettext_lazy('"A warehouse full of books is a warehouse full of possibilities." — Book Distribution Philosophy'),
+    gettext_lazy('"Every delivered book is a new story beginning somewhere." — Book Distribution Philosophy'),
+    gettext_lazy('"Behind every order is a reader waiting for discovery." — Book Distribution Philosophy'),
+    gettext_lazy('"Distribution turns printed pages into shared experiences." — Book Distribution Philosophy'),
+    gettext_lazy('"Every package carries imagination, knowledge, and opportunity." — Book Distribution Philosophy'),
+    gettext_lazy('"A distributor is the bridge between authors and readers." — Book Distribution Philosophy'),
+    gettext_lazy('"The journey of knowledge begins with accessibility." — Book Distribution Philosophy'),
+    gettext_lazy('"Books travel so minds can explore." — Book Distribution Philosophy'),
 
     # Business & teamwork
-    '"The goal as a company is to have customer service that is not just the best but legendary." — Sam Walton',
-    '"Quality is the best business plan." — John Lasseter',
-    '"Great things in business are never done by one person. They are done by a team of people." — Steve Jobs',
-    '"Efficiency is doing better what is already being done." — Peter Drucker',
-    '"The best way to predict the future is to create it." — Peter Drucker',
+    gettext_lazy('"The goal as a company is to have customer service that is not just the best but legendary." — Sam Walton'),
+    gettext_lazy('"Quality is the best business plan." — John Lasseter'),
+    gettext_lazy('"Great things in business are never done by one person. They are done by a team of people." — Steve Jobs'),
+    gettext_lazy('"Efficiency is doing better what is already being done." — Peter Drucker'),
+    gettext_lazy('"The best way to predict the future is to create it." — Peter Drucker'),
 ]
 
 
@@ -96,10 +98,10 @@ def _time_based_greeting():
     hour = timezone.localtime().hour
 
     if hour < 12:
-        return "Good morning"
+        return gettext("Good morning")
     if hour < 18:
-        return "Good afternoon"
-    return "Good evening"
+        return gettext("Good afternoon")
+    return gettext("Good evening")
 
 
 def _book_export_rows(books):
@@ -116,15 +118,56 @@ def _book_export_rows(books):
         ]
 
 
-SALE_EXPORT_HEADERS = [
-    "Date",
-    "Book",
-    "Category",
-    "Quantity",
-    "Unit Price",
-    "Revenue",
-    "Channel",
-]
+def _sale_export_headers():
+    return [
+        gettext("Date"),
+        gettext("Book"),
+        gettext("Category"),
+        gettext("Quantity"),
+        gettext("Unit Price"),
+        gettext("Revenue"),
+        gettext("Channel"),
+    ]
+
+
+_PDF_FONTS_REGISTERED = False
+
+
+def _register_pdf_fonts():
+    global _PDF_FONTS_REGISTERED
+
+    if _PDF_FONTS_REGISTERED:
+        return
+
+    from reportlab.pdfbase import pdfmetrics
+    from reportlab.pdfbase.ttfonts import TTFont
+
+    try:
+        pdfmetrics.registerFont(TTFont("Tahoma", r"C:\Windows\Fonts\tahoma.ttf"))
+        pdfmetrics.registerFont(TTFont("Tahoma-Bold", r"C:\Windows\Fonts\tahomabd.ttf"))
+    except Exception:
+        pass
+
+    _PDF_FONTS_REGISTERED = True
+
+
+def _pdf_fonts():
+    if translation.get_language() == "ar":
+        return "Tahoma", "Tahoma-Bold"
+
+    return "Helvetica", "Helvetica-Bold"
+
+
+def _pdf_text(value):
+    text = str(value)
+
+    if translation.get_language() == "ar":
+        import arabic_reshaper
+        from bidi.algorithm import get_display
+
+        return get_display(arabic_reshaper.reshape(text))
+
+    return text
 
 
 def _sale_export_rows(sales):
@@ -273,7 +316,7 @@ def book_create(request):
             book.owner = request.user
             book.save()
             form.save_m2m()
-            messages.success(request, "Book created.")
+            messages.success(request, gettext("Book created."))
             return redirect("book_list")
 
     return render(request, "books/form.html", {"form": form})
@@ -290,7 +333,7 @@ def book_update(request, id):
 
         if form.is_valid():
             form.save()
-            messages.success(request, "Book updated.")
+            messages.success(request, gettext("Book updated."))
             return redirect("book_list")
 
     return render(request, "books/form.html", {"form": form})
@@ -303,14 +346,14 @@ def book_delete(request, id):
 
     if request.method == "POST":
         book.delete()
-        messages.success(request, "Book deleted.")
+        messages.success(request, gettext("Book deleted."))
         return redirect("book_list")
 
     return render(
         request,
         "books/confirm_delete.html",
         {
-            "object_type": "book",
+            "object_type": gettext("book"),
             "object_name": book.title,
             "cancel_url": reverse("book_list"),
         },
@@ -354,7 +397,7 @@ def category_create(request):
             category = form.save(commit=False)
             category.owner = request.user
             category.save()
-            messages.success(request, "Category created.")
+            messages.success(request, gettext("Category created."))
             return redirect("category_list")
 
     return render(request, "books/category_form.html", {"form": form})
@@ -371,7 +414,7 @@ def category_update(request, id):
 
         if form.is_valid():
             form.save()
-            messages.success(request, "Category updated.")
+            messages.success(request, gettext("Category updated."))
             return redirect("category_list")
 
     return render(
@@ -394,23 +437,23 @@ def category_delete(request, id):
         if book_count:
             messages.error(
                 request,
-                "Move or delete this category's books before deleting the category.",
+                gettext("Move or delete this category's books before deleting the category."),
             )
             return redirect("category_list")
 
         category.delete()
-        messages.success(request, "Category deleted.")
+        messages.success(request, gettext("Category deleted."))
         return redirect("category_list")
 
     return render(
         request,
         "books/confirm_delete.html",
         {
-            "object_type": "category",
+            "object_type": gettext("category"),
             "object_name": category.name,
             "cancel_url": reverse("category_list"),
             "warning": (
-                "This category contains books and cannot be deleted yet."
+                gettext("This category contains books and cannot be deleted yet.")
                 if book_count
                 else ""
             ),
@@ -438,7 +481,7 @@ def author_create(request):
             author = form.save(commit=False)
             author.owner = request.user
             author.save()
-            messages.success(request, "Author created.")
+            messages.success(request, gettext("Author created."))
             return redirect("author_list")
 
     return render(request, "books/author_form.html", {"form": form})
@@ -455,7 +498,7 @@ def author_update(request, id):
 
         if form.is_valid():
             form.save()
-            messages.success(request, "Author updated.")
+            messages.success(request, gettext("Author updated."))
             return redirect("author_list")
 
     return render(
@@ -478,23 +521,23 @@ def author_delete(request, id):
         if book_count:
             messages.error(
                 request,
-                "Remove this author from their books before deleting them.",
+                gettext("Remove this author from their books before deleting them."),
             )
             return redirect("author_list")
 
         author.delete()
-        messages.success(request, "Author deleted.")
+        messages.success(request, gettext("Author deleted."))
         return redirect("author_list")
 
     return render(
         request,
         "books/confirm_delete.html",
         {
-            "object_type": "author",
+            "object_type": gettext("author"),
             "object_name": author.name,
             "cancel_url": reverse("author_list"),
             "warning": (
-                "This author is linked to books and cannot be deleted yet."
+                gettext("This author is linked to books and cannot be deleted yet.")
                 if book_count
                 else ""
             ),
@@ -667,6 +710,7 @@ def dashboard(request):
     context = {
         "greeting": _time_based_greeting(),
         "quote": random.choice(LEARNING_QUOTES),
+        "all_quotes": [str(quote) for quote in LEARNING_QUOTES],
         "total_books": books.count(),
         "total_authors": Author.objects.filter(owner=request.user).count(),
         "total_categories": Category.objects.filter(owner=request.user).count(),
@@ -699,7 +743,7 @@ def profile_update(request):
 
         if form.is_valid():
             form.save()
-            messages.success(request, "Profile photo updated.")
+            messages.success(request, gettext("Profile photo updated."))
             return redirect("dashboard")
 
     return render(request, "books/profile_form.html", {"form": form, "profile": profile})
@@ -727,7 +771,7 @@ def chat_api(request):
     try:
         reply, updated_history = ai_chat.get_chat_reply(request.user, message, history)
     except Exception:
-        reply = "Sorry, something went wrong talking to the AI assistant. Please try again."
+        reply = gettext("Sorry, something went wrong talking to the AI assistant. Please try again.")
         updated_history = history
 
     return JsonResponse({"reply": reply, "history": updated_history})
@@ -744,13 +788,21 @@ def _notify_stock_level(request, book):
     if book.is_low_stock:
         messages.warning(
             request,
-            f"Low stock: '{book.title}' has {book.stock_on_hand} remaining "
-            f"(reorder threshold {book.reorder_threshold}).",
+            gettext(
+                "Low stock: '%(title)s' has %(stock)s remaining "
+                "(reorder threshold %(threshold)s)."
+            )
+            % {
+                "title": book.title,
+                "stock": book.stock_on_hand,
+                "threshold": book.reorder_threshold,
+            },
         )
     else:
         messages.info(
             request,
-            f"'{book.title}' now has {book.stock_on_hand} in stock.",
+            gettext("'%(title)s' now has %(stock)s in stock.")
+            % {"title": book.title, "stock": book.stock_on_hand},
         )
 
 
@@ -787,15 +839,15 @@ def sale_create(request):
             if book.stock_on_hand < quantity:
                 messages.error(
                     request,
-                    f"Cannot record sale: '{book.title}' only has "
-                    f"{book.stock_on_hand} in stock.",
+                    gettext("Cannot record sale: '%(title)s' only has %(stock)s in stock.")
+                    % {"title": book.title, "stock": book.stock_on_hand},
                 )
             else:
                 sale = form.save(commit=False)
                 sale.owner = request.user
                 sale.save()
                 book = _adjust_stock(sale.book_id, -sale.quantity, request.user)
-                messages.success(request, "Sale recorded.")
+                messages.success(request, gettext("Sale recorded."))
                 _notify_stock_level(request, book)
                 return redirect("sale_list")
 
@@ -825,14 +877,14 @@ def sale_update(request, id):
             if available < new_quantity:
                 messages.error(
                     request,
-                    f"Cannot update sale: '{new_book.title}' only has "
-                    f"{available} available.",
+                    gettext("Cannot update sale: '%(title)s' only has %(stock)s available.")
+                    % {"title": new_book.title, "stock": available},
                 )
             else:
                 sale = form.save()
                 _adjust_stock(previous_book_id, previous_quantity, request.user)
                 book = _adjust_stock(sale.book_id, -sale.quantity, request.user)
-                messages.success(request, "Sale updated.")
+                messages.success(request, gettext("Sale updated."))
                 _notify_stock_level(request, book)
                 return redirect("sale_list")
 
@@ -854,14 +906,14 @@ def sale_delete(request, id):
     if request.method == "POST":
         _adjust_stock(sale.book_id, sale.quantity, request.user)
         sale.delete()
-        messages.success(request, "Sale deleted.")
+        messages.success(request, gettext("Sale deleted."))
         return redirect("sale_list")
 
     return render(
         request,
         "books/confirm_delete.html",
         {
-            "object_type": "sale",
+            "object_type": gettext("sale"),
             "object_name": f"{sale.book.title} ({sale.sale_date})",
             "cancel_url": reverse("sale_list"),
         },
@@ -875,7 +927,7 @@ def export_books_csv(request):
     response["Content-Disposition"] = 'attachment; filename="rumi-press-books.csv"'
 
     writer = csv.writer(response)
-    writer.writerow(BOOK_EXPORT_HEADERS)
+    writer.writerow(_book_export_headers())
 
     for row in _book_export_rows(_filtered_books_for_export(request)):
         writer.writerow(row)
@@ -891,7 +943,7 @@ def export_books_excel(request):
     workbook = Workbook()
     worksheet = workbook.active
     worksheet.title = "Books"
-    worksheet.append(BOOK_EXPORT_HEADERS)
+    worksheet.append(_book_export_headers())
 
     for row in _book_export_rows(_filtered_books_for_export(request)):
         worksheet.append(row)
@@ -924,6 +976,9 @@ def export_books_pdf(request):
     from reportlab.lib.styles import getSampleStyleSheet
     from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
 
+    _register_pdf_fonts()
+    body_font, bold_font = _pdf_fonts()
+
     buffer = BytesIO()
     document = SimpleDocTemplate(
         buffer,
@@ -935,15 +990,18 @@ def export_books_pdf(request):
     )
 
     styles = getSampleStyleSheet()
+    title_style = styles["Title"]
+    title_style.fontName = bold_font
+
     elements = [
-        Paragraph("Rumi Press Books", styles["Title"]),
+        Paragraph(_pdf_text(gettext("Rumi Press Books")), title_style),
         Spacer(1, 12),
     ]
 
-    rows = [BOOK_EXPORT_HEADERS]
+    rows = [[_pdf_text(value) for value in _book_export_headers()]]
 
     for row in _book_export_rows(_filtered_books_for_export(request)):
-        rows.append([str(value) for value in row])
+        rows.append([_pdf_text(value) for value in row])
 
     table = Table(
         rows,
@@ -955,7 +1013,8 @@ def export_books_pdf(request):
             [
                 ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#1f1f1f")),
                 ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
-                ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+                ("FONTNAME", (0, 0), (-1, 0), bold_font),
+                ("FONTNAME", (0, 1), (-1, -1), body_font),
                 ("FONTSIZE", (0, 0), (-1, -1), 7),
                 ("GRID", (0, 0), (-1, -1), 0.25, colors.grey),
                 ("VALIGN", (0, 0), (-1, -1), "TOP"),
@@ -980,7 +1039,7 @@ def export_sales_csv(request):
     response["Content-Disposition"] = 'attachment; filename="rumi-press-sales.csv"'
 
     writer = csv.writer(response)
-    writer.writerow(SALE_EXPORT_HEADERS)
+    writer.writerow(_sale_export_headers())
 
     sales = Sale.objects.filter(owner=request.user).select_related("book", "book__category")
 
@@ -998,7 +1057,7 @@ def export_sales_excel(request):
     workbook = Workbook()
     worksheet = workbook.active
     worksheet.title = "Sales"
-    worksheet.append(SALE_EXPORT_HEADERS)
+    worksheet.append(_sale_export_headers())
 
     sales = Sale.objects.filter(owner=request.user).select_related("book", "book__category")
 
@@ -1033,6 +1092,9 @@ def export_sales_pdf(request):
     from reportlab.lib.styles import getSampleStyleSheet
     from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
 
+    _register_pdf_fonts()
+    body_font, bold_font = _pdf_fonts()
+
     buffer = BytesIO()
     document = SimpleDocTemplate(
         buffer,
@@ -1044,17 +1106,20 @@ def export_sales_pdf(request):
     )
 
     styles = getSampleStyleSheet()
+    title_style = styles["Title"]
+    title_style.fontName = bold_font
+
     elements = [
-        Paragraph("Rumi Press Sales", styles["Title"]),
+        Paragraph(_pdf_text(gettext("Rumi Press Sales")), title_style),
         Spacer(1, 12),
     ]
 
     sales = Sale.objects.filter(owner=request.user).select_related("book", "book__category")
 
-    rows = [SALE_EXPORT_HEADERS]
+    rows = [[_pdf_text(value) for value in _sale_export_headers()]]
 
     for row in _sale_export_rows(sales):
-        rows.append([str(value) for value in row])
+        rows.append([_pdf_text(value) for value in row])
 
     table = Table(
         rows,
@@ -1066,7 +1131,8 @@ def export_sales_pdf(request):
             [
                 ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#1f1f1f")),
                 ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
-                ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+                ("FONTNAME", (0, 0), (-1, 0), bold_font),
+                ("FONTNAME", (0, 1), (-1, -1), body_font),
                 ("FONTSIZE", (0, 0), (-1, -1), 7),
                 ("GRID", (0, 0), (-1, -1), 0.25, colors.grey),
                 ("VALIGN", (0, 0), (-1, -1), "TOP"),
@@ -1194,7 +1260,7 @@ def verify_email(request):
             )
             profile.save()
             _send_verification_email(user, code)
-            messages.success(request, "A new verification code has been sent to your email.")
+            messages.success(request, gettext("A new verification code has been sent to your email."))
         else:
             form = VerifyEmailForm(request.POST)
 
@@ -1215,7 +1281,7 @@ def verify_email(request):
                     _notify_owners_of_pending_activation(user)
                     return redirect("redeem_access_code")
 
-                form.add_error("code", "That code is invalid or has expired.")
+                form.add_error("code", gettext("That code is invalid or has expired."))
 
     return render(
         request,
@@ -1251,7 +1317,7 @@ def redeem_access_code(request):
                 access_code = None
 
             if access_code is None or not access_code.is_valid:
-                form.add_error("code", "That access code is invalid, used, or expired.")
+                form.add_error("code", gettext("That access code is invalid, used, or expired."))
             else:
                 access_code.is_used = True
                 access_code.used_by = user
@@ -1272,7 +1338,7 @@ def redeem_access_code(request):
                 del request.session["pending_user_id"]
 
                 login(request, user)
-                messages.success(request, "Your account is active. Welcome to RumiPress!")
+                messages.success(request, gettext("Your account is active. Welcome to RumiPress!"))
                 return redirect("dashboard")
 
     return render(request, "registration/redeem_access_code.html", {"form": form})

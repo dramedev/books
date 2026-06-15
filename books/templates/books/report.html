@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load i18n %}
 
 
 {% block content %}
@@ -6,23 +7,23 @@
 
 <div class="d-flex justify-content-between align-items-center mb-3">
 <div>
-<h1 class="mb-1">Distribution Report</h1>
+<h1 class="mb-1">{% translate "Distribution Report" %}</h1>
 <p class="muted-text mb-0">
-Review distribution expenses by category.
+{% translate "Review distribution expenses by category." %}
 </p>
 </div>
 
 <div class="d-flex gap-2">
 <a class="btn btn-outline-light" href="{% url 'export_books_csv' %}?{{ query_string }}">
-CSV
+{% translate "CSV" %}
 </a>
 
 <a class="btn btn-outline-light" href="{% url 'export_books_excel' %}?{{ query_string }}">
-Excel
+{% translate "Excel" %}
 </a>
 
 <a class="btn btn-outline-light" href="{% url 'export_books_pdf' %}?{{ query_string }}">
-PDF
+{% translate "PDF" %}
 </a>
 </div>
 </div>
@@ -32,9 +33,9 @@ PDF
 <div class="row g-3 align-items-end">
 
 <div class="col-md-2">
-<label class="form-label" for="category">Category</label>
+<label class="form-label" for="category">{% translate "Category" %}</label>
 <select id="category" name="category" class="form-select">
-<option value="">All categories</option>
+<option value="">{% translate "All categories" %}</option>
 {% for category in categories %}
 <option value="{{ category.id }}" {% if filters.category == category.id|stringformat:"s" %}selected{% endif %}>
 {{ category.name }}
@@ -44,9 +45,9 @@ PDF
 </div>
 
 <div class="col-md-2">
-<label class="form-label" for="publisher">Publisher</label>
+<label class="form-label" for="publisher">{% translate "Publisher" %}</label>
 <select id="publisher" name="publisher" class="form-select">
-<option value="">All publishers</option>
+<option value="">{% translate "All publishers" %}</option>
 {% for publisher in publishers %}
 <option value="{{ publisher }}" {% if filters.publisher == publisher %}selected{% endif %}>
 {{ publisher }}
@@ -56,9 +57,9 @@ PDF
 </div>
 
 <div class="col-md-2">
-<label class="form-label" for="year">Year</label>
+<label class="form-label" for="year">{% translate "Year" %}</label>
 <select id="year" name="year" class="form-select">
-<option value="">All years</option>
+<option value="">{% translate "All years" %}</option>
 {% for year in years %}
 <option value="{{ year|date:'Y' }}" {% if filters.year == year|date:'Y' %}selected{% endif %}>
 {{ year|date:"Y" }}
@@ -68,18 +69,18 @@ PDF
 </div>
 
 <div class="col-md-2">
-<label class="form-label" for="start_date">From</label>
+<label class="form-label" for="start_date">{% translate "From" %}</label>
 <input id="start_date" type="date" name="start_date" class="form-control" value="{{ filters.start_date }}">
 </div>
 
 <div class="col-md-2">
-<label class="form-label" for="end_date">To</label>
+<label class="form-label" for="end_date">{% translate "To" %}</label>
 <input id="end_date" type="date" name="end_date" class="form-control" value="{{ filters.end_date }}">
 </div>
 
 <div class="col-md-2 d-flex gap-2">
-<button class="btn btn-success" type="submit">Apply</button>
-<a class="btn btn-outline-light" href="{% url 'report' %}">Reset</a>
+<button class="btn btn-success" type="submit">{% translate "Apply" %}</button>
+<a class="btn btn-outline-light" href="{% url 'report' %}">{% translate "Reset" %}</a>
 </div>
 
 </div>
@@ -89,28 +90,28 @@ PDF
 <div class="row g-3 mb-3">
 <div class="col-md-3">
 <div class="page-panel">
-<p class="muted-text mb-1">Books in report</p>
+<p class="muted-text mb-1">{% translate "Books in report" %}</p>
 <h2 class="mb-0">{{ total_books }}</h2>
 </div>
 </div>
 
 <div class="col-md-3">
 <div class="page-panel">
-<p class="muted-text mb-1">Total expense</p>
+<p class="muted-text mb-1">{% translate "Total expense" %}</p>
 <h2 class="mb-0">{{ total_expense }}</h2>
 </div>
 </div>
 
 <div class="col-md-3">
 <div class="page-panel">
-<p class="muted-text mb-1">Total revenue</p>
+<p class="muted-text mb-1">{% translate "Total revenue" %}</p>
 <h2 class="mb-0">{{ total_revenue }}</h2>
 </div>
 </div>
 
 <div class="col-md-3">
 <div class="page-panel">
-<p class="muted-text mb-1">Total profit</p>
+<p class="muted-text mb-1">{% translate "Total profit" %}</p>
 <h2 class="mb-0">{{ total_profit }}</h2>
 </div>
 </div>
@@ -158,7 +159,7 @@ new Chart(ctx, {
         labels: {{ labels|safe }},
         datasets: [
             {
-                label: "Distribution Expenses",
+                label: "{% translate 'Distribution Expenses' %}",
                 data: {{ values|safe }}
             }
         ]
@@ -172,7 +173,7 @@ new Chart(ctx, {
             },
             title: {
                 display: true,
-                text: "Expenses by Category"
+                text: "{% translate 'Expenses by Category' %}"
             }
         }
     }
@@ -186,11 +187,11 @@ new Chart(revenueCtx, {
         labels: {{ labels|safe }},
         datasets: [
             {
-                label: "Revenue",
+                label: "{% translate 'Revenue' %}",
                 data: {{ revenues|safe }}
             },
             {
-                label: "Profit",
+                label: "{% translate 'Profit' %}",
                 data: {{ profits|safe }}
             }
         ]
@@ -204,7 +205,7 @@ new Chart(revenueCtx, {
             },
             title: {
                 display: true,
-                text: "Revenue & Profit by Category"
+                text: "{% translate 'Revenue & Profit by Category' %}"
             }
         }
     }
@@ -218,7 +219,7 @@ new Chart(trendCtx, {
         labels: {{ trend_labels|safe }},
         datasets: [
             {
-                label: "Units Sold",
+                label: "{% translate 'Units Sold' %}",
                 data: {{ trend_units|safe }},
                 yAxisID: "units",
                 borderColor: "#3f6f9f",
@@ -226,7 +227,7 @@ new Chart(trendCtx, {
                 tension: 0.3
             },
             {
-                label: "Revenue",
+                label: "{% translate 'Revenue' %}",
                 data: {{ trend_revenues|safe }},
                 yAxisID: "revenue",
                 borderColor: "#2f6f63",
@@ -244,7 +245,7 @@ new Chart(trendCtx, {
             },
             title: {
                 display: true,
-                text: "Sales Trend"
+                text: "{% translate 'Sales Trend' %}"
             }
         },
         scales: {
@@ -253,7 +254,7 @@ new Chart(trendCtx, {
                 position: "left",
                 title: {
                     display: true,
-                    text: "Units Sold"
+                    text: "{% translate 'Units Sold' %}"
                 }
             },
             revenue: {
@@ -261,7 +262,7 @@ new Chart(trendCtx, {
                 position: "right",
                 title: {
                     display: true,
-                    text: "Revenue"
+                    text: "{% translate 'Revenue' %}"
                 },
                 grid: {
                     drawOnChartArea: false

@@ -1,14 +1,15 @@
 {% extends "base.html" %}
+{% load i18n %}
 
 
 {% block content %}
 
 
 <div class="page-panel">
-<h1 class="mb-3">Delete {{ object_type }}</h1>
+<h1 class="mb-3">{% blocktranslate %}Delete {{ object_type }}{% endblocktranslate %}</h1>
 
 <p>
-Are you sure you want to delete <strong>{{ object_name }}</strong>?
+{% blocktranslate %}Are you sure you want to delete <strong>{{ object_name }}</strong>?{% endblocktranslate %}
 </p>
 
 {% if warning %}
@@ -21,11 +22,11 @@ Are you sure you want to delete <strong>{{ object_name }}</strong>?
 {% csrf_token %}
 
 <button class="btn btn-danger" {% if disable_delete %}disabled{% endif %}>
-Delete
+{% translate "Delete" %}
 </button>
 
 <a class="btn btn-outline-light" href="{{ cancel_url }}">
-Cancel
+{% translate "Cancel" %}
 </a>
 </form>
 </div>

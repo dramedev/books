@@ -1,0 +1,720 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: RumiPress\n"
+"Report-Msgid-Bugs-To: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Language: fr\n"
+
+msgid "Dashboard"
+msgstr "Tableau de bord"
+
+msgid "Catalog"
+msgstr "Catalogue"
+
+msgid "Books"
+msgstr "Livres"
+
+msgid "Stock"
+msgstr "Stock"
+
+msgid "Categories"
+msgstr "Catégories"
+
+msgid "Authors"
+msgstr "Auteurs"
+
+msgid "Sales"
+msgstr "Ventes"
+
+msgid "Reports"
+msgstr "Rapports"
+
+msgid "Help"
+msgstr "Aide"
+
+msgid "About"
+msgstr "À propos"
+
+msgid "Logout"
+msgstr "Déconnexion"
+
+msgid "Theme"
+msgstr "Thème"
+
+msgid "Login"
+msgstr "Connexion"
+
+msgid "Language"
+msgstr "Langue"
+
+msgid "RumiPress Assistant"
+msgstr "Assistant RumiPress"
+
+msgid "Ask a question..."
+msgstr "Posez une question..."
+
+msgid "Toggle navigation"
+msgstr "Afficher/masquer la navigation"
+
+msgid "Open AI assistant"
+msgstr "Ouvrir l'assistant IA"
+
+msgid "Thinking..."
+msgstr "Réflexion en cours..."
+
+msgid "Sorry, something went wrong."
+msgstr "Désolé, une erreur est survenue."
+
+msgid "About Rumi Press"
+msgstr "À propos de Rumi Press"
+
+msgid "What each part of the system does."
+msgstr "Ce que fait chaque partie du système."
+
+msgid "Profile"
+msgstr "Profil"
+
+msgid "A quick overview of the whole catalog: total books, total units sold, low stock count, total revenue and profit, a revenue/profit-by-category chart, a sales trend chart, the books currently low on stock, the top sellers, and the most recent sales."
+msgstr "Un aperçu rapide de l'ensemble du catalogue : nombre total de livres, total des unités vendues, nombre de stocks faibles, revenu et profit totaux, un graphique des revenus/profits par catégorie, un graphique de la tendance des ventes, les livres actuellement en stock faible, les meilleures ventes et les ventes les plus récentes."
+
+msgid "The catalog of titles: ISBN, title, subtitle, authors, publisher, publish date, category and distribution expense. Search, filter by category/publisher, sort, and export the list to CSV, Excel or PDF."
+msgstr "Le catalogue des titres : ISBN, titre, sous-titre, auteurs, éditeur, date de publication, catégorie et frais de distribution. Recherchez, filtrez par catégorie/éditeur, triez et exportez la liste en CSV, Excel ou PDF."
+
+msgid "Stock on hand and reorder thresholds for every book. Books at or below their threshold are flagged \"Low stock\" and can be filtered to a low-stock-only view."
+msgstr "Le stock disponible et les seuils de réapprovisionnement pour chaque livre. Les livres au niveau ou en dessous de leur seuil sont marqués « Stock faible » et peuvent être filtrés dans une vue dédiée."
+
+msgid "Groupings used to organize books for filtering and reporting. Each category shows how many books belong to it, and can be added, edited or deleted (categories still in use can't be deleted)."
+msgstr "Des regroupements utilisés pour organiser les livres pour le filtrage et les rapports. Chaque catégorie affiche le nombre de livres qui lui appartiennent, et peut être ajoutée, modifiée ou supprimée (les catégories encore utilisées ne peuvent pas être supprimées)."
+
+msgid "The list of authors linked to books, with a count of how many books each author has. Authors can be added, edited or removed once they are no longer linked to any book."
+msgstr "La liste des auteurs liés aux livres, avec le nombre de livres de chaque auteur. Les auteurs peuvent être ajoutés, modifiés ou supprimés une fois qu'ils ne sont plus liés à aucun livre."
+
+msgid "Every sale transaction: book, quantity, unit price, revenue, date and channel. Recording a sale reduces the book's stock on hand and shows a remaining-stock notification; a sale is refused if it would exceed available stock. The list can be exported to CSV, Excel or PDF."
+msgstr "Chaque transaction de vente : livre, quantité, prix unitaire, revenu, date et canal. L'enregistrement d'une vente réduit le stock disponible du livre et affiche une notification de stock restant ; une vente est refusée si elle dépasse le stock disponible. La liste peut être exportée en CSV, Excel ou PDF."
+
+msgid "A filterable distribution report: total books, expense, revenue and profit, with charts for expenses and revenue/profit by category and a sales trend over time. Results can be exported to CSV, Excel or PDF."
+msgstr "Un rapport de distribution filtrable : total des livres, dépenses, revenus et profits, avec des graphiques des dépenses et des revenus/profits par catégorie et une tendance des ventes au fil du temps. Les résultats peuvent être exportés en CSV, Excel ou PDF."
+
+msgid "Each user can upload a profile photo, shown in the sidebar. Access to each section above is controlled by permissions, so what you see depends on your assigned role."
+msgstr "Chaque utilisateur peut télécharger une photo de profil, affichée dans la barre latérale. L'accès à chaque section ci-dessus est contrôlé par des permissions, donc ce que vous voyez dépend du rôle qui vous est attribué."
+
+msgid "Edit"
+msgstr "Modifier"
+
+msgid "Delete"
+msgstr "Supprimer"
+
+msgid "Save"
+msgstr "Enregistrer"
+
+msgid "Cancel"
+msgstr "Annuler"
+
+msgid "Name"
+msgstr "Nom"
+
+msgid "Actions"
+msgstr "Actions"
+
+msgid "Add Author"
+msgstr "Ajouter un auteur"
+
+msgid "Add Category"
+msgstr "Ajouter une catégorie"
+
+msgid "Add Book"
+msgstr "Ajouter un livre"
+
+msgid "Add Sale"
+msgstr "Ajouter une vente"
+
+msgid "No authors yet."
+msgstr "Aucun auteur pour le moment."
+
+msgid "No categories yet."
+msgstr "Aucune catégorie pour le moment."
+
+msgid "Manage the authors linked to your books."
+msgstr "Gérez les auteurs liés à vos livres."
+
+msgid "Manage the catalog, filter records, and open reports."
+msgstr "Gérez le catalogue, filtrez les enregistrements et ouvrez les rapports."
+
+msgid "Group books for reporting and filtering."
+msgstr "Regroupez les livres pour les rapports et le filtrage."
+
+msgid "Delete %(object_type)s"
+msgstr "Supprimer %(object_type)s"
+
+msgid "Are you sure you want to delete <strong>%(object_name)s</strong>?"
+msgstr "Voulez-vous vraiment supprimer <strong>%(object_name)s</strong> ?"
+
+msgid "book"
+msgstr "le livre"
+
+msgid "category"
+msgstr "la catégorie"
+
+msgid "author"
+msgstr "l'auteur"
+
+msgid "sale"
+msgstr "la vente"
+
+msgid "Author Form"
+msgstr "Formulaire auteur"
+
+msgid "Category Form"
+msgstr "Formulaire catégorie"
+
+msgid "Book Form"
+msgstr "Formulaire livre"
+
+msgid "Sale Form"
+msgstr "Formulaire vente"
+
+msgid "Profile Photo"
+msgstr "Photo de profil"
+
+msgid "ISBN"
+msgstr "ISBN"
+
+msgid "Category name"
+msgstr "Nom de la catégorie"
+
+msgid "Author name"
+msgstr "Nom de l'auteur"
+
+msgid "Channel (optional)"
+msgstr "Canal (facultatif)"
+
+msgid "Password"
+msgstr "Mot de passe"
+
+msgid "Confirm password"
+msgstr "Confirmer le mot de passe"
+
+msgid "Username"
+msgstr "Nom d'utilisateur"
+
+msgid "Email"
+msgstr "E-mail"
+
+msgid "Verification code"
+msgstr "Code de vérification"
+
+msgid "Verify"
+msgstr "Vérifier"
+
+msgid "Verify your email"
+msgstr "Vérifiez votre e-mail"
+
+msgid "Resend code"
+msgstr "Renvoyer le code"
+
+msgid "Access code"
+msgstr "Code d'accès"
+
+msgid "Activate"
+msgstr "Activer"
+
+msgid "Activate your account"
+msgstr "Activez votre compte"
+
+msgid "Create an account"
+msgstr "Créer un compte"
+
+msgid "Sign up"
+msgstr "S'inscrire"
+
+msgid "Already have an account?"
+msgstr "Vous avez déjà un compte ?"
+
+msgid "Log in"
+msgstr "Se connecter"
+
+msgid "Don't have an account?"
+msgstr "Vous n'avez pas de compte ?"
+
+msgid "Create one"
+msgstr "Créez-en un"
+
+msgid "Your username and password did not match."
+msgstr "Votre nom d'utilisateur et votre mot de passe ne correspondent pas."
+
+msgid "We sent a 6-digit verification code to <strong>%(email)s</strong>. Enter it below to continue."
+msgstr "Nous avons envoyé un code de vérification à 6 chiffres à <strong>%(email)s</strong>. Saisissez-le ci-dessous pour continuer."
+
+msgid "Your email is verified. Enter the access code you received from the RumiPress owner to activate your account and start using RumiPress."
+msgstr "Votre e-mail est vérifié. Saisissez le code d'accès reçu du propriétaire de RumiPress pour activer votre compte et commencer à utiliser RumiPress."
+
+msgid "Overview of catalog, stock, and sales performance."
+msgstr "Aperçu du catalogue, du stock et des performances des ventes."
+
+msgid "Full Report"
+msgstr "Rapport complet"
+
+msgid "Total books"
+msgstr "Total des livres"
+
+msgid "Total units sold"
+msgstr "Total des unités vendues"
+
+msgid "Low stock items"
+msgstr "Articles en stock faible"
+
+msgid "Total revenue"
+msgstr "Revenu total"
+
+msgid "Total profit"
+msgstr "Profit total"
+
+msgid "Low Stock"
+msgstr "Stock faible"
+
+msgid "Top Sellers"
+msgstr "Meilleures ventes"
+
+msgid "Recent Sales"
+msgstr "Ventes récentes"
+
+msgid "Title"
+msgstr "Titre"
+
+msgid "Threshold"
+msgstr "Seuil"
+
+msgid "Low"
+msgstr "Faible"
+
+msgid "Nothing is below its reorder threshold."
+msgstr "Aucun article n'est sous son seuil de réapprovisionnement."
+
+msgid "View all %(low_stock_count)s low stock books"
+msgstr "Voir les %(low_stock_count)s livres en stock faible"
+
+msgid "Category"
+msgstr "Catégorie"
+
+msgid "Units sold"
+msgstr "Unités vendues"
+
+msgid "No sales recorded yet."
+msgstr "Aucune vente enregistrée pour le moment."
+
+msgid "Date"
+msgstr "Date"
+
+msgid "Book"
+msgstr "Livre"
+
+msgid "Quantity"
+msgstr "Quantité"
+
+msgid "Revenue"
+msgstr "Revenu"
+
+msgid "Channel"
+msgstr "Canal"
+
+msgid "View all sales"
+msgstr "Voir toutes les ventes"
+
+msgid "Revenue & Profit by Category"
+msgstr "Revenus et profits par catégorie"
+
+msgid "Sales Trend"
+msgstr "Tendance des ventes"
+
+msgid "Units Sold"
+msgstr "Unités vendues"
+
+msgid "Profit"
+msgstr "Profit"
+
+msgid "Back to Books"
+msgstr "Retour aux livres"
+
+msgid "Details"
+msgstr "Détails"
+
+msgid "Publisher"
+msgstr "Éditeur"
+
+msgid "Published"
+msgstr "Publié"
+
+msgid "Distribution Expense"
+msgstr "Frais de distribution"
+
+msgid "Inventory & Sales"
+msgstr "Inventaire et ventes"
+
+msgid "Stock on hand"
+msgstr "Stock disponible"
+
+msgid "Reorder threshold"
+msgstr "Seuil de réapprovisionnement"
+
+msgid "Unit Price"
+msgstr "Prix unitaire"
+
+msgid "No sales recorded for this book yet."
+msgstr "Aucune vente enregistrée pour ce livre pour le moment."
+
+msgid "CSV"
+msgstr "CSV"
+
+msgid "Excel"
+msgstr "Excel"
+
+msgid "PDF"
+msgstr "PDF"
+
+msgid "Search"
+msgstr "Rechercher"
+
+msgid "Title, author, publisher, ISBN"
+msgstr "Titre, auteur, éditeur, ISBN"
+
+msgid "All categories"
+msgstr "Toutes les catégories"
+
+msgid "All publishers"
+msgstr "Tous les éditeurs"
+
+msgid "Sort"
+msgstr "Trier"
+
+msgid "Title A-Z"
+msgstr "Titre A-Z"
+
+msgid "Title Z-A"
+msgstr "Titre Z-A"
+
+msgid "Oldest first"
+msgstr "Plus anciens d'abord"
+
+msgid "Newest first"
+msgstr "Plus récents d'abord"
+
+msgid "Lowest expense"
+msgstr "Dépense la plus faible"
+
+msgid "Highest expense"
+msgstr "Dépense la plus élevée"
+
+msgid "Apply"
+msgstr "Appliquer"
+
+msgid "Reset"
+msgstr "Réinitialiser"
+
+msgid "Author"
+msgstr "Auteur"
+
+msgid "Expense"
+msgstr "Dépense"
+
+msgid "No books match the current filters."
+msgstr "Aucun livre ne correspond aux filtres actuels."
+
+msgid "Book pages"
+msgstr "Pages de livres"
+
+msgid "Previous"
+msgstr "Précédent"
+
+msgid "Next"
+msgstr "Suivant"
+
+msgid "Page %(number)s of %(total)s"
+msgstr "Page %(number)s sur %(total)s"
+
+msgid "Track book sales and revenue."
+msgstr "Suivez les ventes de livres et les revenus."
+
+msgid "Sale pages"
+msgstr "Pages de ventes"
+
+msgid "Review stock on hand and reorder thresholds."
+msgstr "Consultez le stock disponible et les seuils de réapprovisionnement."
+
+msgid "Show all"
+msgstr "Tout afficher"
+
+msgid "Low stock only"
+msgstr "Stock faible uniquement"
+
+msgid "Status"
+msgstr "Statut"
+
+msgid "Low stock"
+msgstr "Stock faible"
+
+msgid "OK"
+msgstr "OK"
+
+msgid "No books to show."
+msgstr "Aucun livre à afficher."
+
+msgid "Distribution Report"
+msgstr "Rapport de distribution"
+
+msgid "Review distribution expenses by category."
+msgstr "Consultez les frais de distribution par catégorie."
+
+msgid "Year"
+msgstr "Année"
+
+msgid "From"
+msgstr "De"
+
+msgid "To"
+msgstr "À"
+
+msgid "All years"
+msgstr "Toutes les années"
+
+msgid "Books in report"
+msgstr "Livres dans le rapport"
+
+msgid "Total expense"
+msgstr "Dépense totale"
+
+msgid "Distribution Expenses"
+msgstr "Frais de distribution"
+
+msgid "Expenses by Category"
+msgstr "Dépenses par catégorie"
+
+msgid "Subtitle"
+msgstr "Sous-titre"
+
+msgid "Published date"
+msgstr "Date de publication"
+
+msgid "Distribution expense"
+msgstr "Frais de distribution"
+
+msgid "Unit price"
+msgstr "Prix unitaire"
+
+msgid "Sale date"
+msgstr "Date de vente"
+
+msgid "Avatar"
+msgstr "Avatar"
+
+msgid "Published Date"
+msgstr "Date de publication"
+
+msgid "Rumi Press Books"
+msgstr "Rumi Press - Livres"
+
+msgid "Rumi Press Sales"
+msgstr "Rumi Press - Ventes"
+
+msgid "Good morning"
+msgstr "Bonjour"
+
+msgid "Good afternoon"
+msgstr "Bon après-midi"
+
+msgid "Good evening"
+msgstr "Bonsoir"
+
+msgid "Book created."
+msgstr "Livre créé."
+
+msgid "Book updated."
+msgstr "Livre mis à jour."
+
+msgid "Book deleted."
+msgstr "Livre supprimé."
+
+msgid "Category created."
+msgstr "Catégorie créée."
+
+msgid "Category updated."
+msgstr "Catégorie mise à jour."
+
+msgid "Category deleted."
+msgstr "Catégorie supprimée."
+
+msgid "Author created."
+msgstr "Auteur créé."
+
+msgid "Author updated."
+msgstr "Auteur mis à jour."
+
+msgid "Author deleted."
+msgstr "Auteur supprimé."
+
+msgid "Sale recorded."
+msgstr "Vente enregistrée."
+
+msgid "Sale updated."
+msgstr "Vente mise à jour."
+
+msgid "Sale deleted."
+msgstr "Vente supprimée."
+
+msgid "Profile photo updated."
+msgstr "Photo de profil mise à jour."
+
+msgid "Move or delete this category's books before deleting the category."
+msgstr "Déplacez ou supprimez les livres de cette catégorie avant de la supprimer."
+
+msgid "This category contains books and cannot be deleted yet."
+msgstr "Cette catégorie contient des livres et ne peut pas encore être supprimée."
+
+msgid "Remove this author from their books before deleting them."
+msgstr "Retirez cet auteur de ses livres avant de le supprimer."
+
+msgid "This author is linked to books and cannot be deleted yet."
+msgstr "Cet auteur est lié à des livres et ne peut pas encore être supprimé."
+
+msgid "Cannot record sale: '%(title)s' only has %(stock)s in stock."
+msgstr "Impossible d'enregistrer la vente : « %(title)s » n'a que %(stock)s en stock."
+
+msgid "Cannot update sale: '%(title)s' only has %(stock)s available."
+msgstr "Impossible de mettre à jour la vente : « %(title)s » n'a que %(stock)s disponible."
+
+msgid "Low stock: '%(title)s' has %(stock)s remaining (reorder threshold %(threshold)s)."
+msgstr "Stock faible : « %(title)s » a %(stock)s restant (seuil de réapprovisionnement %(threshold)s)."
+
+msgid "'%(title)s' now has %(stock)s in stock."
+msgstr "« %(title)s » a maintenant %(stock)s en stock."
+
+msgid "Sorry, something went wrong talking to the AI assistant. Please try again."
+msgstr "Désolé, une erreur est survenue avec l'assistant IA. Veuillez réessayer."
+
+msgid "A new verification code has been sent to your email."
+msgstr "Un nouveau code de vérification a été envoyé à votre e-mail."
+
+msgid "That code is invalid or has expired."
+msgstr "Ce code est invalide ou a expiré."
+
+msgid "That access code is invalid, used, or expired."
+msgstr "Ce code d'accès est invalide, déjà utilisé ou expiré."
+
+msgid "Your account is active. Welcome to RumiPress!"
+msgstr "Votre compte est actif. Bienvenue sur RumiPress !"
+
+msgid "That username is already taken."
+msgstr "Ce nom d'utilisateur est déjà pris."
+
+msgid "An account with that email already exists."
+msgstr "Un compte avec cet e-mail existe déjà."
+
+msgid "The two password fields didn't match."
+msgstr "Les deux champs de mot de passe ne correspondent pas."
+
+msgid "\"The beautiful thing about learning is that no one can take it away from you.\" — B.B. King"
+msgstr "« La belle chose à propos de l'apprentissage, c'est que personne ne peut vous l'enlever. » — B.B. King"
+
+msgid "\"Live as if you were to die tomorrow. Learn as if you were to live forever.\" — Mahatma Gandhi"
+msgstr "« Vis comme si tu devais mourir demain. Apprends comme si tu devais vivre toujours. » — Mahatma Gandhi"
+
+msgid "\"An investment in knowledge always pays the best interest.\" — Benjamin Franklin"
+msgstr "« Un investissement dans la connaissance rapporte toujours les meilleurs intérêts. » — Benjamin Franklin"
+
+msgid "\"The capacity to learn is a gift; the ability to learn is a skill; the willingness to learn is a choice.\" — Brian Herbert"
+msgstr "« La capacité d'apprendre est un don ; l'aptitude à apprendre est une compétence ; la volonté d'apprendre est un choix. » — Brian Herbert"
+
+msgid "\"Develop a passion for learning. If you do, you will never cease to grow.\" — Anthony J. D'Angelo"
+msgstr "« Développez une passion pour l'apprentissage. Si vous le faites, vous ne cesserez jamais de grandir. » — Anthony J. D'Angelo"
+
+msgid "\"Each small task of everyday life is part of the total harmony of the universe.\" — Saint Therese"
+msgstr "« Chaque petite tâche de la vie quotidienne fait partie de l'harmonie totale de l'univers. » — Sainte Thérèse"
+
+msgid "\"Growth is painful. Change is painful. But nothing is as painful as staying stuck somewhere you don't belong.\" — N.R. Narayana Murthy"
+msgstr "« Grandir est douloureux. Changer est douloureux. Mais rien n'est aussi douloureux que de rester coincé là où l'on n'a pas sa place. » — N.R. Narayana Murthy"
+
+msgid "\"The expert in anything was once a beginner.\" — Helen Hayes"
+msgstr "« L'expert en toute chose a d'abord été un débutant. » — Helen Hayes"
+
+msgid "\"Success is the sum of small efforts repeated day in and day out.\" — Robert Collier"
+msgstr "« Le succès est la somme de petits efforts répétés jour après jour. » — Robert Collier"
+
+msgid "\"You don't have to be great to start, but you have to start to be great.\" — Zig Ziglar"
+msgstr "« Vous n'avez pas besoin d'être excellent pour commencer, mais vous devez commencer pour être excellent. » — Zig Ziglar"
+
+msgid "\"A room without books is like a body without a soul.\" — Marcus Tullius Cicero"
+msgstr "« Une pièce sans livres est comme un corps sans âme. » — Marcus Tullius Cicero"
+
+msgid "\"Books are a uniquely portable magic.\" — Stephen King"
+msgstr "« Les livres sont une magie particulièrement portable. » — Stephen King"
+
+msgid "\"Today a reader, tomorrow a leader.\" — Margaret Fuller"
+msgstr "« Lecteur aujourd'hui, leader demain. » — Margaret Fuller"
+
+msgid "\"Reading is to the mind what exercise is to the body.\" — Joseph Addison"
+msgstr "« La lecture est à l'esprit ce que l'exercice est au corps. » — Joseph Addison"
+
+msgid "\"Once you learn to read, you will be forever free.\" — Frederick Douglass"
+msgstr "« Une fois que vous apprenez à lire, vous serez libre pour toujours. » — Frederick Douglass"
+
+msgid "\"I have always imagined that Paradise will be a kind of library.\" — Jorge Luis Borges"
+msgstr "« J'ai toujours imaginé que le Paradis serait une sorte de bibliothèque. » — Jorge Luis Borges"
+
+msgid "\"So many books, so little time.\" — Frank Zappa"
+msgstr "« Tant de livres, si peu de temps. » — Frank Zappa"
+
+msgid "\"There is no friend as loyal as a book.\" — Ernest Hemingway"
+msgstr "« Il n'y a pas d'ami aussi loyal qu'un livre. » — Ernest Hemingway"
+
+msgid "\"A reader lives a thousand lives before he dies. The man who never reads lives only one.\" — George R.R. Martin"
+msgstr "« Un lecteur vit mille vies avant de mourir. L'homme qui ne lit jamais n'en vit qu'une. » — George R.R. Martin"
+
+msgid "\"Books are mirrors: you only see in them what you already have inside you.\" — Carlos Ruiz Zafón"
+msgstr "« Les livres sont des miroirs : on n'y voit que ce que l'on porte déjà en soi. » — Carlos Ruiz Zafón"
+
+msgid "\"Every book has a destination, and every reader has a journey.\" — Book Distribution Philosophy"
+msgstr "« Chaque livre a une destination, et chaque lecteur a un voyage. » — Philosophie de la distribution de livres"
+
+msgid "\"We do not simply move books; we move knowledge, ideas, and imagination.\" — Book Distribution Philosophy"
+msgstr "« Nous ne déplaçons pas simplement des livres ; nous déplaçons des connaissances, des idées et de l'imagination. » — Philosophie de la distribution de livres"
+
+msgid "\"A warehouse full of books is a warehouse full of possibilities.\" — Book Distribution Philosophy"
+msgstr "« Un entrepôt plein de livres est un entrepôt plein de possibilités. » — Philosophie de la distribution de livres"
+
+msgid "\"Every delivered book is a new story beginning somewhere.\" — Book Distribution Philosophy"
+msgstr "« Chaque livre livré est une nouvelle histoire qui commence quelque part. » — Philosophie de la distribution de livres"
+
+msgid "\"Behind every order is a reader waiting for discovery.\" — Book Distribution Philosophy"
+msgstr "« Derrière chaque commande se trouve un lecteur en attente de découverte. » — Philosophie de la distribution de livres"
+
+msgid "\"Distribution turns printed pages into shared experiences.\" — Book Distribution Philosophy"
+msgstr "« La distribution transforme les pages imprimées en expériences partagées. » — Philosophie de la distribution de livres"
+
+msgid "\"Every package carries imagination, knowledge, and opportunity.\" — Book Distribution Philosophy"
+msgstr "« Chaque colis transporte de l'imagination, des connaissances et des opportunités. » — Philosophie de la distribution de livres"
+
+msgid "\"A distributor is the bridge between authors and readers.\" — Book Distribution Philosophy"
+msgstr "« Un distributeur est le pont entre les auteurs et les lecteurs. » — Philosophie de la distribution de livres"
+
+msgid "\"The journey of knowledge begins with accessibility.\" — Book Distribution Philosophy"
+msgstr "« Le voyage de la connaissance commence par l'accessibilité. » — Philosophie de la distribution de livres"
+
+msgid "\"Books travel so minds can explore.\" — Book Distribution Philosophy"
+msgstr "« Les livres voyagent pour que les esprits puissent explorer. » — Philosophie de la distribution de livres"
+
+msgid "\"The goal as a company is to have customer service that is not just the best but legendary.\" — Sam Walton"
+msgstr "« L'objectif d'une entreprise est d'avoir un service client qui ne soit pas seulement le meilleur, mais légendaire. » — Sam Walton"
+
+msgid "\"Quality is the best business plan.\" — John Lasseter"
+msgstr "« La qualité est le meilleur plan d'affaires. » — John Lasseter"
+
+msgid "\"Great things in business are never done by one person. They are done by a team of people.\" — Steve Jobs"
+msgstr "« Les grandes choses en affaires ne sont jamais réalisées par une seule personne. Elles sont réalisées par une équipe. » — Steve Jobs"
+
+msgid "\"Efficiency is doing better what is already being done.\" — Peter Drucker"
+msgstr "« L'efficacité consiste à mieux faire ce qui est déjà fait. » — Peter Drucker"
+
+msgid "\"The best way to predict the future is to create it.\" — Peter Drucker"
+msgstr "« La meilleure façon de prédire l'avenir est de le créer. » — Peter Drucker"
+

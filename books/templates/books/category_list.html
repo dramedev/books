@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load i18n %}
 
 
 {% block content %}
@@ -6,15 +7,15 @@
 
 <div class="d-flex justify-content-between align-items-center mb-3">
 <div>
-<h1 class="mb-1">Categories</h1>
+<h1 class="mb-1">{% translate "Categories" %}</h1>
 <p class="muted-text mb-0">
-Group books for reporting and filtering.
+{% translate "Group books for reporting and filtering." %}
 </p>
 </div>
 
 {% if perms.books.add_category %}
 <a class="btn btn-primary" href="{% url 'category_create' %}">
-Add Category
+{% translate "Add Category" %}
 </a>
 {% endif %}
 </div>
@@ -23,9 +24,9 @@ Add Category
 <div class="table-responsive">
 <table class="table table-striped align-middle">
 <tr>
-<th>Name</th>
-<th>Books</th>
-<th>Actions</th>
+<th>{% translate "Name" %}</th>
+<th>{% translate "Books" %}</th>
+<th>{% translate "Actions" %}</th>
 </tr>
 
 {% for category in categories %}
@@ -35,13 +36,13 @@ Add Category
 <td>
 {% if perms.books.change_category %}
 <a class="btn btn-warning btn-sm" href="{% url 'category_update' category.id %}">
-Edit
+{% translate "Edit" %}
 </a>
 {% endif %}
 
 {% if perms.books.delete_category %}
 <a class="btn btn-danger btn-sm" href="{% url 'category_delete' category.id %}">
-Delete
+{% translate "Delete" %}
 </a>
 {% endif %}
 </td>
@@ -49,7 +50,7 @@ Delete
 {% empty %}
 <tr>
 <td colspan="3" class="text-center muted-text py-4">
-No categories yet.
+{% translate "No categories yet." %}
 </td>
 </tr>
 {% endfor %}

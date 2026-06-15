@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load i18n %}
 
 
 {% block content %}
@@ -6,15 +7,15 @@
 
 <div class="d-flex justify-content-between align-items-center mb-3">
 <div>
-<h1 class="mb-1">Authors</h1>
+<h1 class="mb-1">{% translate "Authors" %}</h1>
 <p class="muted-text mb-0">
-Manage the authors linked to your books.
+{% translate "Manage the authors linked to your books." %}
 </p>
 </div>
 
 {% if perms.books.add_author %}
 <a class="btn btn-primary" href="{% url 'author_create' %}">
-Add Author
+{% translate "Add Author" %}
 </a>
 {% endif %}
 </div>
@@ -23,9 +24,9 @@ Add Author
 <div class="table-responsive">
 <table class="table table-striped align-middle">
 <tr>
-<th>Name</th>
-<th>Books</th>
-<th>Actions</th>
+<th>{% translate "Name" %}</th>
+<th>{% translate "Books" %}</th>
+<th>{% translate "Actions" %}</th>
 </tr>
 
 {% for author in authors %}
@@ -35,13 +36,13 @@ Add Author
 <td>
 {% if perms.books.change_author %}
 <a class="btn btn-warning btn-sm" href="{% url 'author_update' author.id %}">
-Edit
+{% translate "Edit" %}
 </a>
 {% endif %}
 
 {% if perms.books.delete_author %}
 <a class="btn btn-danger btn-sm" href="{% url 'author_delete' author.id %}">
-Delete
+{% translate "Delete" %}
 </a>
 {% endif %}
 </td>
@@ -49,7 +50,7 @@ Delete
 {% empty %}
 <tr>
 <td colspan="3" class="text-center muted-text py-4">
-No authors yet.
+{% translate "No authors yet." %}
 </td>
 </tr>
 {% endfor %}
