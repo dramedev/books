@@ -343,6 +343,12 @@ msgstr "Coût total des achats"
 msgid "Purchase Cost"
 msgstr "Coût d'achat"
 
+msgid "Stock Value"
+msgstr "Valeur du stock"
+
+msgid "Total inventory value"
+msgstr "Valeur totale de l'inventaire"
+
 msgid "Back to Books"
 msgstr "Retour aux livres"
 

@@ -159,6 +159,8 @@ FR = {
     "Profit": "Profit",
     "Total purchase cost": "Coût total des achats",
     "Purchase Cost": "Coût d'achat",
+    "Stock Value": "Valeur du stock",
+    "Total inventory value": "Valeur totale de l'inventaire",
 
     # Book detail
     "Back to Books": "Retour aux livres",
@@ -563,6 +565,8 @@ AR = {
     "Profit": "الأرباح",
     "Total purchase cost": "إجمالي تكلفة الشراء",
     "Purchase Cost": "تكلفة الشراء",
+    "Stock Value": "قيمة المخزون",
+    "Total inventory value": "القيمة الإجمالية للمخزون",
 
     # Book detail
     "Back to Books": "العودة إلى الكتب",

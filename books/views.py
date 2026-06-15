@@ -11,8 +11,8 @@ from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib.auth.models import User
 from django.core.mail import send_mail
 from django.core.paginator import Paginator
-from django.db.models import Count, DecimalField, ExpressionWrapper, F, Q, Sum
-from django.db.models.functions import TruncMonth
+from django.db.models import Count, DecimalField, ExpressionWrapper, F, OuterRef, Q, Subquery, Sum, Value
+from django.db.models.functions import Coalesce, TruncMonth
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
@@ -400,12 +400,16 @@ def stock_list(request):
     if request.GET.get("low") == "1":
         books = books.filter(stock_on_hand__lte=F("reorder_threshold"))
 
+    books = _annotate_stock_value(books)
+    total_stock_value = books.aggregate(total=Sum("stock_value"))["total"] or 0
+
     return render(
         request,
         "books/stock_list.html",
         {
             "books": books,
             "low_only": request.GET.get("low") == "1",
+            "total_stock_value": total_stock_value,
         },
     )
 
@@ -673,6 +677,30 @@ PURCHASE_COST_EXPRESSION = ExpressionWrapper(
 )
 
 
+def _annotate_stock_value(books):
+    latest_cost = (
+        Reorder.objects.filter(
+            book=OuterRef("pk"),
+            status=Reorder.STATUS_RECEIVED,
+            received_at__isnull=False,
+        )
+        .order_by("-received_at")
+        .values("unit_cost")[:1]
+    )
+
+    return books.annotate(
+        unit_cost=Coalesce(
+            Subquery(latest_cost, output_field=DecimalField(max_digits=8, decimal_places=2)),
+            Value(0, output_field=DecimalField(max_digits=8, decimal_places=2)),
+        ),
+    ).annotate(
+        stock_value=ExpressionWrapper(
+            F("stock_on_hand") * F("unit_cost"),
+            output_field=DecimalField(max_digits=12, decimal_places=2),
+        )
+    )
+
+
 @login_required
 @permission_required("books.view_book", raise_exception=True)
 def report(request):
@@ -856,6 +884,10 @@ def dashboard(request):
         received_reorders.aggregate(total=Sum(PURCHASE_COST_EXPRESSION))["total"] or 0
     )
 
+    total_inventory_value = (
+        _annotate_stock_value(books).aggregate(total=Sum("stock_value"))["total"] or 0
+    )
+
     sales_trend = (
         sales.annotate(month=TruncMonth("sale_date"))
         .values("month")
@@ -910,6 +942,7 @@ def dashboard(request):
         "total_profit": total_profit,
         "total_units_sold": total_units_sold,
         "total_purchase_cost": total_purchase_cost,
+        "total_inventory_value": total_inventory_value,
         "labels": json.dumps(labels),
         "revenues": json.dumps(revenues),
         "profits": json.dumps(profits),

@@ -343,6 +343,12 @@ msgstr "إجمالي تكلفة الشراء"
 msgid "Purchase Cost"
 msgstr "تكلفة الشراء"
 
+msgid "Stock Value"
+msgstr "قيمة المخزون"
+
+msgid "Total inventory value"
+msgstr "القيمة الإجمالية للمخزون"
+
 msgid "Back to Books"
 msgstr "العودة إلى الكتب"
 

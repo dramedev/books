@@ -27,6 +27,16 @@
 </div>
 
 
+<div class="row g-3 mb-3">
+<div class="col-md-3">
+<div class="page-panel">
+<p class="muted-text mb-1">{% translate "Total inventory value" %}</p>
+<h2 class="mb-0">{{ total_stock_value }}</h2>
+</div>
+</div>
+</div>
+
+
 <div class="table-responsive">
 <table class="table table-striped align-middle">
 <tr>
@@ -34,6 +44,8 @@
 <th>{% translate "Category" %}</th>
 <th>{% translate "Stock on hand" %}</th>
 <th>{% translate "Reorder threshold" %}</th>
+<th>{% translate "Unit Cost" %}</th>
+<th>{% translate "Stock Value" %}</th>
 <th>{% translate "Status" %}</th>
 <th>{% translate "Actions" %}</th>
 </tr>
@@ -44,6 +56,8 @@
 <td>{{ book.category }}</td>
 <td>{{ book.stock_on_hand }}</td>
 <td>{{ book.reorder_threshold }}</td>
+<td>{{ book.unit_cost }}</td>
+<td>{{ book.stock_value }}</td>
 <td>
 {% if book.is_low_stock %}
 <span class="badge bg-danger">{% translate "Low stock" %}</span>
@@ -68,7 +82,7 @@
 
 {% empty %}
 <tr>
-<td colspan="6" class="text-center muted-text py-4">
+<td colspan="8" class="text-center muted-text py-4">
 {% translate "No books to show." %}
 </td>
 </tr>
