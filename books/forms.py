@@ -3,7 +3,7 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.password_validation import validate_password
 from django.utils.translation import gettext_lazy as _
 
-from .models import Author, Book, Category, Profile, Reorder, Return, Sale, Supplier
+from .models import Author, Book, Category, Profile, Reorder, Return, Sale, StockAdjustment, Supplier
 
 
 class BookForm(forms.ModelForm):
@@ -311,6 +311,50 @@ class ReturnForm(forms.ModelForm):
                 }
             ),
         }
+
+
+
+class StockAdjustmentForm(forms.ModelForm):
+
+    class Meta:
+        model = StockAdjustment
+
+        fields = [
+            "change",
+            "reason",
+            "note",
+        ]
+
+        widgets = {
+            "change": forms.NumberInput(
+                attrs={
+                    "class": "form-control",
+                }
+            ),
+            "reason": forms.Select(
+                attrs={
+                    "class": "form-select",
+                }
+            ),
+            "note": forms.TextInput(
+                attrs={
+                    "class": "form-control",
+                    "placeholder": _("Note (optional)")
+                }
+            ),
+        }
+
+        help_texts = {
+            "change": _("Use a positive number to add stock, negative to remove."),
+        }
+
+    def clean_change(self):
+        change = self.cleaned_data["change"]
+
+        if change == 0:
+            raise forms.ValidationError(_("Change cannot be zero."))
+
+        return change
 
 
 

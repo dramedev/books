@@ -331,6 +331,60 @@ class Return(models.Model):
 
 
 
+class StockAdjustment(models.Model):
+
+    REASON_DAMAGED = "damaged"
+    REASON_LOST = "lost"
+    REASON_FOUND = "found"
+    REASON_CORRECTION = "correction"
+    REASON_OTHER = "other"
+
+    REASON_CHOICES = [
+        (REASON_DAMAGED, _("Damaged")),
+        (REASON_LOST, _("Lost")),
+        (REASON_FOUND, _("Found")),
+        (REASON_CORRECTION, _("Correction")),
+        (REASON_OTHER, _("Other")),
+    ]
+
+    owner = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="owned_stock_adjustments",
+    )
+
+    book = models.ForeignKey(
+        Book,
+        on_delete=models.CASCADE,
+        related_name="stock_adjustments",
+        verbose_name=_("Book")
+    )
+
+    change = models.IntegerField(verbose_name=_("Change"))
+
+    resulting_stock = models.PositiveIntegerField(verbose_name=_("Resulting stock"))
+
+    reason = models.CharField(
+        max_length=20,
+        choices=REASON_CHOICES,
+        default=REASON_CORRECTION,
+        verbose_name=_("Reason")
+    )
+
+    note = models.CharField(max_length=200, blank=True, verbose_name=_("Note"))
+
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name=_("Date"))
+
+
+    class Meta:
+        ordering = ["-created_at"]
+
+
+    def __str__(self):
+        return f"{self.book.title} - {self.change:+d}"
+
+
+
 class Profile(models.Model):
 
     user = models.OneToOneField(

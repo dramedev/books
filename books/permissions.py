@@ -31,6 +31,10 @@ ROLE_PERMISSIONS = {
         "change_return",
         "delete_return",
         "view_return",
+        "add_stockadjustment",
+        "change_stockadjustment",
+        "delete_stockadjustment",
+        "view_stockadjustment",
     ],
     "Staff": [
         "add_book",
@@ -54,6 +58,9 @@ ROLE_PERMISSIONS = {
         "add_return",
         "change_return",
         "view_return",
+        "add_stockadjustment",
+        "change_stockadjustment",
+        "view_stockadjustment",
     ],
     "Viewer": [
         "view_book",
@@ -63,6 +70,7 @@ ROLE_PERMISSIONS = {
         "view_reorder",
         "view_supplier",
         "view_return",
+        "view_stockadjustment",
     ],
 }
 

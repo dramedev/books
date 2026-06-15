@@ -373,6 +373,60 @@ msgstr "الكمية المقترحة"
 msgid "No reorder suggestions right now."
 msgstr "لا توجد مقترحات لإعادة الطلب حاليًا."
 
+msgid "Adjust"
+msgstr "تعديل"
+
+msgid "Adjust Stock"
+msgstr "تعديل المخزون"
+
+msgid "Adjustment History"
+msgstr "سجل التعديلات"
+
+msgid "Stock Adjustments"
+msgstr "تعديلات المخزون"
+
+msgid "History of manual stock corrections."
+msgstr "سجل التصحيحات اليدوية للمخزون."
+
+msgid "Back to Stock"
+msgstr "العودة إلى المخزون"
+
+msgid "Change"
+msgstr "التغيير"
+
+msgid "Resulting stock"
+msgstr "المخزون الناتج"
+
+msgid "Use a positive number to add stock, negative to remove."
+msgstr "استخدم رقمًا موجبًا لإضافة المخزون وسالبًا لإزالته."
+
+msgid "Change cannot be zero."
+msgstr "لا يمكن أن يكون التغيير صفرًا."
+
+msgid "This would reduce stock below zero (current stock: %(stock)s)."
+msgstr "سيؤدي هذا إلى خفض المخزون إلى أقل من الصفر (المخزون الحالي: %(stock)s)."
+
+msgid "Stock adjustment recorded."
+msgstr "تم تسجيل تعديل المخزون."
+
+msgid "No stock adjustments recorded yet."
+msgstr "لا توجد تعديلات مخزون مسجلة حتى الآن."
+
+msgid "Damaged"
+msgstr "تالف"
+
+msgid "Lost"
+msgstr "مفقود"
+
+msgid "Found"
+msgstr "تم العثور عليه"
+
+msgid "Correction"
+msgstr "تصحيح"
+
+msgid "Other"
+msgstr "أخرى"
+
 msgid "Back to Books"
 msgstr "العودة إلى الكتب"
 

@@ -14,6 +14,12 @@
 </div>
 
 <div class="d-flex gap-2">
+{% if perms.books.view_stockadjustment %}
+<a class="btn btn-outline-light" href="{% url 'stock_adjustment_list' %}">
+{% translate "Adjustment History" %}
+</a>
+{% endif %}
+
 {% if low_only %}
 <a class="btn btn-outline-light" href="{% url 'stock_list' %}">
 {% translate "Show all" %}
@@ -75,6 +81,12 @@
 {% if book.is_low_stock and perms.books.add_reorder %}
 <a class="btn btn-primary btn-sm" href="{% url 'reorder_create' book.id %}">
 {% translate "Reorder" %}
+</a>
+{% endif %}
+
+{% if perms.books.add_stockadjustment %}
+<a class="btn btn-outline-light btn-sm" href="{% url 'stock_adjustment_create' book.id %}">
+{% translate "Adjust" %}
 </a>
 {% endif %}
 </td>

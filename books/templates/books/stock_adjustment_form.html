@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+
+{% block content %}
+
+
+<div class="page-panel">
+<h1 class="mb-3">{% translate "Adjust Stock" %}</h1>
+
+<p class="muted-text">
+{% blocktranslate with title=book.title stock=book.stock_on_hand %}'{{ title }}' currently has {{ stock }} unit(s) on hand.{% endblocktranslate %}
+</p>
+
+<form method="POST">
+{% csrf_token %}
+
+{{ form.non_field_errors }}
+
+{% for field in form %}
+<div class="mb-3">
+<label class="form-label" for="{{ field.id_for_label }}">
+{{ field.label }}
+</label>
+{{ field }}
+
+{% if field.help_text %}
+<div class="form-text">{{ field.help_text }}</div>
+{% endif %}
+
+{% for error in field.errors %}
+<div class="text-danger small">{{ error }}</div>
+{% endfor %}
+</div>
+{% endfor %}
+
+<button class="btn btn-success">
+{% translate "Save" %}
+</button>
+
+<a class="btn btn-outline-light" href="{% url 'stock_list' %}">
+{% translate "Cancel" %}
+</a>
+</form>
+</div>
+
+
+{% endblock %}

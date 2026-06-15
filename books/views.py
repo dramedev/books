@@ -32,10 +32,11 @@ from .forms import (
     ReturnForm,
     SaleForm,
     SignupForm,
+    StockAdjustmentForm,
     SupplierForm,
     VerifyEmailForm,
 )
-from .models import AccessCode, Author, Book, Category, Profile, Reorder, Return, Sale, Supplier
+from .models import AccessCode, Author, Book, Category, Profile, Reorder, Return, Sale, StockAdjustment, Supplier
 from .permissions import ensure_roles
 
 
@@ -411,6 +412,66 @@ def stock_list(request):
             "books": books,
             "low_only": request.GET.get("low") == "1",
             "total_stock_value": total_stock_value,
+        },
+    )
+
+
+@login_required
+@permission_required("books.view_stockadjustment", raise_exception=True)
+def stock_adjustment_list(request):
+    adjustments = StockAdjustment.objects.filter(owner=request.user).select_related("book", "book__category")
+
+    paginator = Paginator(adjustments, 10)
+    page_obj = paginator.get_page(request.GET.get("page"))
+
+    return render(
+        request,
+        "books/stock_adjustment_list.html",
+        {
+            "adjustments": page_obj.object_list,
+            "page_obj": page_obj,
+        },
+    )
+
+
+@login_required
+@permission_required("books.add_stockadjustment", raise_exception=True)
+def stock_adjustment_create(request, book_id):
+    book = get_object_or_404(Book, id=book_id, owner=request.user)
+
+    if request.method == "POST":
+        form = StockAdjustmentForm(request.POST)
+
+        if form.is_valid():
+            change = form.cleaned_data["change"]
+
+            if book.stock_on_hand + change < 0:
+                form.add_error(
+                    "change",
+                    gettext("This would reduce stock below zero (current stock: %(stock)s).")
+                    % {"stock": book.stock_on_hand},
+                )
+            else:
+                adjustment = form.save(commit=False)
+                adjustment.owner = request.user
+                adjustment.book = book
+
+                book = _adjust_stock(book.id, change, request.user)
+                adjustment.resulting_stock = book.stock_on_hand
+                adjustment.save()
+
+                messages.success(request, gettext("Stock adjustment recorded."))
+                _notify_stock_level(request, book)
+                return redirect("stock_list")
+    else:
+        form = StockAdjustmentForm()
+
+    return render(
+        request,
+        "books/stock_adjustment_form.html",
+        {
+            "form": form,
+            "book": book,
         },
     )
 

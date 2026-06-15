@@ -8,7 +8,7 @@ from django.contrib import admin
 from django.core.mail import send_mail
 from django.db.models import Count, F, Sum
 
-from .models import AccessCode, Author, Book, Category, PendingActivation, Sale
+from .models import AccessCode, Author, Book, Category, PendingActivation, Sale, StockAdjustment
 
 
 
@@ -154,6 +154,42 @@ class SaleAdmin(admin.ModelAdmin):
         return obj.revenue
 
     revenue.short_description = "Revenue"
+
+
+
+@admin.register(StockAdjustment)
+class StockAdjustmentAdmin(admin.ModelAdmin):
+
+    list_display = (
+        "id",
+        "book",
+        "change",
+        "resulting_stock",
+        "reason",
+        "created_at",
+    )
+
+    list_filter = (
+        "reason",
+        "created_at",
+    )
+
+    search_fields = (
+        "book__title",
+        "note",
+    )
+
+    autocomplete_fields = (
+        "book",
+    )
+
+    date_hierarchy = "created_at"
+
+    ordering = (
+        "-created_at",
+    )
+
+    list_per_page = 25
 
 
 

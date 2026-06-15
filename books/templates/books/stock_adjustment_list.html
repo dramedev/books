@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+
+{% block content %}
+
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+<div>
+<h1 class="mb-1">{% translate "Stock Adjustments" %}</h1>
+<p class="muted-text mb-0">
+{% translate "History of manual stock corrections." %}
+</p>
+</div>
+
+<a class="btn btn-outline-light" href="{% url 'stock_list' %}">
+{% translate "Back to Stock" %}
+</a>
+</div>
+
+
+<div class="table-responsive">
+<table class="table table-striped align-middle">
+<tr>
+<th>{% translate "Date" %}</th>
+<th>{% translate "Book" %}</th>
+<th>{% translate "Change" %}</th>
+<th>{% translate "Resulting stock" %}</th>
+<th>{% translate "Reason" %}</th>
+<th>{% translate "Note" %}</th>
+</tr>
+
+{% for adjustment in adjustments %}
+<tr>
+<td>{{ adjustment.created_at|date:"Y-m-d H:i" }}</td>
+<td>{{ adjustment.book.title }}</td>
+<td>
+{% if adjustment.change > 0 %}
+<span class="badge bg-success">+{{ adjustment.change }}</span>
+{% else %}
+<span class="badge bg-danger">{{ adjustment.change }}</span>
+{% endif %}
+</td>
+<td>{{ adjustment.resulting_stock }}</td>
+<td>{{ adjustment.get_reason_display }}</td>
+<td>{{ adjustment.note|default:"-" }}</td>
+</tr>
+
+{% empty %}
+<tr>
+<td colspan="6" class="text-center muted-text py-4">
+{% translate "No stock adjustments recorded yet." %}
+</td>
+</tr>
+{% endfor %}
+</table>
+</div>
+
+
+{% if page_obj.paginator.num_pages > 1 %}
+<nav aria-label="{% translate 'Stock adjustment pages' %}">
+<ul class="pagination">
+
+{% if page_obj.has_previous %}
+<li class="page-item">
+<a class="page-link" href="?page={{ page_obj.previous_page_number }}">{% translate "Previous" %}</a>
+</li>
+{% endif %}
+
+<li class="page-item disabled">
+<span class="page-link">
+{% blocktranslate with number=page_obj.number total=page_obj.paginator.num_pages %}Page {{ number }} of {{ total }}{% endblocktranslate %}
+</span>
+</li>
+
+{% if page_obj.has_next %}
+<li class="page-item">
+<a class="page-link" href="?page={{ page_obj.next_page_number }}">{% translate "Next" %}</a>
+</li>
+{% endif %}
+
+</ul>
+</nav>
+{% endif %}
+
+
+{% endblock %}

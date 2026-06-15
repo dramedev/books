@@ -373,6 +373,60 @@ msgstr "Quantité suggérée"
 msgid "No reorder suggestions right now."
 msgstr "Aucune suggestion de réapprovisionnement pour le moment."
 
+msgid "Adjust"
+msgstr "Ajuster"
+
+msgid "Adjust Stock"
+msgstr "Ajuster le stock"
+
+msgid "Adjustment History"
+msgstr "Historique des ajustements"
+
+msgid "Stock Adjustments"
+msgstr "Ajustements de stock"
+
+msgid "History of manual stock corrections."
+msgstr "Historique des corrections manuelles de stock."
+
+msgid "Back to Stock"
+msgstr "Retour au stock"
+
+msgid "Change"
+msgstr "Variation"
+
+msgid "Resulting stock"
+msgstr "Stock résultant"
+
+msgid "Use a positive number to add stock, negative to remove."
+msgstr "Utilisez un nombre positif pour ajouter du stock, négatif pour en retirer."
+
+msgid "Change cannot be zero."
+msgstr "La variation ne peut pas être nulle."
+
+msgid "This would reduce stock below zero (current stock: %(stock)s)."
+msgstr "Cela réduirait le stock en dessous de zéro (stock actuel : %(stock)s)."
+
+msgid "Stock adjustment recorded."
+msgstr "Ajustement de stock enregistré."
+
+msgid "No stock adjustments recorded yet."
+msgstr "Aucun ajustement de stock enregistré pour le moment."
+
+msgid "Damaged"
+msgstr "Endommagé"
+
+msgid "Lost"
+msgstr "Perdu"
+
+msgid "Found"
+msgstr "Retrouvé"
+
+msgid "Correction"
+msgstr "Correction"
+
+msgid "Other"
+msgstr "Autre"
+
 msgid "Back to Books"
 msgstr "Retour aux livres"
 
