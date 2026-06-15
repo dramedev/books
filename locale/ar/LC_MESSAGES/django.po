@@ -163,6 +163,9 @@ msgstr "المؤلف"
 msgid "sale"
 msgstr "عملية البيع"
 
+msgid "reorder"
+msgstr "طلب إعادة التزويد"
+
 msgid "Author Form"
 msgstr "نموذج المؤلف"
 
@@ -525,6 +528,12 @@ msgstr "تم إلغاء طلب إعادة التزويد."
 
 msgid "This reorder can't be updated from its current status."
 msgstr "لا يمكن تحديث هذا الطلب من حالته الحالية."
+
+msgid "Reorder deleted."
+msgstr "تم حذف طلب إعادة التزويد."
+
+msgid "Only cancelled reorders can be deleted."
+msgstr "يمكن حذف طلبات إعادة التزويد الملغاة فقط."
 
 msgid "Created"
 msgstr "تاريخ الإنشاء"

@@ -1026,6 +1026,31 @@ def reorder_update_status(request, id, action):
 
 
 @login_required
+@permission_required("books.delete_reorder", raise_exception=True)
+def reorder_delete(request, id):
+    reorder = get_object_or_404(Reorder, id=id, owner=request.user)
+
+    if reorder.status != Reorder.STATUS_CANCELLED:
+        messages.error(request, gettext("Only cancelled reorders can be deleted."))
+        return redirect("reorder_list")
+
+    if request.method == "POST":
+        reorder.delete()
+        messages.success(request, gettext("Reorder deleted."))
+        return redirect("reorder_list")
+
+    return render(
+        request,
+        "books/confirm_delete.html",
+        {
+            "object_type": gettext("reorder"),
+            "object_name": f"{reorder.book.title} ({reorder.quantity})",
+            "cancel_url": reverse("reorder_list"),
+        },
+    )
+
+
+@login_required
 @permission_required("books.view_book", raise_exception=True)
 def export_books_csv(request):
     response = HttpResponse(content_type="text/csv")

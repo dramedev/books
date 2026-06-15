@@ -163,6 +163,9 @@ msgstr "l'auteur"
 msgid "sale"
 msgstr "la vente"
 
+msgid "reorder"
+msgstr "le réapprovisionnement"
+
 msgid "Author Form"
 msgstr "Formulaire auteur"
 
@@ -525,6 +528,12 @@ msgstr "Réapprovisionnement annulé."
 
 msgid "This reorder can't be updated from its current status."
 msgstr "Ce réapprovisionnement ne peut pas être mis à jour depuis son statut actuel."
+
+msgid "Reorder deleted."
+msgstr "Réapprovisionnement supprimé."
+
+msgid "Only cancelled reorders can be deleted."
+msgstr "Seuls les réapprovisionnements annulés peuvent être supprimés."
 
 msgid "Created"
 msgstr "Créé"

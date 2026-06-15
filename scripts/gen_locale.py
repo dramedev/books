@@ -93,6 +93,7 @@ FR = {
     "category": "la catégorie",
     "author": "l'auteur",
     "sale": "la vente",
+    "reorder": "le réapprovisionnement",
 
     # Forms
     "Author Form": "Formulaire auteur",
@@ -231,6 +232,8 @@ FR = {
     "Reorder received and stock updated.": "Réapprovisionnement reçu et stock mis à jour.",
     "Reorder cancelled.": "Réapprovisionnement annulé.",
     "This reorder can't be updated from its current status.": "Ce réapprovisionnement ne peut pas être mis à jour depuis son statut actuel.",
+    "Reorder deleted.": "Réapprovisionnement supprimé.",
+    "Only cancelled reorders can be deleted.": "Seuls les réapprovisionnements annulés peuvent être supprimés.",
     "Created": "Créé",
 
     # Report
@@ -446,6 +449,7 @@ AR = {
     "category": "التصنيف",
     "author": "المؤلف",
     "sale": "عملية البيع",
+    "reorder": "طلب إعادة التزويد",
 
     # Forms
     "Author Form": "نموذج المؤلف",
@@ -584,6 +588,8 @@ AR = {
     "Reorder received and stock updated.": "تم استلام الطلب وتحديث المخزون.",
     "Reorder cancelled.": "تم إلغاء طلب إعادة التزويد.",
     "This reorder can't be updated from its current status.": "لا يمكن تحديث هذا الطلب من حالته الحالية.",
+    "Reorder deleted.": "تم حذف طلب إعادة التزويد.",
+    "Only cancelled reorders can be deleted.": "يمكن حذف طلبات إعادة التزويد الملغاة فقط.",
     "Created": "تاريخ الإنشاء",
 
     # Report

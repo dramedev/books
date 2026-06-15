@@ -69,6 +69,12 @@
 </form>
 {% endif %}
 {% endif %}
+
+{% if reorder.status == "cancelled" and perms.books.delete_reorder %}
+<a class="btn btn-outline-danger btn-sm" href="{% url 'reorder_delete' reorder.id %}">
+{% translate "Delete" %}
+</a>
+{% endif %}
 </td>
 </tr>
 
