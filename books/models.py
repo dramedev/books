@@ -244,6 +244,14 @@ class Reorder(models.Model):
     quantity = models.PositiveIntegerField(verbose_name=_("Quantity"))
 
 
+    unit_cost = models.DecimalField(
+        max_digits=8,
+        decimal_places=2,
+        default=0,
+        verbose_name=_("Unit cost")
+    )
+
+
     status = models.CharField(
         max_length=10,
         choices=STATUS_CHOICES,
@@ -276,6 +284,11 @@ class Reorder(models.Model):
             self.STATUS_RECEIVED: "bg-success",
             self.STATUS_CANCELLED: "bg-secondary",
         }.get(self.status, "bg-secondary")
+
+
+    @property
+    def total_cost(self):
+        return self.quantity * self.unit_cost
 
 
 

@@ -337,6 +337,12 @@ msgstr "الوحدات المباعة"
 msgid "Profit"
 msgstr "الأرباح"
 
+msgid "Total purchase cost"
+msgstr "إجمالي تكلفة الشراء"
+
+msgid "Purchase Cost"
+msgstr "تكلفة الشراء"
+
 msgid "Back to Books"
 msgstr "العودة إلى الكتب"
 
@@ -541,6 +547,12 @@ msgstr "تاريخ الإنشاء"
 msgid "Supplier"
 msgstr "المورّد"
 
+msgid "Unit Cost"
+msgstr "تكلفة الوحدة"
+
+msgid "Total Cost"
+msgstr "التكلفة الإجمالية"
+
 msgid "Suppliers"
 msgstr "الموردون"
 
@@ -681,6 +693,9 @@ msgstr "مصاريف التوزيع"
 
 msgid "Unit price"
 msgstr "سعر الوحدة"
+
+msgid "Unit cost"
+msgstr "تكلفة الوحدة"
 
 msgid "Sale date"
 msgstr "تاريخ البيع"

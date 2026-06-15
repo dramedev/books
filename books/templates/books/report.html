@@ -115,6 +115,13 @@
 <h2 class="mb-0">{{ total_profit }}</h2>
 </div>
 </div>
+
+<div class="col-md-3">
+<div class="page-panel">
+<p class="muted-text mb-1">{% translate "Total purchase cost" %}</p>
+<h2 class="mb-0">{{ total_purchase_cost }}</h2>
+</div>
+</div>
 </div>
 
 
@@ -193,6 +200,10 @@ new Chart(revenueCtx, {
             {
                 label: "{% translate 'Profit' %}",
                 data: {{ profits|safe }}
+            },
+            {
+                label: "{% translate 'Purchase Cost' %}",
+                data: {{ purchase_costs|safe }}
             }
         ]
     },
@@ -232,6 +243,14 @@ new Chart(trendCtx, {
                 yAxisID: "revenue",
                 borderColor: "#2f6f63",
                 backgroundColor: "#2f6f63",
+                tension: 0.3
+            },
+            {
+                label: "{% translate 'Purchase Cost' %}",
+                data: {{ trend_purchase_costs|safe }},
+                yAxisID: "revenue",
+                borderColor: "#9f5f3f",
+                backgroundColor: "#9f5f3f",
                 tension: 0.3
             }
         ]

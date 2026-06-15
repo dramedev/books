@@ -337,6 +337,12 @@ msgstr "Unités vendues"
 msgid "Profit"
 msgstr "Profit"
 
+msgid "Total purchase cost"
+msgstr "Coût total des achats"
+
+msgid "Purchase Cost"
+msgstr "Coût d'achat"
+
 msgid "Back to Books"
 msgstr "Retour aux livres"
 
@@ -541,6 +547,12 @@ msgstr "Créé"
 msgid "Supplier"
 msgstr "Fournisseur"
 
+msgid "Unit Cost"
+msgstr "Coût unitaire"
+
+msgid "Total Cost"
+msgstr "Coût total"
+
 msgid "Suppliers"
 msgstr "Fournisseurs"
 
@@ -681,6 +693,9 @@ msgstr "Frais de distribution"
 
 msgid "Unit price"
 msgstr "Prix unitaire"
+
+msgid "Unit cost"
+msgstr "Coût unitaire"
 
 msgid "Sale date"
 msgstr "Date de vente"

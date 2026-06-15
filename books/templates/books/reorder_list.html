@@ -49,6 +49,8 @@
 <th>{% translate "Book" %}</th>
 <th>{% translate "Supplier" %}</th>
 <th>{% translate "Quantity" %}</th>
+<th>{% translate "Unit Cost" %}</th>
+<th>{% translate "Total Cost" %}</th>
 <th>{% translate "Status" %}</th>
 <th>{% translate "Note" %}</th>
 <th>{% translate "Actions" %}</th>
@@ -60,6 +62,8 @@
 <td>{{ reorder.book.title }}</td>
 <td>{{ reorder.supplier|default:"-" }}</td>
 <td>{{ reorder.quantity }}</td>
+<td>{{ reorder.unit_cost }}</td>
+<td>{{ reorder.total_cost }}</td>
 <td><span class="badge {{ reorder.status_badge_class }}">{{ reorder.get_status_display }}</span></td>
 <td>{{ reorder.note|default:"-" }}</td>
 <td class="d-flex gap-2 flex-wrap">
@@ -96,7 +100,7 @@
 
 {% empty %}
 <tr>
-<td colspan="7" class="text-center muted-text py-4">
+<td colspan="9" class="text-center muted-text py-4">
 {% translate "No reorders yet." %}
 </td>
 </tr>

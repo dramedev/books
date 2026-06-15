@@ -201,6 +201,7 @@ class ReorderForm(forms.ModelForm):
         fields = [
             "supplier",
             "quantity",
+            "unit_cost",
             "note",
         ]
 
@@ -214,6 +215,13 @@ class ReorderForm(forms.ModelForm):
                 attrs={
                     "class": "form-control",
                     "min": "1"
+                }
+            ),
+            "unit_cost": forms.NumberInput(
+                attrs={
+                    "class": "form-control",
+                    "min": "0",
+                    "step": "0.01"
                 }
             ),
             "note": forms.TextInput(

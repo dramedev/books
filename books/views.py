@@ -192,6 +192,8 @@ def _reorder_export_headers():
         gettext("Book"),
         gettext("Supplier"),
         gettext("Quantity"),
+        gettext("Unit Cost"),
+        gettext("Total Cost"),
         gettext("Status"),
         gettext("Note"),
         gettext("Received"),
@@ -205,6 +207,8 @@ def _reorder_export_rows(reorders):
             reorder.book.title,
             reorder.supplier.name if reorder.supplier else "",
             reorder.quantity,
+            reorder.unit_cost,
+            reorder.total_cost,
             reorder.get_status_display(),
             reorder.note,
             reorder.received_at.date().isoformat() if reorder.received_at else "",
@@ -663,6 +667,11 @@ REVENUE_EXPRESSION = ExpressionWrapper(
     output_field=DecimalField(max_digits=10, decimal_places=2),
 )
 
+PURCHASE_COST_EXPRESSION = ExpressionWrapper(
+    F("quantity") * F("unit_cost"),
+    output_field=DecimalField(max_digits=10, decimal_places=2),
+)
+
 
 @login_required
 @permission_required("books.view_book", raise_exception=True)
@@ -685,22 +694,38 @@ def report(request):
         )
     }
 
+    received_reorders = Reorder.objects.filter(
+        book__in=filtered_books, status=Reorder.STATUS_RECEIVED
+    )
+
+    purchase_cost_by_category = {
+        item["book__category__name"]: item["cost"] or 0
+        for item in (
+            received_reorders
+            .values("book__category__name")
+            .annotate(cost=Sum(PURCHASE_COST_EXPRESSION))
+        )
+    }
+
     labels = []
     values = []
     counts = []
     revenues = []
     profits = []
+    purchase_costs = []
 
     for item in data:
         category_name = item["category__name"]
         expense = float(item["total"])
         revenue = float(revenue_by_category.get(category_name, 0))
+        purchase_cost = float(purchase_cost_by_category.get(category_name, 0))
 
         labels.append(category_name)
         values.append(expense)
         counts.append(item["count"])
         revenues.append(revenue)
         profits.append(revenue - expense)
+        purchase_costs.append(purchase_cost)
 
     totals = filtered_books.aggregate(
         total=Sum("distribution_expense"),
@@ -714,23 +739,39 @@ def report(request):
         or 0
     )
     total_expense = totals["total"] or 0
+    total_purchase_cost = (
+        received_reorders.aggregate(total=Sum(PURCHASE_COST_EXPRESSION))["total"] or 0
+    )
 
-    trend_data = (
+    sales_trend = (
         Sale.objects.filter(book__in=filtered_books)
         .annotate(month=TruncMonth("sale_date"))
         .values("month")
         .annotate(units=Sum("quantity"), revenue=Sum(REVENUE_EXPRESSION))
-        .order_by("month")
     )
+
+    purchase_trend = (
+        received_reorders.filter(received_at__isnull=False)
+        .annotate(month=TruncMonth("received_at"))
+        .values("month")
+        .annotate(cost=Sum(PURCHASE_COST_EXPRESSION))
+    )
+
+    sales_by_month = {item["month"]: item for item in sales_trend}
+    purchase_by_month = {
+        item["month"].date(): item for item in purchase_trend
+    }
 
     trend_labels = []
     trend_units = []
     trend_revenues = []
+    trend_purchase_costs = []
 
-    for item in trend_data:
-        trend_labels.append(item["month"].strftime("%b %Y"))
-        trend_units.append(item["units"] or 0)
-        trend_revenues.append(float(item["revenue"] or 0))
+    for month in sorted(set(sales_by_month) | set(purchase_by_month)):
+        trend_labels.append(month.strftime("%b %Y"))
+        trend_units.append(sales_by_month.get(month, {}).get("units") or 0)
+        trend_revenues.append(float(sales_by_month.get(month, {}).get("revenue") or 0))
+        trend_purchase_costs.append(float(purchase_by_month.get(month, {}).get("cost") or 0))
 
     context = _filter_context(request)
     context.update(
@@ -740,13 +781,16 @@ def report(request):
             "labels": json.dumps(labels),
             "revenues": json.dumps(revenues),
             "profits": json.dumps(profits),
+            "purchase_costs": json.dumps(purchase_costs),
             "trend_labels": json.dumps(trend_labels),
             "trend_units": json.dumps(trend_units),
             "trend_revenues": json.dumps(trend_revenues),
+            "trend_purchase_costs": json.dumps(trend_purchase_costs),
             "total_expense": total_expense,
             "total_books": totals["count"],
             "total_revenue": total_revenue,
             "total_profit": total_revenue - total_expense,
+            "total_purchase_cost": total_purchase_cost,
         }
     )
 
@@ -1619,7 +1663,7 @@ def export_reorders_pdf(request):
     table = Table(
         rows,
         repeatRows=1,
-        colWidths=[70, 140, 100, 50, 60, 130, 70],
+        colWidths=[60, 120, 90, 45, 55, 60, 50, 100, 60],
     )
     table.setStyle(
         TableStyle(

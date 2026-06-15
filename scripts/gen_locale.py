@@ -157,6 +157,8 @@ FR = {
     "Sales Trend": "Tendance des ventes",
     "Units Sold": "Unités vendues",
     "Profit": "Profit",
+    "Total purchase cost": "Coût total des achats",
+    "Purchase Cost": "Coût d'achat",
 
     # Book detail
     "Back to Books": "Retour aux livres",
@@ -236,6 +238,8 @@ FR = {
     "Only cancelled reorders can be deleted.": "Seuls les réapprovisionnements annulés peuvent être supprimés.",
     "Created": "Créé",
     "Supplier": "Fournisseur",
+    "Unit Cost": "Coût unitaire",
+    "Total Cost": "Coût total",
 
     # Suppliers
     "Suppliers": "Fournisseurs",
@@ -295,6 +299,7 @@ FR = {
     "Published date": "Date de publication",
     "Distribution expense": "Frais de distribution",
     "Unit price": "Prix unitaire",
+    "Unit cost": "Coût unitaire",
     "Sale date": "Date de vente",
     "Avatar": "Avatar",
 
@@ -556,6 +561,8 @@ AR = {
     "Sales Trend": "اتجاه المبيعات",
     "Units Sold": "الوحدات المباعة",
     "Profit": "الأرباح",
+    "Total purchase cost": "إجمالي تكلفة الشراء",
+    "Purchase Cost": "تكلفة الشراء",
 
     # Book detail
     "Back to Books": "العودة إلى الكتب",
@@ -635,6 +642,8 @@ AR = {
     "Only cancelled reorders can be deleted.": "يمكن حذف طلبات إعادة التزويد الملغاة فقط.",
     "Created": "تاريخ الإنشاء",
     "Supplier": "المورّد",
+    "Unit Cost": "تكلفة الوحدة",
+    "Total Cost": "التكلفة الإجمالية",
 
     # Suppliers
     "Suppliers": "الموردون",
@@ -694,6 +703,7 @@ AR = {
     "Published date": "تاريخ النشر",
     "Distribution expense": "مصاريف التوزيع",
     "Unit price": "سعر الوحدة",
+    "Unit cost": "تكلفة الوحدة",
     "Sale date": "تاريخ البيع",
     "Avatar": "الصورة الرمزية",
 
