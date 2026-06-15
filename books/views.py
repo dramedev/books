@@ -47,6 +47,7 @@ BOOK_EXPORT_HEADERS = [
 
 
 LEARNING_QUOTES = [
+    # Learning & growth
     '"The beautiful thing about learning is that no one can take it away from you." — B.B. King',
     '"Live as if you were to die tomorrow. Learn as if you were to live forever." — Mahatma Gandhi',
     '"An investment in knowledge always pays the best interest." — Benjamin Franklin',
@@ -57,6 +58,37 @@ LEARNING_QUOTES = [
     '"The expert in anything was once a beginner." — Helen Hayes',
     '"Success is the sum of small efforts repeated day in and day out." — Robert Collier',
     '"You don\'t have to be great to start, but you have to start to be great." — Zig Ziglar',
+
+    # Books & reading
+    '"A room without books is like a body without a soul." — Marcus Tullius Cicero',
+    '"Books are a uniquely portable magic." — Stephen King',
+    '"Today a reader, tomorrow a leader." — Margaret Fuller',
+    '"Reading is to the mind what exercise is to the body." — Joseph Addison',
+    '"Once you learn to read, you will be forever free." — Frederick Douglass',
+    '"I have always imagined that Paradise will be a kind of library." — Jorge Luis Borges',
+    '"So many books, so little time." — Frank Zappa',
+    '"There is no friend as loyal as a book." — Ernest Hemingway',
+    '"A reader lives a thousand lives before he dies. The man who never reads lives only one." — George R.R. Martin',
+    '"Books are mirrors: you only see in them what you already have inside you." — Carlos Ruiz Zafón',
+
+    # Book distribution mission
+    '"Every book has a destination, and every reader has a journey." — Book Distribution Philosophy',
+    '"We do not simply move books; we move knowledge, ideas, and imagination." — Book Distribution Philosophy',
+    '"A warehouse full of books is a warehouse full of possibilities." — Book Distribution Philosophy',
+    '"Every delivered book is a new story beginning somewhere." — Book Distribution Philosophy',
+    '"Behind every order is a reader waiting for discovery." — Book Distribution Philosophy',
+    '"Distribution turns printed pages into shared experiences." — Book Distribution Philosophy',
+    '"Every package carries imagination, knowledge, and opportunity." — Book Distribution Philosophy',
+    '"A distributor is the bridge between authors and readers." — Book Distribution Philosophy',
+    '"The journey of knowledge begins with accessibility." — Book Distribution Philosophy',
+    '"Books travel so minds can explore." — Book Distribution Philosophy',
+
+    # Business & teamwork
+    '"The goal as a company is to have customer service that is not just the best but legendary." — Sam Walton',
+    '"Quality is the best business plan." — John Lasseter',
+    '"Great things in business are never done by one person. They are done by a team of people." — Steve Jobs',
+    '"Efficiency is doing better what is already being done." — Peter Drucker',
+    '"The best way to predict the future is to create it." — Peter Drucker',
 ]
 
 
