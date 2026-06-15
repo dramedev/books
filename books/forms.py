@@ -1,8 +1,18 @@
 from django import forms
+from django.contrib.auth import get_user_model
+from django.contrib.auth.password_validation import validate_password
+
 from .models import Author, Book, Category, Profile, Sale
 
 
 class BookForm(forms.ModelForm):
+
+    def __init__(self, *args, user=None, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        if user is not None:
+            self.fields["category"].queryset = Category.objects.filter(owner=user)
+            self.fields["authors"].queryset = Author.objects.filter(owner=user)
 
     class Meta:
         model = Book
@@ -121,6 +131,12 @@ class AuthorForm(forms.ModelForm):
 
 class SaleForm(forms.ModelForm):
 
+    def __init__(self, *args, user=None, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        if user is not None:
+            self.fields["book"].queryset = Book.objects.filter(owner=user)
+
     class Meta:
         model = Sale
 
@@ -183,3 +199,73 @@ class ProfileForm(forms.ModelForm):
                 }
             ),
         }
+
+
+
+class SignupForm(forms.Form):
+
+    username = forms.CharField(
+        max_length=150,
+        widget=forms.TextInput(attrs={"class": "form-control", "autofocus": True}),
+    )
+
+    email = forms.EmailField(
+        widget=forms.EmailInput(attrs={"class": "form-control"}),
+    )
+
+    password1 = forms.CharField(
+        label="Password",
+        widget=forms.PasswordInput(attrs={"class": "form-control"}),
+    )
+
+    password2 = forms.CharField(
+        label="Confirm password",
+        widget=forms.PasswordInput(attrs={"class": "form-control"}),
+    )
+
+    def clean_username(self):
+        username = self.cleaned_data["username"]
+
+        if get_user_model().objects.filter(username__iexact=username).exists():
+            raise forms.ValidationError("That username is already taken.")
+
+        return username
+
+    def clean_email(self):
+        email = self.cleaned_data["email"]
+
+        if get_user_model().objects.filter(email__iexact=email).exists():
+            raise forms.ValidationError("An account with that email already exists.")
+
+        return email
+
+    def clean(self):
+        cleaned_data = super().clean()
+        password1 = cleaned_data.get("password1")
+        password2 = cleaned_data.get("password2")
+
+        if password1 and password2 and password1 != password2:
+            raise forms.ValidationError("The two password fields didn't match.")
+
+        if password1:
+            validate_password(password1)
+
+        return cleaned_data
+
+
+
+class VerifyEmailForm(forms.Form):
+
+    code = forms.CharField(
+        max_length=6,
+        widget=forms.TextInput(attrs={"class": "form-control", "autofocus": True}),
+    )
+
+
+
+class RedeemAccessCodeForm(forms.Form):
+
+    code = forms.CharField(
+        max_length=12,
+        widget=forms.TextInput(attrs={"class": "form-control", "autofocus": True}),
+    )

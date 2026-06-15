@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+
+
+{% block content %}
+
+
+<div class="row justify-content-center">
+<div class="col-md-5">
+<div class="page-panel">
+<h1 class="mb-3">Activate your account</h1>
+
+<p class="muted-text">
+Your email is verified. Enter the access code you received from the
+RumiPress owner to activate your account and start using RumiPress.
+</p>
+
+{% if form.non_field_errors %}
+<div class="alert alert-danger">
+{% for error in form.non_field_errors %}
+{{ error }}
+{% endfor %}
+</div>
+{% endif %}
+
+<form method="post">
+{% csrf_token %}
+
+<div class="mb-3">
+<label class="form-label" for="{{ form.code.id_for_label }}">
+Access code
+</label>
+{{ form.code }}
+{% for error in form.code.errors %}
+<div class="text-danger small">{{ error }}</div>
+{% endfor %}
+</div>
+
+<button class="btn btn-primary">
+Activate
+</button>
+</form>
+</div>
+</div>
+</div>
+
+
+{% endblock %}

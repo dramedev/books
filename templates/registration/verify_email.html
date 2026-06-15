@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+
+
+{% block content %}
+
+
+<div class="row justify-content-center">
+<div class="col-md-5">
+<div class="page-panel">
+<h1 class="mb-3">Verify your email</h1>
+
+<p class="muted-text">
+We sent a 6-digit verification code to <strong>{{ email }}</strong>.
+Enter it below to continue.
+</p>
+
+{% if form.non_field_errors %}
+<div class="alert alert-danger">
+{% for error in form.non_field_errors %}
+{{ error }}
+{% endfor %}
+</div>
+{% endif %}
+
+<form method="post">
+{% csrf_token %}
+
+<div class="mb-3">
+<label class="form-label" for="{{ form.code.id_for_label }}">
+Verification code
+</label>
+{{ form.code }}
+{% for error in form.code.errors %}
+<div class="text-danger small">{{ error }}</div>
+{% endfor %}
+</div>
+
+<button class="btn btn-primary">
+Verify
+</button>
+</form>
+
+<form method="post" class="mt-2">
+{% csrf_token %}
+<input type="hidden" name="action" value="resend">
+<button class="btn btn-link p-0">
+Resend code
+</button>
+</form>
+</div>
+</div>
+</div>
+
+
+{% endblock %}

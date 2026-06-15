@@ -1,9 +1,14 @@
 import json
+import secrets
+import string
 
+from django import forms
+from django.conf import settings
 from django.contrib import admin
+from django.core.mail import send_mail
 from django.db.models import Count, F, Sum
 
-from .models import Author, Book, Category, Sale
+from .models import AccessCode, Author, Book, Category, PendingActivation, Sale
 
 
 
@@ -151,6 +156,118 @@ class SaleAdmin(admin.ModelAdmin):
     revenue.short_description = "Revenue"
 
 
+
+class AccessCodeAdminForm(forms.ModelForm):
+
+    class Meta:
+        model = AccessCode
+        fields = "__all__"
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["code"].required = False
+
+    def clean_code(self):
+        code = self.cleaned_data.get("code")
+        if not code:
+            code = "".join(
+                secrets.choice(string.ascii_uppercase + string.digits)
+                for _ in range(10)
+            )
+        return code
+
+
+@admin.register(AccessCode)
+class AccessCodeAdmin(admin.ModelAdmin):
+
+    form = AccessCodeAdminForm
+
+    list_display = (
+        "code",
+        "label",
+        "recipient_email",
+        "is_used",
+        "used_by",
+        "used_at",
+        "expires_at",
+        "created_at",
+    )
+
+    list_filter = (
+        "is_used",
+    )
+
+    search_fields = (
+        "code",
+        "label",
+        "recipient_email",
+        "used_by__username",
+    )
+
+    readonly_fields = (
+        "is_used",
+        "used_by",
+        "used_at",
+        "created_at",
+    )
+
+    def save_model(self, request, obj, form, change):
+        is_new = obj.pk is None
+
+        super().save_model(request, obj, form, change)
+
+        if is_new and obj.recipient_email:
+            send_mail(
+                subject="Your RumiPress access code",
+                message=(
+                    "Welcome to RumiPress!\n\n"
+                    f"Your access code is: {obj.code}\n\n"
+                    "Enter this code on the activation page after verifying "
+                    "your email to activate your account."
+                ),
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[obj.recipient_email],
+                fail_silently=True,
+            )
+
+
+
+@admin.register(PendingActivation)
+class PendingActivationAdmin(admin.ModelAdmin):
+
+    list_display = (
+        "user",
+        "user_email",
+    )
+
+    search_fields = (
+        "user__username",
+        "user__email",
+    )
+
+    readonly_fields = (
+        "user",
+        "email_verified",
+        "access_code_redeemed",
+    )
+
+    def user_email(self, obj):
+        return obj.user.email
+
+    user_email.short_description = "Email"
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+    def get_queryset(self, request):
+        return (
+            super()
+            .get_queryset(request)
+            .filter(email_verified=True, access_code_redeemed=False)
+        )
 
 
 

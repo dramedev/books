@@ -184,9 +184,9 @@ def _book_summary(book):
     }
 
 
-def get_dashboard_overview(_input):
-    books = Book.objects.all()
-    sales = Sale.objects.all()
+def get_dashboard_overview(_input, user):
+    books = Book.objects.filter(owner=user)
+    sales = Sale.objects.filter(owner=user)
 
     total_units_sold = sales.aggregate(total=Sum("quantity"))["total"] or 0
     total_revenue = sum((sale.revenue for sale in sales), start=0)
@@ -201,8 +201,8 @@ def get_dashboard_overview(_input):
     }
 
 
-def list_books(tool_input):
-    books = Book.objects.all()
+def list_books(tool_input, user):
+    books = Book.objects.filter(owner=user)
 
     category = (tool_input.get("category") or "").strip()
     if category:
@@ -225,13 +225,14 @@ def list_books(tool_input):
     return {"books": [_book_summary(book) for book in books.distinct()]}
 
 
-def search_books(tool_input):
+def search_books(tool_input, user):
     query = (tool_input.get("query") or "").strip()
     if not query:
         return {"books": []}
 
     books = (
-        Book.objects.filter(
+        Book.objects.filter(owner=user)
+        .filter(
             Q(title__icontains=query)
             | Q(subtitle__icontains=query)
             | Q(isbn__icontains=query)
@@ -242,8 +243,8 @@ def search_books(tool_input):
     return {"books": [_book_summary(book) for book in books]}
 
 
-def get_low_stock_books(_input):
-    books = [book for book in Book.objects.all() if book.is_low_stock]
+def get_low_stock_books(_input, user):
+    books = [book for book in Book.objects.filter(owner=user) if book.is_low_stock]
     return {"books": [_book_summary(book) for book in books]}
 
 
@@ -255,8 +256,8 @@ def _parse_date(value):
     return date.fromisoformat(value)
 
 
-def get_sales_summary(tool_input):
-    sales = Sale.objects.all()
+def get_sales_summary(tool_input, user):
+    sales = Sale.objects.filter(owner=user)
 
     start_date = _parse_date(tool_input.get("start_date"))
     end_date = _parse_date(tool_input.get("end_date"))
@@ -277,8 +278,8 @@ def get_sales_summary(tool_input):
     }
 
 
-def get_top_selling_books(tool_input):
-    sales = Sale.objects.all()
+def get_top_selling_books(tool_input, user):
+    sales = Sale.objects.filter(owner=user)
 
     start_date = _parse_date(tool_input.get("start_date"))
     end_date = _parse_date(tool_input.get("end_date"))
@@ -305,8 +306,8 @@ def get_top_selling_books(tool_input):
     return {"books": ranked}
 
 
-def get_categories(_input):
-    categories = Category.objects.all()
+def get_categories(_input, user):
+    categories = Category.objects.filter(owner=user)
     return {
         "categories": [
             {"name": category.name, "book_count": category.book_set.count()}
@@ -339,7 +340,7 @@ def execute_tool(name, tool_input, user):
     if spec is None or not user.has_perm(spec["permission"]):
         return {"error": "You don't have permission to access this information."}
 
-    return TOOL_FUNCTIONS[name](tool_input)
+    return TOOL_FUNCTIONS[name](tool_input, user)
 
 
 NOT_CONFIGURED_REPLY = (

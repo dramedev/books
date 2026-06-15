@@ -1,10 +1,15 @@
 import csv
 import json
 import random
+from datetime import timedelta
 from io import BytesIO
 
+from django.conf import settings
 from django.contrib import messages
+from django.contrib.auth import login
 from django.contrib.auth.decorators import login_required, permission_required
+from django.contrib.auth.models import User
+from django.core.mail import send_mail
 from django.core.paginator import Paginator
 from django.db.models import Count, DecimalField, ExpressionWrapper, F, Q, Sum
 from django.db.models.functions import TruncMonth
@@ -15,8 +20,18 @@ from django.utils import timezone
 from django.views.decorators.http import require_POST
 
 from . import ai_chat
-from .forms import AuthorForm, BookForm, CategoryForm, ProfileForm, SaleForm
-from .models import Author, Book, Category, Profile, Sale
+from .forms import (
+    AuthorForm,
+    BookForm,
+    CategoryForm,
+    ProfileForm,
+    RedeemAccessCodeForm,
+    SaleForm,
+    SignupForm,
+    VerifyEmailForm,
+)
+from .models import AccessCode, Author, Book, Category, Profile, Sale
+from .permissions import ensure_roles
 
 
 BOOK_EXPORT_HEADERS = [
@@ -94,7 +109,7 @@ def _sale_export_rows(sales):
 
 
 def _book_filters(request):
-    books = Book.objects.select_related("category").prefetch_related("authors")
+    books = Book.objects.filter(owner=request.user).select_related("category").prefetch_related("authors")
 
     search = request.GET.get("q", "").strip()
     category = request.GET.get("category", "")
@@ -141,14 +156,15 @@ def _filter_context(request):
         query_params.pop("page")
 
     return {
-        "categories": Category.objects.order_by("name"),
+        "categories": Category.objects.filter(owner=request.user).order_by("name"),
         "publishers": (
-            Book.objects.exclude(publisher="")
+            Book.objects.filter(owner=request.user)
+            .exclude(publisher="")
             .order_by("publisher")
             .values_list("publisher", flat=True)
             .distinct()
         ),
-        "years": Book.objects.dates("published_date", "year", order="DESC"),
+        "years": Book.objects.filter(owner=request.user).dates("published_date", "year", order="DESC"),
         "filters": request.GET,
         "query_string": query_params.urlencode(),
     }
@@ -193,6 +209,7 @@ def book_detail(request, id):
     book = get_object_or_404(
         Book.objects.select_related("category").prefetch_related("authors"),
         id=id,
+        owner=request.user,
     )
 
     sales = book.sales.all()
@@ -214,13 +231,16 @@ def book_detail(request, id):
 @login_required
 @permission_required("books.add_book", raise_exception=True)
 def book_create(request):
-    form = BookForm()
+    form = BookForm(user=request.user)
 
     if request.method == "POST":
-        form = BookForm(request.POST)
+        form = BookForm(request.POST, user=request.user)
 
         if form.is_valid():
-            form.save()
+            book = form.save(commit=False)
+            book.owner = request.user
+            book.save()
+            form.save_m2m()
             messages.success(request, "Book created.")
             return redirect("book_list")
 
@@ -230,11 +250,11 @@ def book_create(request):
 @login_required
 @permission_required("books.change_book", raise_exception=True)
 def book_update(request, id):
-    book = get_object_or_404(Book, id=id)
-    form = BookForm(instance=book)
+    book = get_object_or_404(Book, id=id, owner=request.user)
+    form = BookForm(instance=book, user=request.user)
 
     if request.method == "POST":
-        form = BookForm(request.POST, instance=book)
+        form = BookForm(request.POST, instance=book, user=request.user)
 
         if form.is_valid():
             form.save()
@@ -247,7 +267,7 @@ def book_update(request, id):
 @login_required
 @permission_required("books.delete_book", raise_exception=True)
 def book_delete(request, id):
-    book = get_object_or_404(Book, id=id)
+    book = get_object_or_404(Book, id=id, owner=request.user)
 
     if request.method == "POST":
         book.delete()
@@ -268,7 +288,7 @@ def book_delete(request, id):
 @login_required
 @permission_required("books.view_book", raise_exception=True)
 def stock_list(request):
-    books = Book.objects.select_related("category").order_by("stock_on_hand", "title")
+    books = Book.objects.filter(owner=request.user).select_related("category").order_by("stock_on_hand", "title")
 
     if request.GET.get("low") == "1":
         books = books.filter(stock_on_hand__lte=F("reorder_threshold"))
@@ -286,7 +306,7 @@ def stock_list(request):
 @login_required
 @permission_required("books.view_category", raise_exception=True)
 def category_list(request):
-    categories = Category.objects.annotate(book_count=Count("book")).order_by("name")
+    categories = Category.objects.filter(owner=request.user).annotate(book_count=Count("book")).order_by("name")
     return render(request, "books/category_list.html", {"categories": categories})
 
 
@@ -299,7 +319,9 @@ def category_create(request):
         form = CategoryForm(request.POST)
 
         if form.is_valid():
-            form.save()
+            category = form.save(commit=False)
+            category.owner = request.user
+            category.save()
             messages.success(request, "Category created.")
             return redirect("category_list")
 
@@ -309,7 +331,7 @@ def category_create(request):
 @login_required
 @permission_required("books.change_category", raise_exception=True)
 def category_update(request, id):
-    category = get_object_or_404(Category, id=id)
+    category = get_object_or_404(Category, id=id, owner=request.user)
     form = CategoryForm(instance=category)
 
     if request.method == "POST":
@@ -333,7 +355,7 @@ def category_update(request, id):
 @login_required
 @permission_required("books.delete_category", raise_exception=True)
 def category_delete(request, id):
-    category = get_object_or_404(Category, id=id)
+    category = get_object_or_404(Category, id=id, owner=request.user)
     book_count = category.book_set.count()
 
     if request.method == "POST":
@@ -368,7 +390,7 @@ def category_delete(request, id):
 @login_required
 @permission_required("books.view_author", raise_exception=True)
 def author_list(request):
-    authors = Author.objects.annotate(book_count=Count("books")).order_by("name")
+    authors = Author.objects.filter(owner=request.user).annotate(book_count=Count("books")).order_by("name")
     return render(request, "books/author_list.html", {"authors": authors})
 
 
@@ -381,7 +403,9 @@ def author_create(request):
         form = AuthorForm(request.POST)
 
         if form.is_valid():
-            form.save()
+            author = form.save(commit=False)
+            author.owner = request.user
+            author.save()
             messages.success(request, "Author created.")
             return redirect("author_list")
 
@@ -391,7 +415,7 @@ def author_create(request):
 @login_required
 @permission_required("books.change_author", raise_exception=True)
 def author_update(request, id):
-    author = get_object_or_404(Author, id=id)
+    author = get_object_or_404(Author, id=id, owner=request.user)
     form = AuthorForm(instance=author)
 
     if request.method == "POST":
@@ -415,7 +439,7 @@ def author_update(request, id):
 @login_required
 @permission_required("books.delete_author", raise_exception=True)
 def author_delete(request, id):
-    author = get_object_or_404(Author, id=id)
+    author = get_object_or_404(Author, id=id, owner=request.user)
     book_count = author.books.count()
 
     if request.method == "POST":
@@ -545,12 +569,13 @@ def report(request):
 @login_required
 @permission_required("books.view_book", raise_exception=True)
 def dashboard(request):
-    books = Book.objects.select_related("category")
+    books = Book.objects.filter(owner=request.user).select_related("category")
+    sales = Sale.objects.filter(owner=request.user)
 
     total_expense = books.aggregate(total=Sum("distribution_expense"))["total"] or 0
-    total_revenue = Sale.objects.aggregate(total=Sum(REVENUE_EXPRESSION))["total"] or 0
+    total_revenue = sales.aggregate(total=Sum(REVENUE_EXPRESSION))["total"] or 0
     total_profit = total_revenue - total_expense
-    total_units_sold = Sale.objects.aggregate(total=Sum("quantity"))["total"] or 0
+    total_units_sold = sales.aggregate(total=Sum("quantity"))["total"] or 0
 
     low_stock_books = books.filter(
         stock_on_hand__lte=F("reorder_threshold")
@@ -565,7 +590,7 @@ def dashboard(request):
     revenue_by_category = {
         item["book__category__name"]: item["revenue"] or 0
         for item in (
-            Sale.objects.values("book__category__name")
+            sales.values("book__category__name")
             .annotate(revenue=Sum(REVENUE_EXPRESSION))
         )
     }
@@ -584,7 +609,7 @@ def dashboard(request):
         profits.append(revenue - expense)
 
     trend_data = (
-        Sale.objects.annotate(month=TruncMonth("sale_date"))
+        sales.annotate(month=TruncMonth("sale_date"))
         .values("month")
         .annotate(units=Sum("quantity"), revenue=Sum(REVENUE_EXPRESSION))
         .order_by("month")
@@ -605,14 +630,14 @@ def dashboard(request):
         .order_by("-units_sold")[:5]
     )
 
-    recent_sales = Sale.objects.select_related("book", "book__category")[:5]
+    recent_sales = sales.select_related("book", "book__category")[:5]
 
     context = {
         "greeting": _time_based_greeting(),
         "quote": random.choice(LEARNING_QUOTES),
         "total_books": books.count(),
-        "total_authors": Author.objects.count(),
-        "total_categories": Category.objects.count(),
+        "total_authors": Author.objects.filter(owner=request.user).count(),
+        "total_categories": Category.objects.filter(owner=request.user).count(),
         "low_stock_count": low_stock_books.count(),
         "low_stock_books": low_stock_books[:5],
         "total_revenue": total_revenue,
@@ -676,8 +701,8 @@ def chat_api(request):
     return JsonResponse({"reply": reply, "history": updated_history})
 
 
-def _adjust_stock(book_id, delta):
-    book = Book.objects.get(id=book_id)
+def _adjust_stock(book_id, delta, owner):
+    book = Book.objects.get(id=book_id, owner=owner)
     book.stock_on_hand = max(0, book.stock_on_hand + delta)
     book.save(update_fields=["stock_on_hand"])
     return book
@@ -700,7 +725,7 @@ def _notify_stock_level(request, book):
 @login_required
 @permission_required("books.view_sale", raise_exception=True)
 def sale_list(request):
-    sales = Sale.objects.select_related("book", "book__category").order_by("-sale_date")
+    sales = Sale.objects.filter(owner=request.user).select_related("book", "book__category").order_by("-sale_date")
 
     paginator = Paginator(sales, 10)
     page_obj = paginator.get_page(request.GET.get("page"))
@@ -718,10 +743,10 @@ def sale_list(request):
 @login_required
 @permission_required("books.add_sale", raise_exception=True)
 def sale_create(request):
-    form = SaleForm()
+    form = SaleForm(user=request.user)
 
     if request.method == "POST":
-        form = SaleForm(request.POST)
+        form = SaleForm(request.POST, user=request.user)
 
         if form.is_valid():
             book = form.cleaned_data["book"]
@@ -734,8 +759,10 @@ def sale_create(request):
                     f"{book.stock_on_hand} in stock.",
                 )
             else:
-                sale = form.save()
-                book = _adjust_stock(sale.book_id, -sale.quantity)
+                sale = form.save(commit=False)
+                sale.owner = request.user
+                sale.save()
+                book = _adjust_stock(sale.book_id, -sale.quantity, request.user)
                 messages.success(request, "Sale recorded.")
                 _notify_stock_level(request, book)
                 return redirect("sale_list")
@@ -746,14 +773,14 @@ def sale_create(request):
 @login_required
 @permission_required("books.change_sale", raise_exception=True)
 def sale_update(request, id):
-    sale = get_object_or_404(Sale, id=id)
-    form = SaleForm(instance=sale)
+    sale = get_object_or_404(Sale, id=id, owner=request.user)
+    form = SaleForm(instance=sale, user=request.user)
 
     if request.method == "POST":
         previous_book_id = sale.book_id
         previous_quantity = sale.quantity
 
-        form = SaleForm(request.POST, instance=sale)
+        form = SaleForm(request.POST, instance=sale, user=request.user)
 
         if form.is_valid():
             new_book = form.cleaned_data["book"]
@@ -771,8 +798,8 @@ def sale_update(request, id):
                 )
             else:
                 sale = form.save()
-                _adjust_stock(previous_book_id, previous_quantity)
-                book = _adjust_stock(sale.book_id, -sale.quantity)
+                _adjust_stock(previous_book_id, previous_quantity, request.user)
+                book = _adjust_stock(sale.book_id, -sale.quantity, request.user)
                 messages.success(request, "Sale updated.")
                 _notify_stock_level(request, book)
                 return redirect("sale_list")
@@ -790,10 +817,10 @@ def sale_update(request, id):
 @login_required
 @permission_required("books.delete_sale", raise_exception=True)
 def sale_delete(request, id):
-    sale = get_object_or_404(Sale, id=id)
+    sale = get_object_or_404(Sale, id=id, owner=request.user)
 
     if request.method == "POST":
-        _adjust_stock(sale.book_id, sale.quantity)
+        _adjust_stock(sale.book_id, sale.quantity, request.user)
         sale.delete()
         messages.success(request, "Sale deleted.")
         return redirect("sale_list")
@@ -923,7 +950,7 @@ def export_sales_csv(request):
     writer = csv.writer(response)
     writer.writerow(SALE_EXPORT_HEADERS)
 
-    sales = Sale.objects.select_related("book", "book__category")
+    sales = Sale.objects.filter(owner=request.user).select_related("book", "book__category")
 
     for row in _sale_export_rows(sales):
         writer.writerow(row)
@@ -941,7 +968,7 @@ def export_sales_excel(request):
     worksheet.title = "Sales"
     worksheet.append(SALE_EXPORT_HEADERS)
 
-    sales = Sale.objects.select_related("book", "book__category")
+    sales = Sale.objects.filter(owner=request.user).select_related("book", "book__category")
 
     for row in _sale_export_rows(sales):
         worksheet.append(row)
@@ -990,7 +1017,7 @@ def export_sales_pdf(request):
         Spacer(1, 12),
     ]
 
-    sales = Sale.objects.select_related("book", "book__category")
+    sales = Sale.objects.filter(owner=request.user).select_related("book", "book__category")
 
     rows = [SALE_EXPORT_HEADERS]
 
@@ -1023,3 +1050,197 @@ def export_sales_pdf(request):
     response["Content-Disposition"] = 'attachment; filename="rumi-press-sales.pdf"'
 
     return response
+
+
+def _generate_verification_code():
+    return f"{random.randint(0, 999999):06d}"
+
+
+def _send_verification_email(user, code):
+    send_mail(
+        subject="Your RumiPress verification code",
+        message=(
+            f"Hi {user.username},\n\n"
+            f"Your RumiPress email verification code is: {code}\n"
+            f"This code expires in {settings.VERIFICATION_CODE_TTL_MINUTES} minutes.\n\n"
+            "If you didn't request this, you can ignore this email."
+        ),
+        from_email=settings.DEFAULT_FROM_EMAIL,
+        recipient_list=[user.email],
+        fail_silently=True,
+    )
+
+
+def _notify_owners_of_pending_activation(user):
+    owner_emails = list(
+        User.objects.filter(is_superuser=True, email__gt="")
+        .exclude(email="")
+        .values_list("email", flat=True)
+    )
+
+    if not owner_emails:
+        return
+
+    send_mail(
+        subject="RumiPress: new user awaiting access code",
+        message=(
+            f"User '{user.username}' ({user.email}) has verified their email "
+            "and is waiting for an access code to activate their account.\n\n"
+            "Generate an access code in the admin site under Books > Access codes."
+        ),
+        from_email=settings.DEFAULT_FROM_EMAIL,
+        recipient_list=owner_emails,
+        fail_silently=True,
+    )
+
+
+def _get_pending_user(request):
+    user_id = request.session.get("pending_user_id")
+    if not user_id:
+        return None
+
+    try:
+        return User.objects.get(id=user_id, is_active=False)
+    except User.DoesNotExist:
+        return None
+
+
+def signup(request):
+    if request.user.is_authenticated:
+        return redirect("dashboard")
+
+    form = SignupForm()
+
+    if request.method == "POST":
+        form = SignupForm(request.POST)
+
+        if form.is_valid():
+            user = User.objects.create_user(
+                username=form.cleaned_data["username"],
+                email=form.cleaned_data["email"],
+                password=form.cleaned_data["password1"],
+                is_active=False,
+            )
+
+            code = _generate_verification_code()
+            profile, _ = Profile.objects.get_or_create(user=user)
+            profile.verification_code = code
+            profile.verification_code_expires_at = timezone.now() + timedelta(
+                minutes=settings.VERIFICATION_CODE_TTL_MINUTES
+            )
+            profile.save()
+
+            _send_verification_email(user, code)
+
+            request.session["pending_user_id"] = user.id
+            return redirect("verify_email")
+
+    return render(request, "registration/signup.html", {"form": form})
+
+
+def verify_email(request):
+    if request.user.is_authenticated:
+        return redirect("dashboard")
+
+    user = _get_pending_user(request)
+    if user is None:
+        return redirect("signup")
+
+    profile, _ = Profile.objects.get_or_create(user=user)
+
+    if profile.email_verified:
+        return redirect("redeem_access_code")
+
+    form = VerifyEmailForm()
+
+    if request.method == "POST":
+        if request.POST.get("action") == "resend":
+            code = _generate_verification_code()
+            profile.verification_code = code
+            profile.verification_code_expires_at = timezone.now() + timedelta(
+                minutes=settings.VERIFICATION_CODE_TTL_MINUTES
+            )
+            profile.save()
+            _send_verification_email(user, code)
+            messages.success(request, "A new verification code has been sent to your email.")
+        else:
+            form = VerifyEmailForm(request.POST)
+
+            if form.is_valid():
+                code = form.cleaned_data["code"]
+                expires_at = profile.verification_code_expires_at
+
+                if (
+                    profile.verification_code
+                    and code == profile.verification_code
+                    and expires_at
+                    and timezone.now() <= expires_at
+                ):
+                    profile.email_verified = True
+                    profile.verification_code = ""
+                    profile.verification_code_expires_at = None
+                    profile.save()
+                    _notify_owners_of_pending_activation(user)
+                    return redirect("redeem_access_code")
+
+                form.add_error("code", "That code is invalid or has expired.")
+
+    return render(
+        request,
+        "registration/verify_email.html",
+        {"form": form, "email": user.email},
+    )
+
+
+def redeem_access_code(request):
+    if request.user.is_authenticated:
+        return redirect("dashboard")
+
+    user = _get_pending_user(request)
+    if user is None:
+        return redirect("signup")
+
+    profile, _ = Profile.objects.get_or_create(user=user)
+
+    if not profile.email_verified:
+        return redirect("verify_email")
+
+    form = RedeemAccessCodeForm()
+
+    if request.method == "POST":
+        form = RedeemAccessCodeForm(request.POST)
+
+        if form.is_valid():
+            code_value = form.cleaned_data["code"].strip()
+
+            try:
+                access_code = AccessCode.objects.get(code__iexact=code_value)
+            except AccessCode.DoesNotExist:
+                access_code = None
+
+            if access_code is None or not access_code.is_valid:
+                form.add_error("code", "That access code is invalid, used, or expired.")
+            else:
+                access_code.is_used = True
+                access_code.used_by = user
+                access_code.used_at = timezone.now()
+                access_code.save()
+
+                profile.access_code_redeemed = True
+                profile.save()
+
+                user.is_active = True
+                user.save()
+
+                admin_group = ensure_roles()["Admin"]
+                user.groups.add(admin_group)
+
+                Category.objects.get_or_create(owner=user, name="General")
+
+                del request.session["pending_user_id"]
+
+                login(request, user)
+                messages.success(request, "Your account is active. Welcome to RumiPress!")
+                return redirect("dashboard")
+
+    return render(request, "registration/redeem_access_code.html", {"form": form})

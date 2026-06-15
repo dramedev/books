@@ -1,48 +1,8 @@
 from django.contrib.auth import get_user_model
-from django.contrib.auth.models import Group, Permission
+from django.contrib.auth.models import Permission
 from django.core.management.base import BaseCommand, CommandError
 
-
-ROLE_PERMISSIONS = {
-    "Admin": [
-        "add_book",
-        "change_book",
-        "delete_book",
-        "view_book",
-        "add_category",
-        "change_category",
-        "delete_category",
-        "view_category",
-        "add_author",
-        "change_author",
-        "delete_author",
-        "view_author",
-        "add_sale",
-        "change_sale",
-        "delete_sale",
-        "view_sale",
-    ],
-    "Staff": [
-        "add_book",
-        "change_book",
-        "view_book",
-        "add_category",
-        "change_category",
-        "view_category",
-        "add_author",
-        "change_author",
-        "view_author",
-        "add_sale",
-        "change_sale",
-        "view_sale",
-    ],
-    "Viewer": [
-        "view_book",
-        "view_category",
-        "view_author",
-        "view_sale",
-    ],
-}
+from books.permissions import ROLE_PERMISSIONS, ensure_roles
 
 
 class Command(BaseCommand):
@@ -62,28 +22,15 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args, **options):
-        groups = {}
-
         for role, codenames in ROLE_PERMISSIONS.items():
-            group, _ = Group.objects.get_or_create(
-                name=role
-            )
-
             permissions = Permission.objects.filter(
                 content_type__app_label="books",
                 codename__in=codenames,
             )
 
             missing = sorted(
-                set(
-                    codenames
-                )
-                - set(
-                    permissions.values_list(
-                        "codename",
-                        flat=True
-                    )
-                )
+                set(codenames)
+                - set(permissions.values_list("codename", flat=True))
             )
 
             if missing:
@@ -91,12 +38,9 @@ class Command(BaseCommand):
                     f"Missing permissions for {role}: {', '.join(missing)}"
                 )
 
-            group.permissions.set(
-                permissions
-            )
+        groups = ensure_roles()
 
-            groups[role] = group
-
+        for role in groups:
             self.stdout.write(
                 self.style.SUCCESS(
                     f"{role} role ready."
