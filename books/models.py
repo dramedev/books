@@ -172,6 +172,72 @@ class Sale(models.Model):
 
 
 
+class Reorder(models.Model):
+
+    STATUS_PENDING = "pending"
+    STATUS_ORDERED = "ordered"
+    STATUS_RECEIVED = "received"
+    STATUS_CANCELLED = "cancelled"
+
+    STATUS_CHOICES = [
+        (STATUS_PENDING, _("Pending")),
+        (STATUS_ORDERED, _("Ordered")),
+        (STATUS_RECEIVED, _("Received")),
+        (STATUS_CANCELLED, _("Cancelled")),
+    ]
+
+    owner = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="owned_reorders",
+    )
+
+    book = models.ForeignKey(
+        Book,
+        on_delete=models.CASCADE,
+        related_name="reorders",
+        verbose_name=_("Book")
+    )
+
+
+    quantity = models.PositiveIntegerField(verbose_name=_("Quantity"))
+
+
+    status = models.CharField(
+        max_length=10,
+        choices=STATUS_CHOICES,
+        default=STATUS_PENDING,
+        verbose_name=_("Status")
+    )
+
+
+    note = models.CharField(max_length=200, blank=True, verbose_name=_("Note"))
+
+
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name=_("Created"))
+
+    received_at = models.DateTimeField(null=True, blank=True, verbose_name=_("Received"))
+
+
+    class Meta:
+        ordering = ["-created_at"]
+
+
+    def __str__(self):
+        return f"{self.book.title} - {self.get_status_display()}"
+
+
+    @property
+    def status_badge_class(self):
+        return {
+            self.STATUS_PENDING: "bg-warning",
+            self.STATUS_ORDERED: "bg-info",
+            self.STATUS_RECEIVED: "bg-success",
+            self.STATUS_CANCELLED: "bg-secondary",
+        }.get(self.status, "bg-secondary")
+
+
+
 class Profile(models.Model):
 
     user = models.OneToOneField(

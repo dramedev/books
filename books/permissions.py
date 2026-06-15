@@ -19,6 +19,10 @@ ROLE_PERMISSIONS = {
         "change_sale",
         "delete_sale",
         "view_sale",
+        "add_reorder",
+        "change_reorder",
+        "delete_reorder",
+        "view_reorder",
     ],
     "Staff": [
         "add_book",
@@ -33,12 +37,16 @@ ROLE_PERMISSIONS = {
         "add_sale",
         "change_sale",
         "view_sale",
+        "add_reorder",
+        "change_reorder",
+        "view_reorder",
     ],
     "Viewer": [
         "view_book",
         "view_category",
         "view_author",
         "view_sale",
+        "view_reorder",
     ],
 }
 

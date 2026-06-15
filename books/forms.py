@@ -3,7 +3,7 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.password_validation import validate_password
 from django.utils.translation import gettext_lazy as _
 
-from .models import Author, Book, Category, Profile, Sale
+from .models import Author, Book, Category, Profile, Reorder, Sale
 
 
 class BookForm(forms.ModelForm):
@@ -178,6 +178,33 @@ class SaleForm(forms.ModelForm):
                 attrs={
                     "class": "form-control",
                     "placeholder": _("Channel (optional)")
+                }
+            ),
+        }
+
+
+
+class ReorderForm(forms.ModelForm):
+
+    class Meta:
+        model = Reorder
+
+        fields = [
+            "quantity",
+            "note",
+        ]
+
+        widgets = {
+            "quantity": forms.NumberInput(
+                attrs={
+                    "class": "form-control",
+                    "min": "1"
+                }
+            ),
+            "note": forms.TextInput(
+                attrs={
+                    "class": "form-control",
+                    "placeholder": _("Note (optional)")
                 }
             ),
         }

@@ -36,4 +36,7 @@ urlpatterns = [
     path("sales/export/csv/", views.export_sales_csv, name="export_sales_csv"),
     path("sales/export/excel/", views.export_sales_excel, name="export_sales_excel"),
     path("sales/export/pdf/", views.export_sales_pdf, name="export_sales_pdf"),
+    path("reorders/", views.reorder_list, name="reorder_list"),
+    path("reorders/add/<int:book_id>/", views.reorder_create, name="reorder_create"),
+    path("reorders/<int:id>/<str:action>/", views.reorder_update_status, name="reorder_update_status"),
 ]

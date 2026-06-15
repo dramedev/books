@@ -27,11 +27,12 @@ from .forms import (
     CategoryForm,
     ProfileForm,
     RedeemAccessCodeForm,
+    ReorderForm,
     SaleForm,
     SignupForm,
     VerifyEmailForm,
 )
-from .models import AccessCode, Author, Book, Category, Profile, Sale
+from .models import AccessCode, Author, Book, Category, Profile, Reorder, Sale
 from .permissions import ensure_roles
 
 
@@ -707,6 +708,11 @@ def dashboard(request):
 
     recent_sales = sales.select_related("book", "book__category")[:5]
 
+    pending_reorders_count = Reorder.objects.filter(
+        owner=request.user,
+        status__in=[Reorder.STATUS_PENDING, Reorder.STATUS_ORDERED],
+    ).count()
+
     context = {
         "greeting": _time_based_greeting(),
         "quote": random.choice(LEARNING_QUOTES),
@@ -728,6 +734,7 @@ def dashboard(request):
         "trend_revenues": json.dumps(trend_revenues),
         "top_books": top_books,
         "recent_sales": recent_sales,
+        "pending_reorders_count": pending_reorders_count,
     }
 
     return render(request, "books/dashboard.html", context)
@@ -918,6 +925,104 @@ def sale_delete(request, id):
             "cancel_url": reverse("sale_list"),
         },
     )
+
+
+@login_required
+@permission_required("books.view_reorder", raise_exception=True)
+def reorder_list(request):
+    reorders = Reorder.objects.filter(owner=request.user).select_related("book", "book__category")
+
+    status = request.GET.get("status")
+    if status in dict(Reorder.STATUS_CHOICES):
+        reorders = reorders.filter(status=status)
+
+    paginator = Paginator(reorders, 10)
+    page_obj = paginator.get_page(request.GET.get("page"))
+
+    return render(
+        request,
+        "books/reorder_list.html",
+        {
+            "reorders": page_obj.object_list,
+            "page_obj": page_obj,
+            "status_choices": Reorder.STATUS_CHOICES,
+            "selected_status": status,
+        },
+    )
+
+
+@login_required
+@permission_required("books.add_reorder", raise_exception=True)
+def reorder_create(request, book_id):
+    book = get_object_or_404(Book, id=book_id, owner=request.user)
+
+    suggested_quantity = max(book.reorder_threshold * 2 - book.stock_on_hand, book.reorder_threshold, 1)
+
+    if request.method == "POST":
+        form = ReorderForm(request.POST)
+
+        if form.is_valid():
+            reorder = form.save(commit=False)
+            reorder.owner = request.user
+            reorder.book = book
+            reorder.save()
+            messages.success(request, gettext("Reorder created."))
+            return redirect("reorder_list")
+    else:
+        form = ReorderForm(initial={"quantity": suggested_quantity})
+
+    return render(
+        request,
+        "books/reorder_form.html",
+        {
+            "form": form,
+            "book": book,
+        },
+    )
+
+
+@login_required
+@permission_required("books.change_reorder", raise_exception=True)
+@require_POST
+def reorder_update_status(request, id, action):
+    reorder = get_object_or_404(Reorder, id=id, owner=request.user)
+
+    transitions = {
+        "ordered": (Reorder.STATUS_PENDING, Reorder.STATUS_ORDERED),
+        "received": (Reorder.STATUS_ORDERED, Reorder.STATUS_RECEIVED),
+        "cancelled": (None, Reorder.STATUS_CANCELLED),
+    }
+
+    if action not in transitions:
+        return redirect("reorder_list")
+
+    required_status, new_status = transitions[action]
+
+    if action == "cancelled":
+        if reorder.status in (Reorder.STATUS_RECEIVED, Reorder.STATUS_CANCELLED):
+            messages.error(request, gettext("This reorder can't be updated from its current status."))
+            return redirect("reorder_list")
+    elif reorder.status != required_status:
+        messages.error(request, gettext("This reorder can't be updated from its current status."))
+        return redirect("reorder_list")
+
+    reorder.status = new_status
+
+    if new_status == Reorder.STATUS_RECEIVED:
+        reorder.received_at = timezone.now()
+        reorder.save(update_fields=["status", "received_at"])
+        book = _adjust_stock(reorder.book_id, reorder.quantity, request.user)
+        messages.success(request, gettext("Reorder received and stock updated."))
+        _notify_stock_level(request, book)
+    else:
+        reorder.save(update_fields=["status"])
+
+        if new_status == Reorder.STATUS_ORDERED:
+            messages.success(request, gettext("Reorder marked as ordered."))
+        else:
+            messages.success(request, gettext("Reorder cancelled."))
+
+    return redirect("reorder_list")
 
 
 @login_required

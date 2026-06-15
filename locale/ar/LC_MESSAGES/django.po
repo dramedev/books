@@ -460,6 +460,75 @@ msgstr "جيد"
 msgid "No books to show."
 msgstr "لا توجد كتب لعرضها."
 
+msgid "Reorders"
+msgstr "إعادة الطلب"
+
+msgid "Track stock reorders from pending to received."
+msgstr "تتبع طلبات إعادة التزويد من الانتظار إلى الاستلام."
+
+msgid "All"
+msgstr "الكل"
+
+msgid "Pending"
+msgstr "قيد الانتظار"
+
+msgid "Ordered"
+msgstr "تم الطلب"
+
+msgid "Received"
+msgstr "تم الاستلام"
+
+msgid "Cancelled"
+msgstr "ملغى"
+
+msgid "Note"
+msgstr "ملاحظة"
+
+msgid "No reorders yet."
+msgstr "لا توجد طلبات إعادة تزويد حتى الآن."
+
+msgid "Mark as ordered"
+msgstr "وضع علامة كمطلوب"
+
+msgid "Mark as received"
+msgstr "وضع علامة كمستلم"
+
+msgid "Cancel reorder"
+msgstr "إلغاء طلب إعادة التزويد"
+
+msgid "Reorder pages"
+msgstr "صفحات إعادة الطلب"
+
+msgid "Reorder Form"
+msgstr "نموذج إعادة الطلب"
+
+msgid "'%(title)s' currently has %(stock)s in stock (threshold %(threshold)s)."
+msgstr "'%(title)s' لديه حاليًا %(stock)s في المخزون (الحد %(threshold)s)."
+
+msgid "Note (optional)"
+msgstr "ملاحظة (اختياري)"
+
+msgid "Reorder"
+msgstr "إعادة الطلب"
+
+msgid "Reorder created."
+msgstr "تم إنشاء طلب إعادة التزويد."
+
+msgid "Reorder marked as ordered."
+msgstr "تم وضع علامة على الطلب كمطلوب."
+
+msgid "Reorder received and stock updated."
+msgstr "تم استلام الطلب وتحديث المخزون."
+
+msgid "Reorder cancelled."
+msgstr "تم إلغاء طلب إعادة التزويد."
+
+msgid "This reorder can't be updated from its current status."
+msgstr "لا يمكن تحديث هذا الطلب من حالته الحالية."
+
+msgid "Created"
+msgstr "تاريخ الإنشاء"
+
 msgid "Distribution Report"
 msgstr "تقرير التوزيع"
 

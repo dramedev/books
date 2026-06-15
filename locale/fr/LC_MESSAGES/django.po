@@ -460,6 +460,75 @@ msgstr "OK"
 msgid "No books to show."
 msgstr "Aucun livre à afficher."
 
+msgid "Reorders"
+msgstr "Réapprovisionnements"
+
+msgid "Track stock reorders from pending to received."
+msgstr "Suivez les réapprovisionnements de stock, de la demande à la réception."
+
+msgid "All"
+msgstr "Tous"
+
+msgid "Pending"
+msgstr "En attente"
+
+msgid "Ordered"
+msgstr "Commandé"
+
+msgid "Received"
+msgstr "Reçu"
+
+msgid "Cancelled"
+msgstr "Annulé"
+
+msgid "Note"
+msgstr "Note"
+
+msgid "No reorders yet."
+msgstr "Aucun réapprovisionnement pour le moment."
+
+msgid "Mark as ordered"
+msgstr "Marquer comme commandé"
+
+msgid "Mark as received"
+msgstr "Marquer comme reçu"
+
+msgid "Cancel reorder"
+msgstr "Annuler le réapprovisionnement"
+
+msgid "Reorder pages"
+msgstr "Pages de réapprovisionnements"
+
+msgid "Reorder Form"
+msgstr "Formulaire de réapprovisionnement"
+
+msgid "'%(title)s' currently has %(stock)s in stock (threshold %(threshold)s)."
+msgstr "« %(title)s » a actuellement %(stock)s en stock (seuil %(threshold)s)."
+
+msgid "Note (optional)"
+msgstr "Note (facultative)"
+
+msgid "Reorder"
+msgstr "Réapprovisionner"
+
+msgid "Reorder created."
+msgstr "Réapprovisionnement créé."
+
+msgid "Reorder marked as ordered."
+msgstr "Réapprovisionnement marqué comme commandé."
+
+msgid "Reorder received and stock updated."
+msgstr "Réapprovisionnement reçu et stock mis à jour."
+
+msgid "Reorder cancelled."
+msgstr "Réapprovisionnement annulé."
+
+msgid "This reorder can't be updated from its current status."
+msgstr "Ce réapprovisionnement ne peut pas être mis à jour depuis son statut actuel."
+
+msgid "Created"
+msgstr "Créé"
+
 msgid "Distribution Report"
 msgstr "Rapport de distribution"
 

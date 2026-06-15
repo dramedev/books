@@ -13,9 +13,20 @@
 </p>
 </div>
 
+<div class="d-flex gap-2 align-items-center">
+{% if perms.books.view_reorder %}
+<a class="btn btn-outline-light position-relative" href="{% url 'reorder_list' %}">
+<i class="bi bi-arrow-repeat"></i> {% translate "Reorders" %}
+{% if pending_reorders_count > 0 %}
+<span class="badge bg-warning text-dark ms-1">{{ pending_reorders_count }}</span>
+{% endif %}
+</a>
+{% endif %}
+
 <a class="btn btn-primary" href="{% url 'report' %}">
 {% translate "Full Report" %}
 </a>
+</div>
 </div>
 
 <div class="page-panel quote-panel mb-3" id="dashboard-quote-panel">

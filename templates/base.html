@@ -510,6 +510,12 @@ html[dir="rtl"] .chat-panel{
 </a>
 {% endif %}
 
+{% if perms.books.view_reorder %}
+<a class="sidebar-link {% if url_name == 'reorder_list' or url_name == 'reorder_create' %}active{% endif %}" href="{% url 'reorder_list' %}">
+<i class="bi bi-arrow-repeat"></i> {% translate "Reorders" %}
+</a>
+{% endif %}
+
 {% if perms.books.view_category %}
 <a class="sidebar-link {% if url_name == 'category_list' or url_name == 'category_create' or url_name == 'category_update' or url_name == 'category_delete' %}active{% endif %}" href="{% url 'category_list' %}">
 <i class="bi bi-tags"></i> {% translate "Categories" %}

@@ -51,10 +51,16 @@
 <span class="badge bg-success">{% translate "OK" %}</span>
 {% endif %}
 </td>
-<td>
+<td class="d-flex gap-2 flex-wrap">
 {% if perms.books.change_book %}
 <a class="btn btn-warning btn-sm" href="{% url 'book_update' book.id %}">
 {% translate "Edit" %}
+</a>
+{% endif %}
+
+{% if book.is_low_stock and perms.books.add_reorder %}
+<a class="btn btn-primary btn-sm" href="{% url 'reorder_create' book.id %}">
+{% translate "Reorder" %}
 </a>
 {% endif %}
 </td>
