@@ -595,6 +595,9 @@ msgstr "Rumi Press - Livres"
 msgid "Rumi Press Sales"
 msgstr "Rumi Press - Ventes"
 
+msgid "Rumi Press Reorders"
+msgstr "Rumi Press - Réapprovisionnements"
+
 msgid "Good morning"
 msgstr "Bonjour"
 

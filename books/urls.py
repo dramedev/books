@@ -38,6 +38,9 @@ urlpatterns = [
     path("sales/export/pdf/", views.export_sales_pdf, name="export_sales_pdf"),
     path("reorders/", views.reorder_list, name="reorder_list"),
     path("reorders/add/<int:book_id>/", views.reorder_create, name="reorder_create"),
+    path("reorders/export/csv/", views.export_reorders_csv, name="export_reorders_csv"),
+    path("reorders/export/excel/", views.export_reorders_excel, name="export_reorders_excel"),
+    path("reorders/export/pdf/", views.export_reorders_pdf, name="export_reorders_pdf"),
     path("reorders/<int:id>/delete/", views.reorder_delete, name="reorder_delete"),
     path("reorders/<int:id>/<str:action>/", views.reorder_update_status, name="reorder_update_status"),
 ]

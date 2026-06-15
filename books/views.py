@@ -184,6 +184,29 @@ def _sale_export_rows(sales):
         ]
 
 
+def _reorder_export_headers():
+    return [
+        gettext("Date"),
+        gettext("Book"),
+        gettext("Quantity"),
+        gettext("Status"),
+        gettext("Note"),
+        gettext("Received"),
+    ]
+
+
+def _reorder_export_rows(reorders):
+    for reorder in reorders:
+        yield [
+            reorder.created_at.date().isoformat(),
+            reorder.book.title,
+            reorder.quantity,
+            reorder.get_status_display(),
+            reorder.note,
+            reorder.received_at.date().isoformat() if reorder.received_at else "",
+        ]
+
+
 def _book_filters(request):
     books = Book.objects.filter(owner=request.user).select_related("category").prefetch_related("authors")
 
@@ -1276,6 +1299,124 @@ def export_sales_pdf(request):
 
     response = HttpResponse(buffer.getvalue(), content_type="application/pdf")
     response["Content-Disposition"] = 'attachment; filename="rumi-press-sales.pdf"'
+
+    return response
+
+
+@login_required
+@permission_required("books.view_reorder", raise_exception=True)
+def export_reorders_csv(request):
+    response = HttpResponse(content_type="text/csv")
+    response["Content-Disposition"] = 'attachment; filename="rumi-press-reorders.csv"'
+
+    writer = csv.writer(response)
+    writer.writerow(_reorder_export_headers())
+
+    reorders = Reorder.objects.filter(owner=request.user).select_related("book")
+
+    for row in _reorder_export_rows(reorders):
+        writer.writerow(row)
+
+    return response
+
+
+@login_required
+@permission_required("books.view_reorder", raise_exception=True)
+def export_reorders_excel(request):
+    from openpyxl import Workbook
+
+    workbook = Workbook()
+    worksheet = workbook.active
+    worksheet.title = "Reorders"
+    worksheet.append(_reorder_export_headers())
+
+    reorders = Reorder.objects.filter(owner=request.user).select_related("book")
+
+    for row in _reorder_export_rows(reorders):
+        worksheet.append(row)
+
+    for column in worksheet.columns:
+        max_length = max(len(str(cell.value or "")) for cell in column)
+        worksheet.column_dimensions[column[0].column_letter].width = min(
+            max_length + 2,
+            40,
+        )
+
+    buffer = BytesIO()
+    workbook.save(buffer)
+    buffer.seek(0)
+
+    response = HttpResponse(
+        buffer.getvalue(),
+        content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    )
+    response["Content-Disposition"] = 'attachment; filename="rumi-press-reorders.xlsx"'
+
+    return response
+
+
+@login_required
+@permission_required("books.view_reorder", raise_exception=True)
+def export_reorders_pdf(request):
+    from reportlab.lib import colors
+    from reportlab.lib.pagesizes import landscape, letter
+    from reportlab.lib.styles import getSampleStyleSheet
+    from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
+
+    _register_pdf_fonts()
+    body_font, bold_font = _pdf_fonts()
+
+    buffer = BytesIO()
+    document = SimpleDocTemplate(
+        buffer,
+        pagesize=landscape(letter),
+        leftMargin=24,
+        rightMargin=24,
+        topMargin=24,
+        bottomMargin=24,
+    )
+
+    styles = getSampleStyleSheet()
+    title_style = styles["Title"]
+    title_style.fontName = bold_font
+
+    elements = [
+        Paragraph(_pdf_text(gettext("Rumi Press Reorders")), title_style),
+        Spacer(1, 12),
+    ]
+
+    reorders = Reorder.objects.filter(owner=request.user).select_related("book")
+
+    rows = [[_pdf_text(value) for value in _reorder_export_headers()]]
+
+    for row in _reorder_export_rows(reorders):
+        rows.append([_pdf_text(value) for value in row])
+
+    table = Table(
+        rows,
+        repeatRows=1,
+        colWidths=[70, 160, 60, 70, 160, 70],
+    )
+    table.setStyle(
+        TableStyle(
+            [
+                ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#1f1f1f")),
+                ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+                ("FONTNAME", (0, 0), (-1, 0), bold_font),
+                ("FONTNAME", (0, 1), (-1, -1), body_font),
+                ("FONTSIZE", (0, 0), (-1, -1), 7),
+                ("GRID", (0, 0), (-1, -1), 0.25, colors.grey),
+                ("VALIGN", (0, 0), (-1, -1), "TOP"),
+            ]
+        )
+    )
+
+    elements.append(table)
+    document.build(elements)
+    buffer.seek(0)
+
+    response = HttpResponse(buffer.getvalue(), content_type="application/pdf")
+    response["Content-Disposition"] = 'attachment; filename="rumi-press-reorders.pdf"'
 
     return response
 

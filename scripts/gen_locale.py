@@ -260,6 +260,7 @@ FR = {
     "Published Date": "Date de publication",
     "Rumi Press Books": "Rumi Press - Livres",
     "Rumi Press Sales": "Rumi Press - Ventes",
+    "Rumi Press Reorders": "Rumi Press - Réapprovisionnements",
 
     # Views / forms messages
     "Good morning": "Bonjour",
@@ -616,6 +617,7 @@ AR = {
     "Published Date": "تاريخ النشر",
     "Rumi Press Books": "روومي برِس - الكتب",
     "Rumi Press Sales": "روومي برِس - المبيعات",
+    "Rumi Press Reorders": "روومي برِس - إعادة الطلب",
 
     # Views / forms messages
     "Good morning": "صباح الخير",

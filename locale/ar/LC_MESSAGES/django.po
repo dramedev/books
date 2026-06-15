@@ -595,6 +595,9 @@ msgstr "روومي برِس - الكتب"
 msgid "Rumi Press Sales"
 msgstr "روومي برِس - المبيعات"
 
+msgid "Rumi Press Reorders"
+msgstr "روومي برِس - إعادة الطلب"
+
 msgid "Good morning"
 msgstr "صباح الخير"
 

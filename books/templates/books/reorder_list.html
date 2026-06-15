@@ -12,6 +12,20 @@
 {% translate "Track stock reorders from pending to received." %}
 </p>
 </div>
+
+<div class="d-flex gap-2">
+<a class="btn btn-outline-light" href="{% url 'export_reorders_csv' %}">
+{% translate "CSV" %}
+</a>
+
+<a class="btn btn-outline-light" href="{% url 'export_reorders_excel' %}">
+{% translate "Excel" %}
+</a>
+
+<a class="btn btn-outline-light" href="{% url 'export_reorders_pdf' %}">
+{% translate "PDF" %}
+</a>
+</div>
 </div>
 
 
