@@ -139,19 +139,21 @@
 <th>{% translate "Title" %}</th>
 <th>{% translate "Stock" %}</th>
 <th>{% translate "Threshold" %}</th>
+<th>{% translate "Suggested Qty" %}</th>
 <th></th>
 </tr>
 
-{% for book in low_stock_books %}
+{% for item in low_stock_books %}
 <tr>
-<td><a href="{% url 'book_detail' book.id %}">{{ book.title }}</a></td>
-<td>{{ book.stock_on_hand }}</td>
-<td>{{ book.reorder_threshold }}</td>
+<td><a href="{% url 'book_detail' item.book.id %}">{{ item.book.title }}</a></td>
+<td>{{ item.book.stock_on_hand }}</td>
+<td>{{ item.book.reorder_threshold }}</td>
+<td>{{ item.suggested_quantity }}</td>
 <td><span class="badge bg-danger">{% translate "Low" %}</span></td>
 </tr>
 {% empty %}
 <tr>
-<td colspan="4" class="text-center muted-text py-4">
+<td colspan="5" class="text-center muted-text py-4">
 {% translate "Nothing is below its reorder threshold." %}
 </td>
 </tr>
@@ -159,13 +161,19 @@
 </table>
 </div>
 
+<div class="mt-2 d-flex gap-2">
 {% if low_stock_count > 5 %}
-<div class="mt-2">
 <a class="btn btn-outline-light btn-sm" href="{% url 'stock_list' %}?low=1">
 {% blocktranslate %}View all {{ low_stock_count }} low stock books{% endblocktranslate %}
 </a>
-</div>
 {% endif %}
+
+{% if perms.books.view_reorder %}
+<a class="btn btn-outline-light btn-sm" href="{% url 'reorder_suggestions' %}">
+{% translate "Reorder Suggestions" %}
+</a>
+{% endif %}
+</div>
 </div>
 </div>
 

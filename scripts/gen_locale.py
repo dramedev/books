@@ -161,6 +161,14 @@ FR = {
     "Purchase Cost": "Coût d'achat",
     "Stock Value": "Valeur du stock",
     "Total inventory value": "Valeur totale de l'inventaire",
+    "Suggested Qty": "Quantité suggérée",
+    "Reorder Suggestions": "Suggestions de réapprovisionnement",
+    "Suggestions": "Suggestions",
+    "Books that are low on stock or projected to run out soon, based on recent sales.": "Livres en faible stock ou dont la rupture est prévue prochainement, sur la base des ventes récentes.",
+    "Avg. daily sales": "Ventes quotidiennes moy.",
+    "Days of stock left": "Jours de stock restants",
+    "Suggested quantity": "Quantité suggérée",
+    "No reorder suggestions right now.": "Aucune suggestion de réapprovisionnement pour le moment.",
 
     # Book detail
     "Back to Books": "Retour aux livres",
@@ -567,6 +575,14 @@ AR = {
     "Purchase Cost": "تكلفة الشراء",
     "Stock Value": "قيمة المخزون",
     "Total inventory value": "القيمة الإجمالية للمخزون",
+    "Suggested Qty": "الكمية المقترحة",
+    "Reorder Suggestions": "مقترحات إعادة الطلب",
+    "Suggestions": "مقترحات",
+    "Books that are low on stock or projected to run out soon, based on recent sales.": "الكتب منخفضة المخزون أو المتوقع نفادها قريبًا، بناءً على المبيعات الأخيرة.",
+    "Avg. daily sales": "متوسط المبيعات اليومية",
+    "Days of stock left": "الأيام المتبقية من المخزون",
+    "Suggested quantity": "الكمية المقترحة",
+    "No reorder suggestions right now.": "لا توجد مقترحات لإعادة الطلب حاليًا.",
 
     # Book detail
     "Back to Books": "العودة إلى الكتب",

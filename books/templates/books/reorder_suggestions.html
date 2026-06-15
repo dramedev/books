@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+
+{% block content %}
+
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+<div>
+<h1 class="mb-1">{% translate "Reorder Suggestions" %}</h1>
+<p class="muted-text mb-0">
+{% translate "Books that are low on stock or projected to run out soon, based on recent sales." %}
+</p>
+</div>
+
+<div class="d-flex gap-2">
+<a class="btn btn-outline-light" href="{% url 'reorder_list' %}">
+{% translate "Reorders" %}
+</a>
+</div>
+</div>
+
+
+<div class="table-responsive">
+<table class="table table-striped align-middle">
+<tr>
+<th>{% translate "Title" %}</th>
+<th>{% translate "Category" %}</th>
+<th>{% translate "Stock on hand" %}</th>
+<th>{% translate "Reorder threshold" %}</th>
+<th>{% translate "Avg. daily sales" %}</th>
+<th>{% translate "Days of stock left" %}</th>
+<th>{% translate "Suggested quantity" %}</th>
+<th>{% translate "Actions" %}</th>
+</tr>
+
+{% for item in suggestions %}
+<tr>
+<td>{{ item.book.title }}</td>
+<td>{{ item.book.category }}</td>
+<td>{{ item.book.stock_on_hand }}</td>
+<td>{{ item.book.reorder_threshold }}</td>
+<td>{{ item.daily_sales_velocity|floatformat:2 }}</td>
+<td>
+{% if item.days_of_stock is not None %}
+{{ item.days_of_stock|floatformat:0 }}
+{% else %}
+&mdash;
+{% endif %}
+</td>
+<td>{{ item.suggested_quantity }}</td>
+<td>
+{% if perms.books.add_reorder %}
+<a class="btn btn-primary btn-sm" href="{% url 'reorder_create' item.book.id %}">
+{% translate "Reorder" %}
+</a>
+{% endif %}
+</td>
+</tr>
+
+{% empty %}
+<tr>
+<td colspan="8" class="text-center muted-text py-4">
+{% translate "No reorder suggestions right now." %}
+</td>
+</tr>
+{% endfor %}
+</table>
+</div>
+
+
+{% endblock %}

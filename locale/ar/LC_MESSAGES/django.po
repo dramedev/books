@@ -349,6 +349,30 @@ msgstr "قيمة المخزون"
 msgid "Total inventory value"
 msgstr "القيمة الإجمالية للمخزون"
 
+msgid "Suggested Qty"
+msgstr "الكمية المقترحة"
+
+msgid "Reorder Suggestions"
+msgstr "مقترحات إعادة الطلب"
+
+msgid "Suggestions"
+msgstr "مقترحات"
+
+msgid "Books that are low on stock or projected to run out soon, based on recent sales."
+msgstr "الكتب منخفضة المخزون أو المتوقع نفادها قريبًا، بناءً على المبيعات الأخيرة."
+
+msgid "Avg. daily sales"
+msgstr "متوسط المبيعات اليومية"
+
+msgid "Days of stock left"
+msgstr "الأيام المتبقية من المخزون"
+
+msgid "Suggested quantity"
+msgstr "الكمية المقترحة"
+
+msgid "No reorder suggestions right now."
+msgstr "لا توجد مقترحات لإعادة الطلب حاليًا."
+
 msgid "Back to Books"
 msgstr "العودة إلى الكتب"
 

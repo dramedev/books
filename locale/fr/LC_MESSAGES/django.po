@@ -349,6 +349,30 @@ msgstr "Valeur du stock"
 msgid "Total inventory value"
 msgstr "Valeur totale de l'inventaire"
 
+msgid "Suggested Qty"
+msgstr "Quantité suggérée"
+
+msgid "Reorder Suggestions"
+msgstr "Suggestions de réapprovisionnement"
+
+msgid "Suggestions"
+msgstr "Suggestions"
+
+msgid "Books that are low on stock or projected to run out soon, based on recent sales."
+msgstr "Livres en faible stock ou dont la rupture est prévue prochainement, sur la base des ventes récentes."
+
+msgid "Avg. daily sales"
+msgstr "Ventes quotidiennes moy."
+
+msgid "Days of stock left"
+msgstr "Jours de stock restants"
+
+msgid "Suggested quantity"
+msgstr "Quantité suggérée"
+
+msgid "No reorder suggestions right now."
+msgstr "Aucune suggestion de réapprovisionnement pour le moment."
+
 msgid "Back to Books"
 msgstr "Retour aux livres"
 

@@ -1,5 +1,6 @@
 import csv
 import json
+import math
 import random
 from datetime import timedelta
 from io import BytesIO
@@ -11,7 +12,7 @@ from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib.auth.models import User
 from django.core.mail import send_mail
 from django.core.paginator import Paginator
-from django.db.models import Count, DecimalField, ExpressionWrapper, F, OuterRef, Q, Subquery, Sum, Value
+from django.db.models import Count, DecimalField, ExpressionWrapper, F, IntegerField, OuterRef, Q, Subquery, Sum, Value
 from django.db.models.functions import Coalesce, TruncMonth
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
@@ -701,6 +702,32 @@ def _annotate_stock_value(books):
     )
 
 
+REORDER_VELOCITY_WINDOW_DAYS = 30
+REORDER_COVER_DAYS = 30
+
+
+def _daily_sales_velocity(book):
+    cutoff = timezone.now().date() - timedelta(days=REORDER_VELOCITY_WINDOW_DAYS)
+
+    units_sold = Sale.objects.filter(
+        book=book, sale_date__gte=cutoff
+    ).aggregate(total=Sum("quantity"))["total"] or 0
+
+    return units_sold / REORDER_VELOCITY_WINDOW_DAYS
+
+
+def _suggested_reorder_quantity(book, velocity=None):
+    if velocity is None:
+        velocity = _daily_sales_velocity(book)
+
+    needed_for_cover = math.ceil(velocity * REORDER_COVER_DAYS) - book.stock_on_hand
+
+    if needed_for_cover > 0:
+        return needed_for_cover
+
+    return max(book.reorder_threshold * 2 - book.stock_on_hand, book.reorder_threshold, 1)
+
+
 @login_required
 @permission_required("books.view_book", raise_exception=True)
 def report(request):
@@ -936,7 +963,10 @@ def dashboard(request):
         "total_authors": Author.objects.filter(owner=request.user).count(),
         "total_categories": Category.objects.filter(owner=request.user).count(),
         "low_stock_count": low_stock_books.count(),
-        "low_stock_books": low_stock_books[:5],
+        "low_stock_books": [
+            {"book": book, "suggested_quantity": _suggested_reorder_quantity(book)}
+            for book in low_stock_books[:5]
+        ],
         "total_revenue": total_revenue,
         "total_expense": total_expense,
         "total_profit": total_profit,
@@ -1282,6 +1312,57 @@ def return_delete(request, id):
 
 @login_required
 @permission_required("books.view_reorder", raise_exception=True)
+def reorder_suggestions(request):
+    books = Book.objects.filter(owner=request.user).select_related("category")
+
+    cutoff = timezone.now().date() - timedelta(days=REORDER_VELOCITY_WINDOW_DAYS)
+
+    recent_sales = (
+        Sale.objects.filter(book=OuterRef("pk"), sale_date__gte=cutoff)
+        .values("book")
+        .annotate(total=Sum("quantity"))
+        .values("total")
+    )
+
+    books = books.annotate(
+        units_sold_recent=Coalesce(
+            Subquery(recent_sales, output_field=IntegerField()),
+            Value(0, output_field=IntegerField()),
+        )
+    )
+
+    suggestions = []
+
+    for book in books:
+        velocity = book.units_sold_recent / REORDER_VELOCITY_WINDOW_DAYS
+        days_of_stock = book.stock_on_hand / velocity if velocity > 0 else None
+        needs_reorder = book.is_low_stock or (
+            days_of_stock is not None and days_of_stock <= REORDER_COVER_DAYS
+        )
+
+        if not needs_reorder:
+            continue
+
+        suggestions.append({
+            "book": book,
+            "daily_sales_velocity": velocity,
+            "days_of_stock": days_of_stock,
+            "suggested_quantity": _suggested_reorder_quantity(book, velocity=velocity),
+        })
+
+    suggestions.sort(
+        key=lambda item: item["days_of_stock"] if item["days_of_stock"] is not None else -1
+    )
+
+    return render(
+        request,
+        "books/reorder_suggestions.html",
+        {"suggestions": suggestions},
+    )
+
+
+@login_required
+@permission_required("books.view_reorder", raise_exception=True)
 def reorder_list(request):
     reorders = Reorder.objects.filter(owner=request.user).select_related("book", "book__category", "supplier")
 
@@ -1309,7 +1390,7 @@ def reorder_list(request):
 def reorder_create(request, book_id):
     book = get_object_or_404(Book, id=book_id, owner=request.user)
 
-    suggested_quantity = max(book.reorder_threshold * 2 - book.stock_on_hand, book.reorder_threshold, 1)
+    suggested_quantity = _suggested_reorder_quantity(book)
 
     if request.method == "POST":
         form = ReorderForm(request.POST, user=request.user)
