@@ -26,6 +26,12 @@
 {% translate "PDF" %}
 </a>
 
+{% if perms.books.view_return %}
+<a class="btn btn-outline-light" href="{% url 'return_list' %}">
+{% translate "Returns" %}
+</a>
+{% endif %}
+
 {% if perms.books.add_sale %}
 <a class="btn btn-primary" href="{% url 'sale_create' %}">
 {% translate "Add Sale" %}
@@ -67,6 +73,12 @@
 {% if perms.books.delete_sale %}
 <a class="btn btn-danger btn-sm" href="{% url 'sale_delete' sale.id %}">
 {% translate "Delete" %}
+</a>
+{% endif %}
+
+{% if perms.books.add_return and sale.quantity > 0 %}
+<a class="btn btn-outline-light btn-sm" href="{% url 'return_create' sale.id %}">
+{% translate "Return" %}
 </a>
 {% endif %}
 </td>

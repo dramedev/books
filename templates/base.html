@@ -516,6 +516,12 @@ html[dir="rtl"] .chat-panel{
 </a>
 {% endif %}
 
+{% if perms.books.view_supplier %}
+<a class="sidebar-link {% if url_name == 'supplier_list' or url_name == 'supplier_create' or url_name == 'supplier_update' or url_name == 'supplier_delete' %}active{% endif %}" href="{% url 'supplier_list' %}">
+<i class="bi bi-truck"></i> {% translate "Suppliers" %}
+</a>
+{% endif %}
+
 {% if perms.books.view_category %}
 <a class="sidebar-link {% if url_name == 'category_list' or url_name == 'category_create' or url_name == 'category_update' or url_name == 'category_delete' %}active{% endif %}" href="{% url 'category_list' %}">
 <i class="bi bi-tags"></i> {% translate "Categories" %}
@@ -533,6 +539,12 @@ html[dir="rtl"] .chat-panel{
 
 <a class="sidebar-link {% if url_name == 'sale_list' or url_name == 'sale_create' or url_name == 'sale_update' or url_name == 'sale_delete' %}active{% endif %}" href="{% url 'sale_list' %}">
 <i class="bi bi-cart3"></i> {% translate "Sales" %}
+</a>
+{% endif %}
+
+{% if perms.books.view_return %}
+<a class="sidebar-link {% if url_name == 'return_list' or url_name == 'return_create' %}active{% endif %}" href="{% url 'return_list' %}">
+<i class="bi bi-arrow-counterclockwise"></i> {% translate "Returns" %}
 </a>
 {% endif %}
 

@@ -43,4 +43,11 @@ urlpatterns = [
     path("reorders/export/pdf/", views.export_reorders_pdf, name="export_reorders_pdf"),
     path("reorders/<int:id>/delete/", views.reorder_delete, name="reorder_delete"),
     path("reorders/<int:id>/<str:action>/", views.reorder_update_status, name="reorder_update_status"),
+    path("suppliers/", views.supplier_list, name="supplier_list"),
+    path("suppliers/add/", views.supplier_create, name="supplier_create"),
+    path("suppliers/edit/<int:id>/", views.supplier_update, name="supplier_update"),
+    path("suppliers/delete/<int:id>/", views.supplier_delete, name="supplier_delete"),
+    path("returns/", views.return_list, name="return_list"),
+    path("returns/add/<int:sale_id>/", views.return_create, name="return_create"),
+    path("returns/delete/<int:id>/", views.return_delete, name="return_delete"),
 ]

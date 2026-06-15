@@ -172,6 +172,35 @@ class Sale(models.Model):
 
 
 
+class Supplier(models.Model):
+
+    owner = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="owned_suppliers",
+    )
+
+    name = models.CharField(max_length=200, verbose_name=_("Name"))
+
+    contact_name = models.CharField(max_length=200, blank=True, verbose_name=_("Contact name"))
+
+    email = models.EmailField(blank=True, verbose_name=_("Email"))
+
+    phone = models.CharField(max_length=50, blank=True, verbose_name=_("Phone"))
+
+    notes = models.CharField(max_length=200, blank=True, verbose_name=_("Notes"))
+
+
+    class Meta:
+        ordering = ["name"]
+        unique_together = ("owner", "name")
+
+
+    def __str__(self):
+        return self.name
+
+
+
 class Reorder(models.Model):
 
     STATUS_PENDING = "pending"
@@ -197,6 +226,15 @@ class Reorder(models.Model):
         on_delete=models.CASCADE,
         related_name="reorders",
         verbose_name=_("Book")
+    )
+
+    supplier = models.ForeignKey(
+        Supplier,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="reorders",
+        verbose_name=_("Supplier")
     )
 
 
@@ -235,6 +273,45 @@ class Reorder(models.Model):
             self.STATUS_RECEIVED: "bg-success",
             self.STATUS_CANCELLED: "bg-secondary",
         }.get(self.status, "bg-secondary")
+
+
+
+class Return(models.Model):
+
+    owner = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="owned_returns",
+    )
+
+    sale = models.ForeignKey(
+        Sale,
+        on_delete=models.CASCADE,
+        related_name="returns",
+        verbose_name=_("Sale")
+    )
+
+
+    quantity = models.PositiveIntegerField(verbose_name=_("Quantity"))
+
+
+    reason = models.CharField(max_length=200, blank=True, verbose_name=_("Reason"))
+
+
+    return_date = models.DateField(verbose_name=_("Return date"))
+
+
+    class Meta:
+        ordering = ["-return_date"]
+
+
+    def __str__(self):
+        return f"{self.sale.book.title} - {self.return_date}"
+
+
+    @property
+    def refund_amount(self):
+        return self.quantity * self.sale.unit_price
 
 
 

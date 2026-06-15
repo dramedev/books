@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+
+{% block content %}
+
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+<div>
+<h1 class="mb-1">{% translate "Suppliers" %}</h1>
+<p class="muted-text mb-0">
+{% translate "Manage the suppliers used for stock reorders." %}
+</p>
+</div>
+
+{% if perms.books.add_supplier %}
+<a class="btn btn-primary" href="{% url 'supplier_create' %}">
+{% translate "Add Supplier" %}
+</a>
+{% endif %}
+</div>
+
+
+<div class="table-responsive">
+<table class="table table-striped align-middle">
+<tr>
+<th>{% translate "Name" %}</th>
+<th>{% translate "Contact name" %}</th>
+<th>{% translate "Email" %}</th>
+<th>{% translate "Phone" %}</th>
+<th>{% translate "Reorders" %}</th>
+<th>{% translate "Actions" %}</th>
+</tr>
+
+{% for supplier in suppliers %}
+<tr>
+<td>{{ supplier.name }}</td>
+<td>{{ supplier.contact_name|default:"-" }}</td>
+<td>{{ supplier.email|default:"-" }}</td>
+<td>{{ supplier.phone|default:"-" }}</td>
+<td>{{ supplier.reorder_count }}</td>
+<td>
+{% if perms.books.change_supplier %}
+<a class="btn btn-warning btn-sm" href="{% url 'supplier_update' supplier.id %}">
+{% translate "Edit" %}
+</a>
+{% endif %}
+
+{% if perms.books.delete_supplier %}
+<a class="btn btn-danger btn-sm" href="{% url 'supplier_delete' supplier.id %}">
+{% translate "Delete" %}
+</a>
+{% endif %}
+</td>
+</tr>
+{% empty %}
+<tr>
+<td colspan="6" class="text-center muted-text py-4">
+{% translate "No suppliers yet." %}
+</td>
+</tr>
+{% endfor %}
+</table>
+</div>
+
+
+{% endblock %}

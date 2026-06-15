@@ -28,11 +28,13 @@ from .forms import (
     ProfileForm,
     RedeemAccessCodeForm,
     ReorderForm,
+    ReturnForm,
     SaleForm,
     SignupForm,
+    SupplierForm,
     VerifyEmailForm,
 )
-from .models import AccessCode, Author, Book, Category, Profile, Reorder, Sale
+from .models import AccessCode, Author, Book, Category, Profile, Reorder, Return, Sale, Supplier
 from .permissions import ensure_roles
 
 
@@ -188,6 +190,7 @@ def _reorder_export_headers():
     return [
         gettext("Date"),
         gettext("Book"),
+        gettext("Supplier"),
         gettext("Quantity"),
         gettext("Status"),
         gettext("Note"),
@@ -200,6 +203,7 @@ def _reorder_export_rows(reorders):
         yield [
             reorder.created_at.date().isoformat(),
             reorder.book.title,
+            reorder.supplier.name if reorder.supplier else "",
             reorder.quantity,
             reorder.get_status_display(),
             reorder.note,
@@ -566,6 +570,90 @@ def author_delete(request, id):
                 else ""
             ),
             "disable_delete": bool(book_count),
+        },
+    )
+
+
+@login_required
+@permission_required("books.view_supplier", raise_exception=True)
+def supplier_list(request):
+    suppliers = Supplier.objects.filter(owner=request.user).annotate(reorder_count=Count("reorders")).order_by("name")
+    return render(request, "books/supplier_list.html", {"suppliers": suppliers})
+
+
+@login_required
+@permission_required("books.add_supplier", raise_exception=True)
+def supplier_create(request):
+    form = SupplierForm()
+
+    if request.method == "POST":
+        form = SupplierForm(request.POST)
+
+        if form.is_valid():
+            supplier = form.save(commit=False)
+            supplier.owner = request.user
+            supplier.save()
+            messages.success(request, gettext("Supplier created."))
+            return redirect("supplier_list")
+
+    return render(request, "books/supplier_form.html", {"form": form})
+
+
+@login_required
+@permission_required("books.change_supplier", raise_exception=True)
+def supplier_update(request, id):
+    supplier = get_object_or_404(Supplier, id=id, owner=request.user)
+    form = SupplierForm(instance=supplier)
+
+    if request.method == "POST":
+        form = SupplierForm(request.POST, instance=supplier)
+
+        if form.is_valid():
+            form.save()
+            messages.success(request, gettext("Supplier updated."))
+            return redirect("supplier_list")
+
+    return render(
+        request,
+        "books/supplier_form.html",
+        {
+            "form": form,
+            "supplier": supplier,
+        },
+    )
+
+
+@login_required
+@permission_required("books.delete_supplier", raise_exception=True)
+def supplier_delete(request, id):
+    supplier = get_object_or_404(Supplier, id=id, owner=request.user)
+    reorder_count = supplier.reorders.count()
+
+    if request.method == "POST":
+        if reorder_count:
+            messages.error(
+                request,
+                gettext("Remove this supplier from its reorders before deleting it."),
+            )
+            return redirect("supplier_list")
+
+        supplier.delete()
+        messages.success(request, gettext("Supplier deleted."))
+        return redirect("supplier_list")
+
+    return render(
+        request,
+        "books/confirm_delete.html",
+        {
+            "object_type": gettext("supplier"),
+            "object_name": supplier.name,
+            "cancel_url": reverse("supplier_list"),
+            "warning": (
+                gettext("This supplier is linked to reorders and cannot be deleted yet.")
+                if reorder_count
+                else ""
+            ),
+            "disable_delete": bool(reorder_count),
         },
     )
 
@@ -951,9 +1039,99 @@ def sale_delete(request, id):
 
 
 @login_required
+@permission_required("books.view_return", raise_exception=True)
+def return_list(request):
+    returns = Return.objects.filter(owner=request.user).select_related("sale", "sale__book")
+
+    paginator = Paginator(returns, 10)
+    page_obj = paginator.get_page(request.GET.get("page"))
+
+    return render(
+        request,
+        "books/return_list.html",
+        {
+            "returns": page_obj.object_list,
+            "page_obj": page_obj,
+        },
+    )
+
+
+@login_required
+@permission_required("books.add_return", raise_exception=True)
+def return_create(request, sale_id):
+    sale = get_object_or_404(Sale, id=sale_id, owner=request.user)
+
+    if sale.quantity <= 0:
+        messages.error(request, gettext("This sale has already been fully returned."))
+        return redirect("sale_list")
+
+    if request.method == "POST":
+        form = ReturnForm(request.POST)
+
+        if form.is_valid():
+            quantity = form.cleaned_data["quantity"]
+
+            if quantity > sale.quantity:
+                messages.error(
+                    request,
+                    gettext("Cannot return more than the %(quantity)s sold.")
+                    % {"quantity": sale.quantity},
+                )
+            else:
+                return_obj = form.save(commit=False)
+                return_obj.owner = request.user
+                return_obj.sale = sale
+                return_obj.save()
+
+                sale.quantity -= quantity
+                sale.save(update_fields=["quantity"])
+
+                book = _adjust_stock(sale.book_id, quantity, request.user)
+                messages.success(request, gettext("Return recorded and stock updated."))
+                _notify_stock_level(request, book)
+                return redirect("return_list")
+    else:
+        form = ReturnForm(initial={"quantity": sale.quantity, "return_date": timezone.now().date()})
+
+    return render(
+        request,
+        "books/return_form.html",
+        {
+            "form": form,
+            "sale": sale,
+        },
+    )
+
+
+@login_required
+@permission_required("books.delete_return", raise_exception=True)
+def return_delete(request, id):
+    return_obj = get_object_or_404(Return, id=id, owner=request.user)
+
+    if request.method == "POST":
+        sale = return_obj.sale
+        sale.quantity += return_obj.quantity
+        sale.save(update_fields=["quantity"])
+        _adjust_stock(sale.book_id, -return_obj.quantity, request.user)
+        return_obj.delete()
+        messages.success(request, gettext("Return deleted."))
+        return redirect("return_list")
+
+    return render(
+        request,
+        "books/confirm_delete.html",
+        {
+            "object_type": gettext("return"),
+            "object_name": f"{return_obj.sale.book.title} ({return_obj.return_date})",
+            "cancel_url": reverse("return_list"),
+        },
+    )
+
+
+@login_required
 @permission_required("books.view_reorder", raise_exception=True)
 def reorder_list(request):
-    reorders = Reorder.objects.filter(owner=request.user).select_related("book", "book__category")
+    reorders = Reorder.objects.filter(owner=request.user).select_related("book", "book__category", "supplier")
 
     status = request.GET.get("status")
     if status in dict(Reorder.STATUS_CHOICES):
@@ -982,7 +1160,7 @@ def reorder_create(request, book_id):
     suggested_quantity = max(book.reorder_threshold * 2 - book.stock_on_hand, book.reorder_threshold, 1)
 
     if request.method == "POST":
-        form = ReorderForm(request.POST)
+        form = ReorderForm(request.POST, user=request.user)
 
         if form.is_valid():
             reorder = form.save(commit=False)
@@ -992,7 +1170,7 @@ def reorder_create(request, book_id):
             messages.success(request, gettext("Reorder created."))
             return redirect("reorder_list")
     else:
-        form = ReorderForm(initial={"quantity": suggested_quantity})
+        form = ReorderForm(initial={"quantity": suggested_quantity}, user=request.user)
 
     return render(
         request,
@@ -1312,7 +1490,7 @@ def export_reorders_csv(request):
     writer = csv.writer(response)
     writer.writerow(_reorder_export_headers())
 
-    reorders = Reorder.objects.filter(owner=request.user).select_related("book")
+    reorders = Reorder.objects.filter(owner=request.user).select_related("book", "supplier")
 
     for row in _reorder_export_rows(reorders):
         writer.writerow(row)
@@ -1330,7 +1508,7 @@ def export_reorders_excel(request):
     worksheet.title = "Reorders"
     worksheet.append(_reorder_export_headers())
 
-    reorders = Reorder.objects.filter(owner=request.user).select_related("book")
+    reorders = Reorder.objects.filter(owner=request.user).select_related("book", "supplier")
 
     for row in _reorder_export_rows(reorders):
         worksheet.append(row)
@@ -1385,7 +1563,7 @@ def export_reorders_pdf(request):
         Spacer(1, 12),
     ]
 
-    reorders = Reorder.objects.filter(owner=request.user).select_related("book")
+    reorders = Reorder.objects.filter(owner=request.user).select_related("book", "supplier")
 
     rows = [[_pdf_text(value) for value in _reorder_export_headers()]]
 
@@ -1395,7 +1573,7 @@ def export_reorders_pdf(request):
     table = Table(
         rows,
         repeatRows=1,
-        colWidths=[70, 160, 60, 70, 160, 70],
+        colWidths=[70, 140, 100, 50, 60, 130, 70],
     )
     table.setStyle(
         TableStyle(

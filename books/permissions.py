@@ -23,6 +23,14 @@ ROLE_PERMISSIONS = {
         "change_reorder",
         "delete_reorder",
         "view_reorder",
+        "add_supplier",
+        "change_supplier",
+        "delete_supplier",
+        "view_supplier",
+        "add_return",
+        "change_return",
+        "delete_return",
+        "view_return",
     ],
     "Staff": [
         "add_book",
@@ -40,6 +48,12 @@ ROLE_PERMISSIONS = {
         "add_reorder",
         "change_reorder",
         "view_reorder",
+        "add_supplier",
+        "change_supplier",
+        "view_supplier",
+        "add_return",
+        "change_return",
+        "view_return",
     ],
     "Viewer": [
         "view_book",
@@ -47,6 +61,8 @@ ROLE_PERMISSIONS = {
         "view_author",
         "view_sale",
         "view_reorder",
+        "view_supplier",
+        "view_return",
     ],
 }
 

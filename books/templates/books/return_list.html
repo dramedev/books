@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+
+{% block content %}
+
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+<div>
+<h1 class="mb-1">{% translate "Returns" %}</h1>
+<p class="muted-text mb-0">
+{% translate "Sales returns and refunds." %}
+</p>
+</div>
+
+<a class="btn btn-outline-light" href="{% url 'sale_list' %}">
+{% translate "Back to Sales" %}
+</a>
+</div>
+
+
+<div class="table-responsive">
+<table class="table table-striped align-middle">
+<tr>
+<th>{% translate "Date" %}</th>
+<th>{% translate "Book" %}</th>
+<th>{% translate "Quantity" %}</th>
+<th>{% translate "Reason" %}</th>
+<th>{% translate "Refund amount" %}</th>
+<th>{% translate "Actions" %}</th>
+</tr>
+
+{% for return in returns %}
+<tr>
+<td>{{ return.return_date }}</td>
+<td>{{ return.sale.book.title }}</td>
+<td>{{ return.quantity }}</td>
+<td>{{ return.reason|default:"-" }}</td>
+<td>{{ return.refund_amount }}</td>
+<td>
+{% if perms.books.delete_return %}
+<a class="btn btn-danger btn-sm" href="{% url 'return_delete' return.id %}">
+{% translate "Delete" %}
+</a>
+{% endif %}
+</td>
+</tr>
+
+{% empty %}
+<tr>
+<td colspan="6" class="text-center muted-text py-4">
+{% translate "No returns recorded yet." %}
+</td>
+</tr>
+{% endfor %}
+</table>
+</div>
+
+
+{% if page_obj.paginator.num_pages > 1 %}
+<nav aria-label="{% translate 'Return pages' %}">
+<ul class="pagination">
+
+{% if page_obj.has_previous %}
+<li class="page-item">
+<a class="page-link" href="?page={{ page_obj.previous_page_number }}">{% translate "Previous" %}</a>
+</li>
+{% endif %}
+
+<li class="page-item disabled">
+<span class="page-link">
+{% blocktranslate with number=page_obj.number total=page_obj.paginator.num_pages %}Page {{ number }} of {{ total }}{% endblocktranslate %}
+</span>
+</li>
+
+{% if page_obj.has_next %}
+<li class="page-item">
+<a class="page-link" href="?page={{ page_obj.next_page_number }}">{% translate "Next" %}</a>
+</li>
+{% endif %}
+
+</ul>
+</nav>
+{% endif %}
+
+
+{% endblock %}

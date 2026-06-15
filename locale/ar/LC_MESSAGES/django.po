@@ -538,6 +538,108 @@ msgstr "يمكن حذف طلبات إعادة التزويد الملغاة فق
 msgid "Created"
 msgstr "تاريخ الإنشاء"
 
+msgid "Supplier"
+msgstr "المورّد"
+
+msgid "Suppliers"
+msgstr "الموردون"
+
+msgid "Add Supplier"
+msgstr "إضافة مورّد"
+
+msgid "Manage the suppliers used for stock reorders."
+msgstr "إدارة الموردين المستخدمين لإعادة تزويد المخزون."
+
+msgid "No suppliers yet."
+msgstr "لا يوجد موردون حتى الآن."
+
+msgid "Contact name"
+msgstr "اسم جهة الاتصال"
+
+msgid "Contact name (optional)"
+msgstr "اسم جهة الاتصال (اختياري)"
+
+msgid "Phone"
+msgstr "الهاتف"
+
+msgid "Notes"
+msgstr "ملاحظات"
+
+msgid "Notes (optional)"
+msgstr "ملاحظات (اختياري)"
+
+msgid "No supplier"
+msgstr "بدون مورّد"
+
+msgid "Supplier created."
+msgstr "تم إنشاء المورّد."
+
+msgid "Supplier updated."
+msgstr "تم تحديث المورّد."
+
+msgid "Supplier deleted."
+msgstr "تم حذف المورّد."
+
+msgid "Remove this supplier from its reorders before deleting it."
+msgstr "أزل هذا المورّد من طلبات إعادة التزويد قبل حذفه."
+
+msgid "This supplier is linked to reorders and cannot be deleted yet."
+msgstr "هذا المورّد مرتبط بطلبات إعادة تزويد ولا يمكن حذفه حاليًا."
+
+msgid "supplier"
+msgstr "مورّد"
+
+msgid "Supplier Form"
+msgstr "نموذج المورّد"
+
+msgid "Returns"
+msgstr "المرتجعات"
+
+msgid "Sales returns and refunds."
+msgstr "مرتجعات المبيعات والمبالغ المستردة."
+
+msgid "Back to Sales"
+msgstr "العودة إلى المبيعات"
+
+msgid "Reason"
+msgstr "السبب"
+
+msgid "Reason (optional)"
+msgstr "السبب (اختياري)"
+
+msgid "Refund amount"
+msgstr "مبلغ الاسترداد"
+
+msgid "No returns recorded yet."
+msgstr "لا توجد مرتجعات مسجلة حتى الآن."
+
+msgid "Return pages"
+msgstr "صفحات المرتجعات"
+
+msgid "Return"
+msgstr "إرجاع"
+
+msgid "Return Form"
+msgstr "نموذج الإرجاع"
+
+msgid "'%(title)s' sale on %(date)s has %(quantity)s unit(s) available to return."
+msgstr "بيع '%(title)s' في %(date)s لديه %(quantity)s وحدة متاحة للإرجاع."
+
+msgid "This sale has already been fully returned."
+msgstr "تم إرجاع هذه المبيعة بالكامل من قبل."
+
+msgid "Cannot return more than the %(quantity)s sold."
+msgstr "لا يمكن إرجاع أكثر من %(quantity)s المباعة."
+
+msgid "Return recorded and stock updated."
+msgstr "تم تسجيل الإرجاع وتحديث المخزون."
+
+msgid "Return deleted."
+msgstr "تم حذف الإرجاع."
+
+msgid "return"
+msgstr "إرجاع"
+
 msgid "Distribution Report"
 msgstr "تقرير التوزيع"
 

@@ -235,6 +235,48 @@ FR = {
     "Reorder deleted.": "Réapprovisionnement supprimé.",
     "Only cancelled reorders can be deleted.": "Seuls les réapprovisionnements annulés peuvent être supprimés.",
     "Created": "Créé",
+    "Supplier": "Fournisseur",
+
+    # Suppliers
+    "Suppliers": "Fournisseurs",
+    "Add Supplier": "Ajouter un fournisseur",
+    "Manage the suppliers used for stock reorders.": "Gérez les fournisseurs utilisés pour les réapprovisionnements de stock.",
+    "No suppliers yet.": "Aucun fournisseur pour le moment.",
+    "Contact name": "Nom du contact",
+    "Contact name (optional)": "Nom du contact (facultatif)",
+    "Phone": "Téléphone",
+    "Notes": "Notes",
+    "Notes (optional)": "Notes (facultatives)",
+    "No supplier": "Aucun fournisseur",
+    "Supplier created.": "Fournisseur créé.",
+    "Supplier updated.": "Fournisseur mis à jour.",
+    "Supplier deleted.": "Fournisseur supprimé.",
+    "Remove this supplier from its reorders before deleting it.":
+        "Retirez ce fournisseur de ses réapprovisionnements avant de le supprimer.",
+    "This supplier is linked to reorders and cannot be deleted yet.":
+        "Ce fournisseur est lié à des réapprovisionnements et ne peut pas encore être supprimé.",
+    "supplier": "fournisseur",
+    "Supplier Form": "Formulaire de fournisseur",
+
+    # Returns
+    "Returns": "Retours",
+    "Sales returns and refunds.": "Retours de ventes et remboursements.",
+    "Back to Sales": "Retour aux ventes",
+    "Reason": "Motif",
+    "Reason (optional)": "Motif (facultatif)",
+    "Refund amount": "Montant du remboursement",
+    "No returns recorded yet.": "Aucun retour enregistré pour le moment.",
+    "Return pages": "Pages de retours",
+    "Return": "Retour",
+    "Return Form": "Formulaire de retour",
+    "'%(title)s' sale on %(date)s has %(quantity)s unit(s) available to return.":
+        "La vente de « %(title)s » du %(date)s a %(quantity)s unité(s) disponible(s) au retour.",
+    "This sale has already been fully returned.": "Cette vente a déjà été entièrement retournée.",
+    "Cannot return more than the %(quantity)s sold.":
+        "Impossible de retourner plus que les %(quantity)s vendues.",
+    "Return recorded and stock updated.": "Retour enregistré et stock mis à jour.",
+    "Return deleted.": "Retour supprimé.",
+    "return": "retour",
 
     # Report
     "Distribution Report": "Rapport de distribution",
@@ -592,6 +634,48 @@ AR = {
     "Reorder deleted.": "تم حذف طلب إعادة التزويد.",
     "Only cancelled reorders can be deleted.": "يمكن حذف طلبات إعادة التزويد الملغاة فقط.",
     "Created": "تاريخ الإنشاء",
+    "Supplier": "المورّد",
+
+    # Suppliers
+    "Suppliers": "الموردون",
+    "Add Supplier": "إضافة مورّد",
+    "Manage the suppliers used for stock reorders.": "إدارة الموردين المستخدمين لإعادة تزويد المخزون.",
+    "No suppliers yet.": "لا يوجد موردون حتى الآن.",
+    "Contact name": "اسم جهة الاتصال",
+    "Contact name (optional)": "اسم جهة الاتصال (اختياري)",
+    "Phone": "الهاتف",
+    "Notes": "ملاحظات",
+    "Notes (optional)": "ملاحظات (اختياري)",
+    "No supplier": "بدون مورّد",
+    "Supplier created.": "تم إنشاء المورّد.",
+    "Supplier updated.": "تم تحديث المورّد.",
+    "Supplier deleted.": "تم حذف المورّد.",
+    "Remove this supplier from its reorders before deleting it.":
+        "أزل هذا المورّد من طلبات إعادة التزويد قبل حذفه.",
+    "This supplier is linked to reorders and cannot be deleted yet.":
+        "هذا المورّد مرتبط بطلبات إعادة تزويد ولا يمكن حذفه حاليًا.",
+    "supplier": "مورّد",
+    "Supplier Form": "نموذج المورّد",
+
+    # Returns
+    "Returns": "المرتجعات",
+    "Sales returns and refunds.": "مرتجعات المبيعات والمبالغ المستردة.",
+    "Back to Sales": "العودة إلى المبيعات",
+    "Reason": "السبب",
+    "Reason (optional)": "السبب (اختياري)",
+    "Refund amount": "مبلغ الاسترداد",
+    "No returns recorded yet.": "لا توجد مرتجعات مسجلة حتى الآن.",
+    "Return pages": "صفحات المرتجعات",
+    "Return": "إرجاع",
+    "Return Form": "نموذج الإرجاع",
+    "'%(title)s' sale on %(date)s has %(quantity)s unit(s) available to return.":
+        "بيع '%(title)s' في %(date)s لديه %(quantity)s وحدة متاحة للإرجاع.",
+    "This sale has already been fully returned.": "تم إرجاع هذه المبيعة بالكامل من قبل.",
+    "Cannot return more than the %(quantity)s sold.":
+        "لا يمكن إرجاع أكثر من %(quantity)s المباعة.",
+    "Return recorded and stock updated.": "تم تسجيل الإرجاع وتحديث المخزون.",
+    "Return deleted.": "تم حذف الإرجاع.",
+    "return": "إرجاع",
 
     # Report
     "Distribution Report": "تقرير التوزيع",

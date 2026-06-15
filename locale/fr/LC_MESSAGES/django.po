@@ -538,6 +538,108 @@ msgstr "Seuls les réapprovisionnements annulés peuvent être supprimés."
 msgid "Created"
 msgstr "Créé"
 
+msgid "Supplier"
+msgstr "Fournisseur"
+
+msgid "Suppliers"
+msgstr "Fournisseurs"
+
+msgid "Add Supplier"
+msgstr "Ajouter un fournisseur"
+
+msgid "Manage the suppliers used for stock reorders."
+msgstr "Gérez les fournisseurs utilisés pour les réapprovisionnements de stock."
+
+msgid "No suppliers yet."
+msgstr "Aucun fournisseur pour le moment."
+
+msgid "Contact name"
+msgstr "Nom du contact"
+
+msgid "Contact name (optional)"
+msgstr "Nom du contact (facultatif)"
+
+msgid "Phone"
+msgstr "Téléphone"
+
+msgid "Notes"
+msgstr "Notes"
+
+msgid "Notes (optional)"
+msgstr "Notes (facultatives)"
+
+msgid "No supplier"
+msgstr "Aucun fournisseur"
+
+msgid "Supplier created."
+msgstr "Fournisseur créé."
+
+msgid "Supplier updated."
+msgstr "Fournisseur mis à jour."
+
+msgid "Supplier deleted."
+msgstr "Fournisseur supprimé."
+
+msgid "Remove this supplier from its reorders before deleting it."
+msgstr "Retirez ce fournisseur de ses réapprovisionnements avant de le supprimer."
+
+msgid "This supplier is linked to reorders and cannot be deleted yet."
+msgstr "Ce fournisseur est lié à des réapprovisionnements et ne peut pas encore être supprimé."
+
+msgid "supplier"
+msgstr "fournisseur"
+
+msgid "Supplier Form"
+msgstr "Formulaire de fournisseur"
+
+msgid "Returns"
+msgstr "Retours"
+
+msgid "Sales returns and refunds."
+msgstr "Retours de ventes et remboursements."
+
+msgid "Back to Sales"
+msgstr "Retour aux ventes"
+
+msgid "Reason"
+msgstr "Motif"
+
+msgid "Reason (optional)"
+msgstr "Motif (facultatif)"
+
+msgid "Refund amount"
+msgstr "Montant du remboursement"
+
+msgid "No returns recorded yet."
+msgstr "Aucun retour enregistré pour le moment."
+
+msgid "Return pages"
+msgstr "Pages de retours"
+
+msgid "Return"
+msgstr "Retour"
+
+msgid "Return Form"
+msgstr "Formulaire de retour"
+
+msgid "'%(title)s' sale on %(date)s has %(quantity)s unit(s) available to return."
+msgstr "La vente de « %(title)s » du %(date)s a %(quantity)s unité(s) disponible(s) au retour."
+
+msgid "This sale has already been fully returned."
+msgstr "Cette vente a déjà été entièrement retournée."
+
+msgid "Cannot return more than the %(quantity)s sold."
+msgstr "Impossible de retourner plus que les %(quantity)s vendues."
+
+msgid "Return recorded and stock updated."
+msgstr "Retour enregistré et stock mis à jour."
+
+msgid "Return deleted."
+msgstr "Retour supprimé."
+
+msgid "return"
+msgstr "retour"
+
 msgid "Distribution Report"
 msgstr "Rapport de distribution"
 

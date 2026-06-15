@@ -3,7 +3,7 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.password_validation import validate_password
 from django.utils.translation import gettext_lazy as _
 
-from .models import Author, Book, Category, Profile, Reorder, Sale
+from .models import Author, Book, Category, Profile, Reorder, Return, Sale, Supplier
 
 
 class BookForm(forms.ModelForm):
@@ -186,15 +186,30 @@ class SaleForm(forms.ModelForm):
 
 class ReorderForm(forms.ModelForm):
 
+    def __init__(self, *args, user=None, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        if user is not None:
+            self.fields["supplier"].queryset = Supplier.objects.filter(owner=user)
+
+        self.fields["supplier"].required = False
+        self.fields["supplier"].empty_label = _("No supplier")
+
     class Meta:
         model = Reorder
 
         fields = [
+            "supplier",
             "quantity",
             "note",
         ]
 
         widgets = {
+            "supplier": forms.Select(
+                attrs={
+                    "class": "form-select"
+                }
+            ),
             "quantity": forms.NumberInput(
                 attrs={
                     "class": "form-control",
@@ -205,6 +220,86 @@ class ReorderForm(forms.ModelForm):
                 attrs={
                     "class": "form-control",
                     "placeholder": _("Note (optional)")
+                }
+            ),
+        }
+
+
+
+class SupplierForm(forms.ModelForm):
+
+    class Meta:
+        model = Supplier
+
+        fields = [
+            "name",
+            "contact_name",
+            "email",
+            "phone",
+            "notes",
+        ]
+
+        widgets = {
+            "name": forms.TextInput(
+                attrs={
+                    "class": "form-control"
+                }
+            ),
+            "contact_name": forms.TextInput(
+                attrs={
+                    "class": "form-control",
+                    "placeholder": _("Contact name (optional)")
+                }
+            ),
+            "email": forms.EmailInput(
+                attrs={
+                    "class": "form-control"
+                }
+            ),
+            "phone": forms.TextInput(
+                attrs={
+                    "class": "form-control"
+                }
+            ),
+            "notes": forms.TextInput(
+                attrs={
+                    "class": "form-control",
+                    "placeholder": _("Notes (optional)")
+                }
+            ),
+        }
+
+
+
+class ReturnForm(forms.ModelForm):
+
+    class Meta:
+        model = Return
+
+        fields = [
+            "quantity",
+            "reason",
+            "return_date",
+        ]
+
+        widgets = {
+            "quantity": forms.NumberInput(
+                attrs={
+                    "class": "form-control",
+                    "min": "1"
+                }
+            ),
+            "reason": forms.TextInput(
+                attrs={
+                    "class": "form-control",
+                    "placeholder": _("Reason (optional)")
+                }
+            ),
+            "return_date": forms.DateInput(
+                format="%Y-%m-%d",
+                attrs={
+                    "class": "form-control",
+                    "type": "date"
                 }
             ),
         }
