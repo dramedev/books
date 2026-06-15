@@ -112,6 +112,9 @@ class Book(models.Model):
     )
 
 
+    low_stock_alert_sent = models.BooleanField(default=False, editable=False)
+
+
     def __str__(self):
         return self.title
 

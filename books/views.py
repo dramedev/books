@@ -898,8 +898,52 @@ def chat_api(request):
 def _adjust_stock(book_id, delta, owner):
     book = Book.objects.get(id=book_id, owner=owner)
     book.stock_on_hand = max(0, book.stock_on_hand + delta)
-    book.save(update_fields=["stock_on_hand"])
+
+    if book.is_low_stock and not book.low_stock_alert_sent:
+        _send_low_stock_email(owner, book)
+        book.low_stock_alert_sent = True
+    elif not book.is_low_stock and book.low_stock_alert_sent:
+        book.low_stock_alert_sent = False
+
+    book.save(update_fields=["stock_on_hand", "low_stock_alert_sent"])
     return book
+
+
+def _send_low_stock_email(user, book):
+    if not user.email:
+        return
+
+    send_mail(
+        subject=f"RumiPress: Low stock alert - {book.title}",
+        message=(
+            f"Hi {user.username},\n\n"
+            f"'{book.title}' is running low on stock: {book.stock_on_hand} remaining "
+            f"(reorder threshold {book.reorder_threshold}).\n\n"
+            "Consider creating a reorder to restock this title."
+        ),
+        from_email=settings.DEFAULT_FROM_EMAIL,
+        recipient_list=[user.email],
+        fail_silently=True,
+    )
+
+
+def _send_reorder_status_email(user, reorder):
+    if not user.email:
+        return
+
+    status_label = reorder.get_status_display()
+
+    send_mail(
+        subject=f"RumiPress: Reorder {status_label} - {reorder.book.title}",
+        message=(
+            f"Hi {user.username},\n\n"
+            f"Your reorder for '{reorder.book.title}' (quantity {reorder.quantity}) "
+            f"is now marked as {status_label.lower()}."
+        ),
+        from_email=settings.DEFAULT_FROM_EMAIL,
+        recipient_list=[user.email],
+        fail_silently=True,
+    )
 
 
 def _notify_stock_level(request, book):
@@ -1222,6 +1266,8 @@ def reorder_update_status(request, id, action):
             messages.success(request, gettext("Reorder marked as ordered."))
         else:
             messages.success(request, gettext("Reorder cancelled."))
+
+    _send_reorder_status_email(request.user, reorder)
 
     return redirect("reorder_list")
 
