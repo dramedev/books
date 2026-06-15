@@ -86,6 +86,16 @@
 </div>
 </div>
 </div>
+
+<div class="col-6 col-lg-3">
+<div class="kpi-card">
+<div class="kpi-icon"><i class="bi bi-truck"></i></div>
+<div>
+<p class="muted-text mb-1">{% translate "Total purchase cost" %}</p>
+<div class="kpi-value">{{ total_purchase_cost }}</div>
+</div>
+</div>
+</div>
 </div>
 
 
@@ -243,6 +253,10 @@ new Chart(revenueCtx, {
             {
                 label: "{% translate 'Profit' %}",
                 data: {{ profits|safe }}
+            },
+            {
+                label: "{% translate 'Purchase Cost' %}",
+                data: {{ purchase_costs|safe }}
             }
         ]
     },
@@ -282,6 +296,14 @@ new Chart(trendCtx, {
                 yAxisID: "revenue",
                 borderColor: "#2f6f63",
                 backgroundColor: "#2f6f63",
+                tension: 0.3
+            },
+            {
+                label: "{% translate 'Purchase Cost' %}",
+                data: {{ trend_purchase_costs|safe }},
+                yAxisID: "revenue",
+                borderColor: "#9f5f3f",
+                backgroundColor: "#9f5f3f",
                 tension: 0.3
             }
         ]

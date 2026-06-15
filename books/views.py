@@ -826,34 +826,62 @@ def dashboard(request):
         )
     }
 
+    received_reorders = Reorder.objects.filter(owner=request.user, status=Reorder.STATUS_RECEIVED)
+
+    purchase_cost_by_category = {
+        item["book__category__name"]: item["cost"] or 0
+        for item in (
+            received_reorders.values("book__category__name")
+            .annotate(cost=Sum(PURCHASE_COST_EXPRESSION))
+        )
+    }
+
     labels = []
     revenues = []
     profits = []
+    purchase_costs = []
 
     for item in category_expenses:
         category_name = item["category__name"]
         expense = float(item["expense"] or 0)
         revenue = float(revenue_by_category.get(category_name, 0))
+        purchase_cost = float(purchase_cost_by_category.get(category_name, 0))
 
         labels.append(category_name)
         revenues.append(revenue)
         profits.append(revenue - expense)
+        purchase_costs.append(purchase_cost)
 
-    trend_data = (
+    total_purchase_cost = (
+        received_reorders.aggregate(total=Sum(PURCHASE_COST_EXPRESSION))["total"] or 0
+    )
+
+    sales_trend = (
         sales.annotate(month=TruncMonth("sale_date"))
         .values("month")
         .annotate(units=Sum("quantity"), revenue=Sum(REVENUE_EXPRESSION))
-        .order_by("month")
     )
+
+    purchase_trend = (
+        received_reorders.filter(received_at__isnull=False)
+        .annotate(month=TruncMonth("received_at"))
+        .values("month")
+        .annotate(cost=Sum(PURCHASE_COST_EXPRESSION))
+    )
+
+    sales_by_month = {item["month"]: item for item in sales_trend}
+    purchase_by_month = {item["month"].date(): item for item in purchase_trend}
 
     trend_labels = []
     trend_units = []
     trend_revenues = []
+    trend_purchase_costs = []
 
-    for item in trend_data:
-        trend_labels.append(item["month"].strftime("%b %Y"))
-        trend_units.append(item["units"] or 0)
-        trend_revenues.append(float(item["revenue"] or 0))
+    for month in sorted(set(sales_by_month) | set(purchase_by_month)):
+        trend_labels.append(month.strftime("%b %Y"))
+        trend_units.append(sales_by_month.get(month, {}).get("units") or 0)
+        trend_revenues.append(float(sales_by_month.get(month, {}).get("revenue") or 0))
+        trend_purchase_costs.append(float(purchase_by_month.get(month, {}).get("cost") or 0))
 
     top_books = (
         books.annotate(units_sold=Sum("sales__quantity"))
@@ -881,12 +909,15 @@ def dashboard(request):
         "total_expense": total_expense,
         "total_profit": total_profit,
         "total_units_sold": total_units_sold,
+        "total_purchase_cost": total_purchase_cost,
         "labels": json.dumps(labels),
         "revenues": json.dumps(revenues),
         "profits": json.dumps(profits),
+        "purchase_costs": json.dumps(purchase_costs),
         "trend_labels": json.dumps(trend_labels),
         "trend_units": json.dumps(trend_units),
         "trend_revenues": json.dumps(trend_revenues),
+        "trend_purchase_costs": json.dumps(trend_purchase_costs),
         "top_books": top_books,
         "recent_sales": recent_sales,
         "pending_reorders_count": pending_reorders_count,
