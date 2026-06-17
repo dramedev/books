@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+<div>
+<h1 class="mb-1">{% translate "Locations" %}</h1>
+<p class="muted-text mb-0">{% translate "Manage warehouse and store locations." %}</p>
+</div>
+<div class="d-flex gap-2">
+{% if perms.books.change_stocklevel %}
+<a class="btn btn-outline-secondary" href="{% url 'stock_transfer' %}">{% translate "Transfer stock" %}</a>
+{% endif %}
+{% if perms.books.add_location %}
+<a class="btn btn-primary" href="{% url 'location_create' %}">{% translate "Add location" %}</a>
+{% endif %}
+</div>
+</div>
+
+{% if locations %}
+<div class="table-responsive">
+<table class="table table-hover align-middle">
+<thead>
+<tr>
+<th>{% translate "Name" %}</th>
+<th>{% translate "Address" %}</th>
+<th class="text-center">{% translate "Default" %}</th>
+<th class="text-end">{% translate "Total stock" %}</th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+{% for loc in locations %}
+<tr>
+<td>
+<a href="{% url 'location_stock' loc.id %}">{{ loc.name }}</a>
+</td>
+<td class="text-muted small">{{ loc.address|default:"—" }}</td>
+<td class="text-center">
+{% if loc.is_default %}<span class="badge bg-success">{% translate "Yes" %}</span>{% else %}—{% endif %}
+</td>
+<td class="text-end">{{ loc.total_stock|default:0 }}</td>
+<td class="text-end">
+{% if perms.books.change_location %}
+<a class="btn btn-sm btn-outline-secondary me-1" href="{% url 'location_update' loc.id %}">{% translate "Edit" %}</a>
+{% endif %}
+{% if perms.books.delete_location %}
+<a class="btn btn-sm btn-outline-danger" href="{% url 'location_delete' loc.id %}">{% translate "Delete" %}</a>
+{% endif %}
+</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+{% else %}
+<p class="text-muted">{% translate "No locations yet." %}</p>
+{% endif %}
+
+{% endblock %}

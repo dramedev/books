@@ -19,9 +19,13 @@ from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import path, include
 
+from books.views import manifest_json, service_worker
+
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('i18n/', include('django.conf.urls.i18n')),
+    path("manifest.json", manifest_json, name="manifest_json"),
+    path("sw.js", service_worker, name="service_worker"),
     path(
         "accounts/",
         include("django.contrib.auth.urls")

@@ -1,4 +1,7 @@
+import base64
 import csv
+import hashlib
+import hmac as _hmac
 import json
 import math
 import random
@@ -19,6 +22,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone, translation
 from django.utils.translation import gettext, gettext_lazy
+from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 
 from . import ai_chat
@@ -26,8 +30,10 @@ from .forms import (
     AuthorForm,
     BookForm,
     CategoryForm,
+    IntegrationForm,
     InvoiceForm,
     InvoiceItemForm,
+    LocationForm,
     PrintRunForm,
     ProfileForm,
     RedeemAccessCodeForm,
@@ -37,10 +43,18 @@ from .forms import (
     SaleForm,
     SignupForm,
     StockAdjustmentForm,
+    StockTransferForm,
     SupplierForm,
     VerifyEmailForm,
 )
-from .models import AccessCode, Author, Book, Category, Invoice, InvoiceItem, PrintRun, Profile, Reorder, Return, RoyaltyRate, Sale, StockAdjustment, Supplier
+from .models import (
+    CURRENCY_CHOICES,
+    AccessCode, Author, Book, Category,
+    Integration, Invoice, InvoiceItem,
+    Location, PrintRun, Profile,
+    Reorder, Return, RoyaltyRate,
+    Sale, StockAdjustment, StockLevel, Supplier,
+)
 from .permissions import ensure_roles
 
 
@@ -1117,9 +1131,31 @@ def chat_api(request):
     return JsonResponse({"reply": reply, "history": updated_history})
 
 
-def _adjust_stock(book_id, delta, owner):
+def _adjust_stock(book_id, delta, owner, location=None):
     book = Book.objects.get(id=book_id, owner=owner)
-    book.stock_on_hand = max(0, book.stock_on_hand + delta)
+
+    if location is None:
+        location, _ = Location.objects.get_or_create(
+            owner=owner,
+            is_default=True,
+            defaults={"name": "Main Warehouse"},
+        )
+
+    level, created = StockLevel.objects.get_or_create(
+        owner=owner, book=book, location=location,
+        defaults={"quantity": 0},
+    )
+
+    # If no StockLevel existed and we're reducing stock, seed from the book total
+    # so the location reflects reality before this deduction.
+    if created and delta < 0:
+        level.quantity = book.stock_on_hand
+
+    level.quantity = max(0, level.quantity + delta)
+    level.save(update_fields=["quantity"])
+
+    total = StockLevel.objects.filter(book=book).aggregate(t=Sum("quantity"))["t"] or 0
+    book.stock_on_hand = total
 
     if book.is_low_stock and not book.low_stock_alert_sent:
         _send_low_stock_email(owner, book)
@@ -2274,6 +2310,293 @@ def royalty_report(request):
         "start_date": start_date,
         "end_date": end_date,
     })
+
+
+# ---------------------------------------------------------------------------
+# Location views
+# ---------------------------------------------------------------------------
+
+@login_required
+@permission_required("books.view_location", raise_exception=True)
+def location_list(request):
+    locations = Location.objects.filter(owner=request.user).annotate(
+        total_stock=Sum("stock_levels__quantity"),
+    )
+    return render(request, "books/location_list.html", {"locations": locations})
+
+
+@login_required
+@permission_required("books.add_location", raise_exception=True)
+def location_create(request):
+    if request.method == "POST":
+        form = LocationForm(request.POST)
+        if form.is_valid():
+            loc = form.save(commit=False)
+            loc.owner = request.user
+            if loc.is_default:
+                Location.objects.filter(owner=request.user, is_default=True).update(is_default=False)
+            loc.save()
+            messages.success(request, gettext("Location created."))
+            return redirect("location_list")
+    else:
+        form = LocationForm()
+    return render(request, "books/location_form.html", {"form": form, "title": gettext("Add location")})
+
+
+@login_required
+@permission_required("books.change_location", raise_exception=True)
+def location_update(request, id):
+    loc = get_object_or_404(Location, id=id, owner=request.user)
+    if request.method == "POST":
+        form = LocationForm(request.POST, instance=loc)
+        if form.is_valid():
+            updated = form.save(commit=False)
+            if updated.is_default:
+                Location.objects.filter(owner=request.user, is_default=True).exclude(id=id).update(is_default=False)
+            updated.save()
+            messages.success(request, gettext("Location updated."))
+            return redirect("location_list")
+    else:
+        form = LocationForm(instance=loc)
+    return render(request, "books/location_form.html", {"form": form, "title": gettext("Edit location"), "object": loc})
+
+
+@login_required
+@permission_required("books.delete_location", raise_exception=True)
+def location_delete(request, id):
+    loc = get_object_or_404(Location, id=id, owner=request.user)
+    if request.method == "POST":
+        loc.delete()
+        messages.success(request, gettext("Location deleted."))
+        return redirect("location_list")
+    return render(request, "books/confirm_delete.html", {
+        "object_type": gettext("location"),
+        "object_name": loc.name,
+        "cancel_url": reverse("location_list"),
+    })
+
+
+@login_required
+@permission_required("books.view_stocklevel", raise_exception=True)
+def location_stock(request, id):
+    loc = get_object_or_404(Location, id=id, owner=request.user)
+    levels = StockLevel.objects.filter(location=loc, owner=request.user).select_related("book")
+    return render(request, "books/location_stock.html", {"location": loc, "levels": levels})
+
+
+@login_required
+@permission_required("books.change_stocklevel", raise_exception=True)
+def stock_transfer(request):
+    form = StockTransferForm(request.POST or None, user=request.user)
+    if request.method == "POST" and form.is_valid():
+        book = form.cleaned_data["book"]
+        from_loc = form.cleaned_data["from_location"]
+        to_loc = form.cleaned_data["to_location"]
+        qty = form.cleaned_data["quantity"]
+
+        if from_loc == to_loc:
+            form.add_error("to_location", gettext("Source and destination must differ."))
+        else:
+            from_level = StockLevel.objects.filter(owner=request.user, book=book, location=from_loc).first()
+            available = from_level.quantity if from_level else 0
+
+            if available < qty:
+                form.add_error("quantity", gettext("Not enough stock at source location (available: %(n)s).") % {"n": available})
+            else:
+                from_level.quantity -= qty
+                from_level.save(update_fields=["quantity"])
+
+                to_level, _ = StockLevel.objects.get_or_create(
+                    owner=request.user, book=book, location=to_loc,
+                    defaults={"quantity": 0},
+                )
+                to_level.quantity += qty
+                to_level.save(update_fields=["quantity"])
+
+                messages.success(request, gettext("Transferred %(qty)s copies of «%(book)s» from %(from)s to %(to)s.") % {
+                    "qty": qty, "book": book.title, "from": from_loc.name, "to": to_loc.name,
+                })
+                return redirect("location_list")
+
+    return render(request, "books/stock_transfer_form.html", {"form": form})
+
+
+# ---------------------------------------------------------------------------
+# Integration views
+# ---------------------------------------------------------------------------
+
+@login_required
+@permission_required("books.view_integration", raise_exception=True)
+def integration_list(request):
+    integrations = Integration.objects.filter(owner=request.user)
+    return render(request, "books/integration_list.html", {"integrations": integrations})
+
+
+@login_required
+@permission_required("books.add_integration", raise_exception=True)
+def integration_create(request):
+    if request.method == "POST":
+        form = IntegrationForm(request.POST)
+        if form.is_valid():
+            intg = form.save(commit=False)
+            intg.owner = request.user
+            intg.save()
+            messages.success(request, gettext("Integration saved."))
+            return redirect("integration_list")
+    else:
+        form = IntegrationForm()
+    return render(request, "books/integration_form.html", {"form": form, "title": gettext("Add integration")})
+
+
+@login_required
+@permission_required("books.change_integration", raise_exception=True)
+def integration_update(request, id):
+    intg = get_object_or_404(Integration, id=id, owner=request.user)
+    if request.method == "POST":
+        form = IntegrationForm(request.POST, instance=intg)
+        if form.is_valid():
+            form.save()
+            messages.success(request, gettext("Integration updated."))
+            return redirect("integration_list")
+    else:
+        form = IntegrationForm(instance=intg)
+    return render(request, "books/integration_form.html", {"form": form, "title": gettext("Edit integration"), "object": intg})
+
+
+@login_required
+@permission_required("books.delete_integration", raise_exception=True)
+def integration_delete(request, id):
+    intg = get_object_or_404(Integration, id=id, owner=request.user)
+    if request.method == "POST":
+        intg.delete()
+        messages.success(request, gettext("Integration deleted."))
+        return redirect("integration_list")
+    return render(request, "books/confirm_delete.html", {
+        "object_type": gettext("integration"),
+        "object_name": intg.name,
+        "cancel_url": reverse("integration_list"),
+    })
+
+
+def _process_shopify_order(owner, payload):
+    """Deduct stock for each line item in a Shopify order."""
+    line_items = payload.get("line_items", [])
+    synced = 0
+
+    for item in line_items:
+        sku = item.get("sku", "").strip()
+        qty = item.get("quantity", 0)
+        if not sku or not qty:
+            continue
+
+        book = Book.objects.filter(owner=owner, isbn=sku).first()
+        if book:
+            _adjust_stock(book.id, -qty, owner)
+            synced += 1
+
+    return synced
+
+
+@csrf_exempt
+def shopify_webhook(request, integration_id):
+    """Verify HMAC and process an incoming Shopify orders/create webhook."""
+    if request.method != "POST":
+        return HttpResponse(status=405)
+
+    try:
+        intg = Integration.objects.get(
+            id=integration_id,
+            platform=Integration.PLATFORM_SHOPIFY,
+            is_active=True,
+        )
+    except Integration.DoesNotExist:
+        return HttpResponse(status=404)
+
+    # Verify HMAC signature
+    secret = intg.webhook_secret.encode()
+    body = request.body
+    digest = base64.b64encode(
+        _hmac.new(secret, body, hashlib.sha256).digest()
+    ).decode()
+    shopify_hmac = request.headers.get("X-Shopify-Hmac-Sha256", "")
+
+    if not _hmac.compare_digest(digest, shopify_hmac):
+        return HttpResponse(status=401)
+
+    try:
+        payload = json.loads(body)
+    except json.JSONDecodeError:
+        return HttpResponse(status=400)
+
+    synced = _process_shopify_order(intg.owner, payload)
+
+    intg.orders_synced = (intg.orders_synced or 0) + (1 if synced > 0 else 0)
+    intg.last_synced_at = timezone.now()
+    intg.save(update_fields=["orders_synced", "last_synced_at"])
+
+    return HttpResponse(status=200)
+
+
+# ---------------------------------------------------------------------------
+# PWA views
+# ---------------------------------------------------------------------------
+
+def manifest_json(request):
+    data = {
+        "name": "RumiPress",
+        "short_name": "RumiPress",
+        "description": "Book inventory management",
+        "start_url": "/",
+        "display": "standalone",
+        "background_color": "#1a1a2e",
+        "theme_color": "#0d6efd",
+        "icons": [
+            {"src": "/static/books/img/icon-192.png", "sizes": "192x192", "type": "image/png"},
+            {"src": "/static/books/img/icon-512.png", "sizes": "512x512", "type": "image/png"},
+        ],
+    }
+    return JsonResponse(data)
+
+
+def service_worker(request):
+    js = r"""
+const CACHE = "rumipress-v1";
+const OFFLINE_URL = "/";
+
+self.addEventListener("install", event => {
+  event.waitUntil(
+    caches.open(CACHE).then(cache => cache.addAll([
+      "/",
+      "/books/",
+      "/static/books/css/style.css",
+    ]))
+  );
+  self.skipWaiting();
+});
+
+self.addEventListener("activate", event => {
+  event.waitUntil(
+    caches.keys().then(keys =>
+      Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)))
+    )
+  );
+  self.clients.claim();
+});
+
+self.addEventListener("fetch", event => {
+  if (event.request.method !== "GET") return;
+  event.respondWith(
+    fetch(event.request)
+      .then(response => {
+        const clone = response.clone();
+        caches.open(CACHE).then(cache => cache.put(event.request, clone));
+        return response;
+      })
+      .catch(() => caches.match(event.request).then(r => r || caches.match(OFFLINE_URL)))
+  );
+});
+""".strip()
+    return HttpResponse(js, content_type="application/javascript")
 
 
 def _generate_verification_code():

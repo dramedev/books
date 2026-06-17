@@ -3,7 +3,7 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.password_validation import validate_password
 from django.utils.translation import gettext_lazy as _
 
-from .models import Author, Book, Category, Invoice, InvoiceItem, PrintRun, Profile, Reorder, Return, RoyaltyRate, Sale, StockAdjustment, Supplier
+from .models import Author, Book, Category, Integration, Invoice, InvoiceItem, Location, PrintRun, Profile, Reorder, Return, RoyaltyRate, Sale, StockAdjustment, Supplier
 
 
 class BookForm(forms.ModelForm):
@@ -509,4 +509,76 @@ class RoyaltyRateForm(forms.ModelForm):
             "rate": forms.NumberInput(attrs={"class": "form-control", "min": "0", "max": "100", "step": "0.01"}),
             "effective_from": forms.DateInput(format="%Y-%m-%d", attrs={"class": "form-control", "type": "date"}),
             "note": forms.TextInput(attrs={"class": "form-control", "placeholder": _("Note (optional)")}),
+        }
+
+
+
+class LocationForm(forms.ModelForm):
+
+    class Meta:
+        model = Location
+
+        fields = ["name", "address", "is_default"]
+
+        widgets = {
+            "name": forms.TextInput(attrs={"class": "form-control"}),
+            "address": forms.Textarea(attrs={"class": "form-control", "rows": 3}),
+            "is_default": forms.CheckboxInput(attrs={"class": "form-check-input"}),
+        }
+
+
+
+class StockTransferForm(forms.Form):
+
+    book = forms.ModelChoiceField(
+        queryset=Book.objects.none(),
+        label=_("Book"),
+        widget=forms.Select(attrs={"class": "form-select"}),
+    )
+    from_location = forms.ModelChoiceField(
+        queryset=Location.objects.none(),
+        label=_("From location"),
+        widget=forms.Select(attrs={"class": "form-select"}),
+    )
+    to_location = forms.ModelChoiceField(
+        queryset=Location.objects.none(),
+        label=_("To location"),
+        widget=forms.Select(attrs={"class": "form-select"}),
+    )
+    quantity = forms.IntegerField(
+        min_value=1,
+        label=_("Quantity"),
+        widget=forms.NumberInput(attrs={"class": "form-control", "min": "1"}),
+    )
+
+    def __init__(self, *args, user=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        if user is not None:
+            self.fields["book"].queryset = Book.objects.filter(owner=user)
+            locs = Location.objects.filter(owner=user)
+            self.fields["from_location"].queryset = locs
+            self.fields["to_location"].queryset = locs
+
+
+
+class IntegrationForm(forms.ModelForm):
+
+    class Meta:
+        model = Integration
+
+        fields = ["platform", "name", "store_url", "api_key", "api_secret", "webhook_secret", "is_active"]
+
+        widgets = {
+            "platform": forms.Select(attrs={"class": "form-select"}),
+            "name": forms.TextInput(attrs={"class": "form-control"}),
+            "store_url": forms.TextInput(attrs={"class": "form-control", "placeholder": "your-store.myshopify.com"}),
+            "api_key": forms.TextInput(attrs={"class": "form-control"}),
+            "api_secret": forms.PasswordInput(attrs={"class": "form-control"}, render_value=True),
+            "webhook_secret": forms.PasswordInput(attrs={"class": "form-control"}, render_value=True),
+            "is_active": forms.CheckboxInput(attrs={"class": "form-check-input"}),
+        }
+
+        help_texts = {
+            "store_url": _("Shopify: your-store.myshopify.com — Amazon: Seller ID"),
+            "webhook_secret": _("Used to verify incoming webhook payloads. Set this in your platform's webhook settings."),
         }

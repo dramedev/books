@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+<div>
+<h1 class="mb-1">{{ location.name }}</h1>
+<p class="muted-text mb-0">{% translate "Stock held at this location." %}</p>
+</div>
+<a class="btn btn-outline-secondary" href="{% url 'location_list' %}">{% translate "Back to locations" %}</a>
+</div>
+
+{% if levels %}
+<div class="table-responsive">
+<table class="table table-hover align-middle">
+<thead>
+<tr>
+<th>{% translate "Book" %}</th>
+<th>{% translate "ISBN" %}</th>
+<th class="text-end">{% translate "Quantity" %}</th>
+</tr>
+</thead>
+<tbody>
+{% for level in levels %}
+<tr>
+<td><a href="{% url 'book_detail' level.book.id %}">{{ level.book.title }}</a></td>
+<td class="text-muted small">{{ level.book.isbn|default:"—" }}</td>
+<td class="text-end {% if level.quantity == 0 %}text-danger{% endif %}">{{ level.quantity }}</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+{% else %}
+<p class="text-muted">{% translate "No stock recorded at this location." %}</p>
+{% endif %}
+
+{% endblock %}

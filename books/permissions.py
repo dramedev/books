@@ -15,6 +15,9 @@ ROLE_PERMISSIONS = {
         "add_invoiceitem", "change_invoiceitem", "delete_invoiceitem", "view_invoiceitem",
         "add_printrun", "change_printrun", "delete_printrun", "view_printrun",
         "add_royaltyrate", "change_royaltyrate", "delete_royaltyrate", "view_royaltyrate",
+        "add_location", "change_location", "delete_location", "view_location",
+        "add_stocklevel", "change_stocklevel", "delete_stocklevel", "view_stocklevel",
+        "add_integration", "change_integration", "delete_integration", "view_integration",
     ],
     "Staff": [
         "add_book", "change_book", "view_book",
@@ -29,11 +32,15 @@ ROLE_PERMISSIONS = {
         "add_invoiceitem", "change_invoiceitem", "view_invoiceitem",
         "add_printrun", "view_printrun",
         "view_royaltyrate",
+        "add_location", "change_location", "view_location",
+        "view_stocklevel",
+        "view_integration",
     ],
     "Viewer": [
         "view_book", "view_category", "view_author", "view_sale",
         "view_reorder", "view_supplier", "view_return", "view_stockadjustment",
         "view_invoice", "view_printrun", "view_royaltyrate",
+        "view_location", "view_stocklevel", "view_integration",
     ],
 }
 

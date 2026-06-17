@@ -630,6 +630,111 @@ class StockAdjustment(models.Model):
 
 
 
+class Location(models.Model):
+
+    owner = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="owned_locations",
+    )
+
+    name = models.CharField(max_length=200, verbose_name=_("Name"))
+
+    address = models.TextField(blank=True, verbose_name=_("Address"))
+
+    is_default = models.BooleanField(default=False, verbose_name=_("Default location"))
+
+
+    class Meta:
+        ordering = ["name"]
+        unique_together = ("owner", "name")
+
+
+    def __str__(self):
+        return self.name
+
+
+
+class StockLevel(models.Model):
+
+    owner = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="owned_stock_levels",
+    )
+
+    book = models.ForeignKey(
+        Book,
+        on_delete=models.CASCADE,
+        related_name="stock_levels",
+        verbose_name=_("Book"),
+    )
+
+    location = models.ForeignKey(
+        Location,
+        on_delete=models.CASCADE,
+        related_name="stock_levels",
+        verbose_name=_("Location"),
+    )
+
+    quantity = models.PositiveIntegerField(default=0, verbose_name=_("Quantity"))
+
+
+    class Meta:
+        unique_together = ("book", "location")
+
+
+    def __str__(self):
+        return f"{self.book.title} @ {self.location.name}: {self.quantity}"
+
+
+
+class Integration(models.Model):
+
+    PLATFORM_SHOPIFY = "shopify"
+    PLATFORM_AMAZON = "amazon"
+
+    PLATFORM_CHOICES = [
+        (PLATFORM_SHOPIFY, _("Shopify")),
+        (PLATFORM_AMAZON, _("Amazon")),
+    ]
+
+    owner = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="owned_integrations",
+    )
+
+    platform = models.CharField(max_length=20, choices=PLATFORM_CHOICES, verbose_name=_("Platform"))
+
+    name = models.CharField(max_length=100, verbose_name=_("Name"))
+
+    store_url = models.CharField(max_length=200, blank=True, verbose_name=_("Store URL"))
+
+    api_key = models.CharField(max_length=200, blank=True, verbose_name=_("API key"))
+
+    api_secret = models.CharField(max_length=200, blank=True, verbose_name=_("API secret"))
+
+    webhook_secret = models.CharField(max_length=200, blank=True, verbose_name=_("Webhook secret"))
+
+    is_active = models.BooleanField(default=True, verbose_name=_("Active"))
+
+    orders_synced = models.PositiveIntegerField(default=0)
+
+    last_synced_at = models.DateTimeField(null=True, blank=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+
+    class Meta:
+        ordering = ["-created_at"]
+
+
+    def __str__(self):
+        return f"{self.name} ({self.get_platform_display()})"
+
+
+
 class Profile(models.Model):
 
     user = models.OneToOneField(

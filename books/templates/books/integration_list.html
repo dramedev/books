@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+<div>
+<h1 class="mb-1">{% translate "Integrations" %}</h1>
+<p class="muted-text mb-0">{% translate "Connect RumiPress to Shopify, Amazon, and more." %}</p>
+</div>
+{% if perms.books.add_integration %}
+<a class="btn btn-primary" href="{% url 'integration_create' %}">{% translate "Add integration" %}</a>
+{% endif %}
+</div>
+
+{% if integrations %}
+<div class="table-responsive">
+<table class="table table-hover align-middle">
+<thead>
+<tr>
+<th>{% translate "Name" %}</th>
+<th>{% translate "Platform" %}</th>
+<th>{% translate "Store / Seller ID" %}</th>
+<th class="text-center">{% translate "Active" %}</th>
+<th class="text-end">{% translate "Orders synced" %}</th>
+<th>{% translate "Last synced" %}</th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+{% for intg in integrations %}
+<tr>
+<td>{{ intg.name }}</td>
+<td>{{ intg.get_platform_display }}</td>
+<td class="text-muted small">{{ intg.store_url|default:"—" }}</td>
+<td class="text-center">
+{% if intg.is_active %}<span class="badge bg-success">{% translate "Yes" %}</span>{% else %}<span class="badge bg-secondary">{% translate "No" %}</span>{% endif %}
+</td>
+<td class="text-end">{{ intg.orders_synced }}</td>
+<td class="text-muted small">{{ intg.last_synced_at|default:"—" }}</td>
+<td class="text-end">
+{% if perms.books.change_integration %}
+<a class="btn btn-sm btn-outline-secondary me-1" href="{% url 'integration_update' intg.id %}">{% translate "Edit" %}</a>
+{% endif %}
+{% if perms.books.delete_integration %}
+<a class="btn btn-sm btn-outline-danger" href="{% url 'integration_delete' intg.id %}">{% translate "Delete" %}</a>
+{% endif %}
+</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+
+<div class="alert alert-info mt-4 small">
+{% translate "Shopify webhook URL:" %}
+<code>{{ request.scheme }}://{{ request.get_host }}{% url 'shopify_webhook' integration_id=0 %}</code>
+<span class="text-muted">{% translate "(replace 0 with the integration ID)" %}</span>
+</div>
+{% else %}
+<p class="text-muted">{% translate "No integrations yet." %}</p>
+{% endif %}
+
+{% endblock %}
