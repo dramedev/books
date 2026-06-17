@@ -1000,3 +1000,350 @@ msgstr "«الكفاءة هي أن تؤدي بشكل أفضل ما يُؤدى ب
 msgid "\"The best way to predict the future is to create it.\" — Peter Drucker"
 msgstr "«أفضل طريقة للتنبؤ بالمستقبل هي صنعه.» — بيتر دراكر"
 
+# --- Sidebar sections ---
+msgid "Billing"
+msgstr "الفواتير"
+
+msgid "Production"
+msgstr "الإنتاج"
+
+msgid "Operations"
+msgstr "العمليات"
+
+# --- Invoices ---
+msgid "Invoices"
+msgstr "الفواتير"
+
+msgid "Create and manage customer invoices."
+msgstr "إنشاء وإدارة فواتير العملاء."
+
+msgid "New Invoice"
+msgstr "فاتورة جديدة"
+
+msgid "Number"
+msgstr "الرقم"
+
+msgid "Customer"
+msgstr "العميل"
+
+msgid "Due"
+msgstr "الاستحقاق"
+
+msgid "Currency"
+msgstr "العملة"
+
+msgid "Total"
+msgstr "الإجمالي"
+
+msgid "No invoices yet."
+msgstr "لا توجد فواتير حتى الآن."
+
+msgid "Create Invoice"
+msgstr "إنشاء فاتورة"
+
+msgid "Mark as sent"
+msgstr "تحديد كمُرسل"
+
+msgid "Mark as paid"
+msgstr "تحديد كمدفوع"
+
+msgid "Invoice details"
+msgstr "تفاصيل الفاتورة"
+
+msgid "Address"
+msgstr "العنوان البريدي"
+
+msgid "Line items"
+msgstr "بنود الفاتورة"
+
+msgid "Qty"
+msgstr "الكمية"
+
+msgid "Tax %"
+msgstr "ضريبة %"
+
+msgid "Subtotal"
+msgstr "المجموع الجزئي"
+
+msgid "Tax"
+msgstr "الضريبة"
+
+msgid "Grand Total"
+msgstr "المجموع الكلي"
+
+msgid "No items yet. Add one below."
+msgstr "لا توجد بنود بعد. أضف واحدًا أدناه."
+
+msgid "Add item"
+msgstr "إضافة بند"
+
+msgid "Add"
+msgstr "إضافة"
+
+msgid "View"
+msgstr "عرض"
+
+msgid "Invoice %(number)s created."
+msgstr "تم إنشاء الفاتورة %(number)s."
+
+msgid "Item added."
+msgstr "تم إضافة البند."
+
+msgid "Item removed."
+msgstr "تم حذف البند."
+
+msgid "Cannot update invoice from its current status."
+msgstr "لا يمكن تحديث الفاتورة من حالتها الحالية."
+
+msgid "Invoice marked as %(status)s."
+msgstr "تم تحديد الفاتورة كـ %(status)s."
+
+msgid "Invoice deleted."
+msgstr "تم حذف الفاتورة."
+
+msgid "invoice"
+msgstr "فاتورة"
+
+msgid "No book (custom item)"
+msgstr "بدون كتاب (بند مخصص)"
+
+msgid "%(count)s book(s) deleted."
+msgstr "تم حذف %(count)s كتاب."
+
+msgid "No books selected."
+msgstr "لم يتم اختيار أي كتاب."
+
+msgid "Tax Rate (%)"
+msgstr "معدل الضريبة (%)"
+
+msgid "Tax Amount"
+msgstr "مبلغ الضريبة"
+
+# --- Invoice form field labels ---
+msgid "Customer name"
+msgstr "اسم العميل"
+
+msgid "Customer email"
+msgstr "بريد العميل الإلكتروني"
+
+msgid "Customer address"
+msgstr "عنوان العميل"
+
+msgid "Invoice date"
+msgstr "تاريخ الفاتورة"
+
+msgid "Due date"
+msgstr "تاريخ الاستحقاق"
+
+msgid "Description"
+msgstr "الوصف"
+
+msgid "Tax rate"
+msgstr "معدل الضريبة"
+
+# --- Print Runs ---
+msgid "Print Runs"
+msgstr "طبعات الإنتاج"
+
+msgid "Track production print runs and their costs."
+msgstr "تتبع طبعات الإنتاج وتكاليفها."
+
+msgid "Cost / Unit"
+msgstr "التكلفة / الوحدة"
+
+msgid "No print runs recorded yet."
+msgstr "لا توجد طبعات مسجلة حتى الآن."
+
+msgid "Print run recorded."
+msgstr "تم تسجيل طبعة الإنتاج."
+
+msgid "Print run deleted."
+msgstr "تم حذف طبعة الإنتاج."
+
+msgid "print run"
+msgstr "طبعة إنتاج"
+
+msgid "Run date"
+msgstr "تاريخ الطبعة"
+
+msgid "Cost per unit"
+msgstr "التكلفة لكل وحدة"
+
+# --- Royalties ---
+msgid "Royalty Rates"
+msgstr "معدلات الأتعاب"
+
+msgid "Author royalty rates per book."
+msgstr "معدلات أتعاب المؤلف لكل كتاب."
+
+msgid "Royalty Report"
+msgstr "تقرير الأتعاب"
+
+msgid "Add Rate"
+msgstr "إضافة معدل"
+
+msgid "Rate (%)"
+msgstr "المعدل (%)"
+
+msgid "Effective From"
+msgstr "ساري من"
+
+msgid "Effective from"
+msgstr "ساري من"
+
+msgid "No royalty rates defined yet."
+msgstr "لم تُحدَّد معدلات أتعاب بعد."
+
+msgid "Royalties owed to authors based on sales revenue."
+msgstr "الأتعاب المستحقة للمؤلفين بناءً على إيرادات المبيعات."
+
+msgid "Rates"
+msgstr "المعدلات"
+
+msgid "Total Revenue"
+msgstr "إجمالي الإيرادات"
+
+msgid "Royalty Owed"
+msgstr "الأتعاب المستحقة"
+
+msgid "No royalty rates defined. Add rates first."
+msgstr "لم تُحدَّد معدلات أتعاب. أضف معدلات أولاً."
+
+msgid "Royalty rate added."
+msgstr "تم إضافة معدل الأتعاب."
+
+msgid "Royalty rate deleted."
+msgstr "تم حذف معدل الأتعاب."
+
+msgid "royalty rate"
+msgstr "معدل الأتعاب"
+
+# --- Locations ---
+msgid "Locations"
+msgstr "المواقع"
+
+msgid "Manage warehouse and store locations."
+msgstr "إدارة مواقع المستودعات والمتاجر."
+
+msgid "Add location"
+msgstr "إضافة موقع"
+
+msgid "Transfer stock"
+msgstr "نقل المخزون"
+
+msgid "Default"
+msgstr "الافتراضي"
+
+msgid "Total stock"
+msgstr "إجمالي المخزون"
+
+msgid "Back to locations"
+msgstr "العودة إلى المواقع"
+
+msgid "Stock held at this location."
+msgstr "المخزون المحتجز في هذا الموقع."
+
+msgid "No stock recorded at this location."
+msgstr "لا يوجد مخزون مسجل في هذا الموقع."
+
+msgid "Move copies between locations."
+msgstr "نقل النسخ بين المواقع."
+
+msgid "Transfer"
+msgstr "نقل"
+
+msgid "Location created."
+msgstr "تم إنشاء الموقع."
+
+msgid "Location updated."
+msgstr "تم تحديث الموقع."
+
+msgid "Location deleted."
+msgstr "تم حذف الموقع."
+
+msgid "Source and destination must differ."
+msgstr "يجب أن يختلف المصدر والوجهة."
+
+msgid "Not enough stock at source location (available: %(n)s)."
+msgstr "لا يوجد مخزون كافٍ في الموقع المصدر (المتاح: %(n)s)."
+
+msgid "Transferred %(qty)s copies of «%(book)s» from %(from)s to %(to)s."
+msgstr "تم نقل %(qty)s نسخة من «%(book)s» من %(from)s إلى %(to)s."
+
+msgid "Edit location"
+msgstr "تعديل الموقع"
+
+msgid "location"
+msgstr "الموقع"
+
+msgid "Default location"
+msgstr "الموقع الافتراضي"
+
+msgid "From location"
+msgstr "من الموقع"
+
+msgid "To location"
+msgstr "إلى الموقع"
+
+# --- Integrations ---
+msgid "Integrations"
+msgstr "التكاملات"
+
+msgid "Connect RumiPress to Shopify, Amazon, and more."
+msgstr "ربط روومي برِس بـ Shopify وAmazon والمزيد."
+
+msgid "Add integration"
+msgstr "إضافة تكامل"
+
+msgid "Platform"
+msgstr "المنصة"
+
+msgid "Store / Seller ID"
+msgstr "المتجر / معرّف البائع"
+
+msgid "Active"
+msgstr "نشط"
+
+msgid "Orders synced"
+msgstr "الطلبات المزامنة"
+
+msgid "Last synced"
+msgstr "آخر مزامنة"
+
+msgid "Shopify webhook URL:"
+msgstr "رابط Shopify webhook:"
+
+msgid "(replace 0 with the integration ID)"
+msgstr "(استبدل 0 بمعرّف التكامل)"
+
+msgid "No integrations yet."
+msgstr "لا توجد تكاملات حتى الآن."
+
+msgid "Edit integration"
+msgstr "تعديل التكامل"
+
+msgid "Integration saved."
+msgstr "تم حفظ التكامل."
+
+msgid "Integration updated."
+msgstr "تم تحديث التكامل."
+
+msgid "Integration deleted."
+msgstr "تم حذف التكامل."
+
+msgid "integration"
+msgstr "التكامل"
+
+msgid "Store URL"
+msgstr "رابط المتجر"
+
+msgid "API key"
+msgstr "مفتاح API"
+
+msgid "API secret"
+msgstr "المفتاح السري لـ API"
+
+msgid "Webhook secret"
+msgstr "المفتاح السري لـ webhook"
+
+
