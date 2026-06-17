@@ -1059,6 +1059,16 @@ def dashboard(request):
         status__in=[Reorder.STATUS_PENDING, Reorder.STATUS_ORDERED],
     ).count()
 
+    low_stock_list = list(low_stock_books[:5])
+    velocity_cutoff = timezone.now().date() - timedelta(days=REORDER_VELOCITY_WINDOW_DAYS)
+    velocity_by_book = {
+        item["book_id"]: (item["units"] or 0) / REORDER_VELOCITY_WINDOW_DAYS
+        for item in Sale.objects.filter(
+            book_id__in=[b.id for b in low_stock_list],
+            sale_date__gte=velocity_cutoff,
+        ).values("book_id").annotate(units=Sum("quantity"))
+    }
+
     context = {
         "greeting": _time_based_greeting(),
         "quote": random.choice(LEARNING_QUOTES),
@@ -1068,8 +1078,13 @@ def dashboard(request):
         "total_categories": Category.objects.filter(owner=request.user).count(),
         "low_stock_count": low_stock_books.count(),
         "low_stock_books": [
-            {"book": book, "suggested_quantity": _suggested_reorder_quantity(book)}
-            for book in low_stock_books[:5]
+            {
+                "book": book,
+                "suggested_quantity": _suggested_reorder_quantity(
+                    book, velocity=velocity_by_book.get(book.id, 0)
+                ),
+            }
+            for book in low_stock_list
         ],
         "total_revenue": total_revenue,
         "total_expense": total_expense,
@@ -2093,7 +2108,7 @@ def _next_invoice_number(owner):
 @login_required
 @permission_required("books.view_invoice", raise_exception=True)
 def invoice_list(request):
-    invoices = Invoice.objects.filter(owner=request.user)
+    invoices = Invoice.objects.filter(owner=request.user).prefetch_related("items")
     status = request.GET.get("status")
     if status in dict(Invoice.STATUS_CHOICES):
         invoices = invoices.filter(status=status)
@@ -2407,17 +2422,21 @@ def royalty_report(request):
     start_date = request.GET.get("start_date", "").strip()
     end_date = request.GET.get("end_date", "").strip()
 
+    sales_qs = Sale.objects.filter(owner=request.user)
+    if start_date:
+        sales_qs = sales_qs.filter(sale_date__gte=start_date)
+    if end_date:
+        sales_qs = sales_qs.filter(sale_date__lte=end_date)
+
+    revenue_by_book = {
+        item["book_id"]: item["revenue"] or 0
+        for item in sales_qs.values("book_id").annotate(revenue=Sum(REVENUE_EXPRESSION))
+    }
+
     rows = []
     for rate in rates:
-        sales = Sale.objects.filter(owner=request.user, book=rate.book)
-        if start_date:
-            sales = sales.filter(sale_date__gte=start_date)
-        if end_date:
-            sales = sales.filter(sale_date__lte=end_date)
-
-        total_revenue = sum((s.revenue for s in sales), start=0)
+        total_revenue = Decimal(str(revenue_by_book.get(rate.book_id, 0)))
         royalty_amount = total_revenue * rate.rate / 100
-
         rows.append({
             "book": rate.book,
             "author": rate.author,
