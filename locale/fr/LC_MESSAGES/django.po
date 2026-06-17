@@ -1508,4 +1508,43 @@ msgstr "Aucune vente trouvée pour la période sélectionnée. Ajustez les dates
 msgid "TOTAL"
 msgstr "TOTAL"
 
+msgid "Customers"
+msgstr "Clients"
+
+msgid "Add Customer"
+msgstr "Ajouter un client"
+
+msgid "Edit Customer"
+msgstr "Modifier le client"
+
+msgid "Saved customer records for quick invoice creation."
+msgstr "Fiches clients enregistrées pour créer des factures rapidement."
+
+msgid "Selecting a customer auto-fills the fields below."
+msgstr "Sélectionner un client remplit automatiquement les champs ci-dessous."
+
+msgid "No customers yet. Add one to speed up invoice creation."
+msgstr "Aucun client pour l'instant. Ajoutez-en un pour accélérer la facturation."
+
+msgid "— Select saved customer (optional) —"
+msgstr "— Sélectionner un client enregistré (optionnel) —"
+
+msgid "Customer"
+msgstr "Client"
+
+msgid "Customer created."
+msgstr "Client créé."
+
+msgid "Customer updated."
+msgstr "Client mis à jour."
+
+msgid "Customer deleted."
+msgstr "Client supprimé."
+
+msgid "customer"
+msgstr "le client"
+
+msgid "Invoices"
+msgstr "Factures"
+
 

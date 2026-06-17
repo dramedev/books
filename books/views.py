@@ -31,6 +31,7 @@ from .forms import (
     AuthorForm,
     BookForm,
     CategoryForm,
+    CustomerForm,
     IntegrationForm,
     InvoiceForm,
     InvoiceItemForm,
@@ -50,7 +51,7 @@ from .forms import (
 )
 from .models import (
     CURRENCY_CHOICES,
-    AccessCode, Author, Book, Category,
+    AccessCode, Author, Book, Category, Customer,
     Integration, Invoice, InvoiceItem,
     Location, PrintRun, Profile,
     Reorder, Return, RoyaltyRate,
@@ -2108,10 +2109,14 @@ def invoice_list(request):
 @login_required
 @permission_required("books.add_invoice", raise_exception=True)
 def invoice_create(request):
-    form = InvoiceForm()
+    import json as _json
+    customers = Customer.objects.filter(owner=request.user).values("id", "name", "email", "address")
+    customers_json = _json.dumps(list(customers))
+
+    form = InvoiceForm(user=request.user)
 
     if request.method == "POST":
-        form = InvoiceForm(request.POST)
+        form = InvoiceForm(request.POST, user=request.user)
         if form.is_valid():
             invoice = form.save(commit=False)
             invoice.owner = request.user
@@ -2120,7 +2125,7 @@ def invoice_create(request):
             messages.success(request, gettext("Invoice %(number)s created.") % {"number": invoice.invoice_number})
             return redirect("invoice_detail", id=invoice.id)
 
-    return render(request, "books/invoice_form.html", {"form": form})
+    return render(request, "books/invoice_form.html", {"form": form, "customers_json": customers_json})
 
 
 @login_required
@@ -2913,6 +2918,66 @@ def redeem_access_code(request):
                 return redirect("dashboard")
 
     return render(request, "registration/redeem_access_code.html", {"form": form})
+
+
+# ---------------------------------------------------------------------------
+# Customer views
+# ---------------------------------------------------------------------------
+
+@login_required
+@permission_required("books.view_customer", raise_exception=True)
+def customer_list(request):
+    customers = Customer.objects.filter(owner=request.user).annotate(
+        invoice_count=Count("invoices")
+    )
+    q = request.GET.get("q", "").strip()
+    if q:
+        customers = customers.filter(name__icontains=q)
+    return render(request, "books/customer_list.html", {"customers": customers, "q": q})
+
+
+@login_required
+@permission_required("books.add_customer", raise_exception=True)
+def customer_create(request):
+    form = CustomerForm()
+    if request.method == "POST":
+        form = CustomerForm(request.POST)
+        if form.is_valid():
+            customer = form.save(commit=False)
+            customer.owner = request.user
+            customer.save()
+            messages.success(request, gettext("Customer created."))
+            return redirect("customer_list")
+    return render(request, "books/customer_form.html", {"form": form})
+
+
+@login_required
+@permission_required("books.change_customer", raise_exception=True)
+def customer_update(request, id):
+    customer = get_object_or_404(Customer, id=id, owner=request.user)
+    form = CustomerForm(instance=customer)
+    if request.method == "POST":
+        form = CustomerForm(request.POST, instance=customer)
+        if form.is_valid():
+            form.save()
+            messages.success(request, gettext("Customer updated."))
+            return redirect("customer_list")
+    return render(request, "books/customer_form.html", {"form": form, "customer": customer})
+
+
+@login_required
+@permission_required("books.delete_customer", raise_exception=True)
+def customer_delete(request, id):
+    customer = get_object_or_404(Customer, id=id, owner=request.user)
+    if request.method == "POST":
+        customer.delete()
+        messages.success(request, gettext("Customer deleted."))
+        return redirect("customer_list")
+    return render(request, "books/confirm_delete.html", {
+        "object_type": gettext("customer"),
+        "object_name": customer.name,
+        "cancel_url": reverse("customer_list"),
+    })
 
 
 # ---------------------------------------------------------------------------

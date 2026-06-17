@@ -3,7 +3,7 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.password_validation import validate_password
 from django.utils.translation import gettext_lazy as _
 
-from .models import Author, Book, Category, Integration, Invoice, InvoiceItem, Location, PrintRun, Profile, Reorder, Return, RoyaltyRate, Sale, StockAdjustment, Supplier
+from .models import Author, Book, Category, Customer, Integration, Invoice, InvoiceItem, Location, PrintRun, Profile, Reorder, Return, RoyaltyRate, Sale, StockAdjustment, Supplier
 
 
 class BookForm(forms.ModelForm):
@@ -423,12 +423,37 @@ class RedeemAccessCodeForm(forms.Form):
 
 
 
+class CustomerForm(forms.ModelForm):
+
+    class Meta:
+        model = Customer
+
+        fields = ["name", "email", "phone", "address", "notes"]
+
+        widgets = {
+            "name": forms.TextInput(attrs={"class": "form-control"}),
+            "email": forms.EmailInput(attrs={"class": "form-control"}),
+            "phone": forms.TextInput(attrs={"class": "form-control"}),
+            "address": forms.Textarea(attrs={"class": "form-control", "rows": 3}),
+            "notes": forms.TextInput(attrs={"class": "form-control", "placeholder": _("Notes (optional)")}),
+        }
+
+
+
 class InvoiceForm(forms.ModelForm):
+
+    def __init__(self, *args, user=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        if user is not None:
+            self.fields["customer"].queryset = Customer.objects.filter(owner=user)
+        self.fields["customer"].required = False
+        self.fields["customer"].empty_label = _("— Select saved customer (optional) —")
 
     class Meta:
         model = Invoice
 
         fields = [
+            "customer",
             "customer_name",
             "customer_email",
             "customer_address",
@@ -439,6 +464,7 @@ class InvoiceForm(forms.ModelForm):
         ]
 
         widgets = {
+            "customer": forms.Select(attrs={"class": "form-select", "id": "id_customer"}),
             "customer_name": forms.TextInput(attrs={"class": "form-control"}),
             "customer_email": forms.EmailInput(attrs={"class": "form-control"}),
             "customer_address": forms.Textarea(attrs={"class": "form-control", "rows": 3}),

@@ -366,6 +366,35 @@ class Return(models.Model):
 
 
 
+class Customer(models.Model):
+
+    owner = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="owned_customers",
+    )
+
+    name = models.CharField(max_length=200, verbose_name=_("Name"))
+
+    email = models.EmailField(blank=True, verbose_name=_("Email"))
+
+    phone = models.CharField(max_length=50, blank=True, verbose_name=_("Phone"))
+
+    address = models.TextField(blank=True, verbose_name=_("Address"))
+
+    notes = models.CharField(max_length=200, blank=True, verbose_name=_("Notes"))
+
+
+    class Meta:
+        ordering = ["name"]
+        unique_together = ("owner", "name")
+
+
+    def __str__(self):
+        return self.name
+
+
+
 class Invoice(models.Model):
 
     STATUS_DRAFT = "draft"
@@ -382,6 +411,15 @@ class Invoice(models.Model):
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         related_name="owned_invoices",
+    )
+
+    customer = models.ForeignKey(
+        Customer,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="invoices",
+        verbose_name=_("Customer"),
     )
 
     invoice_number = models.CharField(max_length=20, blank=True, verbose_name=_("Invoice number"))

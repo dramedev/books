@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+<div>
+<h1 class="mb-1">{% translate "Customers" %}</h1>
+<p class="muted-text mb-0">{% translate "Saved customer records for quick invoice creation." %}</p>
+</div>
+{% if perms.books.add_customer %}
+<a class="btn btn-primary" href="{% url 'customer_create' %}">{% translate "Add Customer" %}</a>
+{% endif %}
+</div>
+
+<form class="filter-panel mb-3" method="get">
+<div class="row g-3 align-items-end">
+<div class="col-md-4">
+<label class="form-label">{% translate "Search" %}</label>
+<input type="text" name="q" class="form-control" value="{{ q }}" placeholder="{% translate 'Name' %}">
+</div>
+<div class="col-md-3 d-flex align-items-end gap-2">
+<button class="btn btn-success" type="submit">{% translate "Apply" %}</button>
+<a class="btn btn-outline-light" href="{% url 'customer_list' %}">{% translate "Reset" %}</a>
+</div>
+</div>
+</form>
+
+<div class="table-responsive">
+<table class="table table-striped align-middle">
+<thead>
+<tr>
+<th>{% translate "Name" %}</th>
+<th>{% translate "Email" %}</th>
+<th>{% translate "Phone" %}</th>
+<th>{% translate "Invoices" %}</th>
+<th>{% translate "Actions" %}</th>
+</tr>
+</thead>
+<tbody>
+{% for customer in customers %}
+<tr>
+<td><strong>{{ customer.name }}</strong></td>
+<td>{{ customer.email|default:"—" }}</td>
+<td>{{ customer.phone|default:"—" }}</td>
+<td>{{ customer.invoice_count }}</td>
+<td class="d-flex gap-2">
+{% if perms.books.change_customer %}
+<a class="btn btn-warning btn-sm" href="{% url 'customer_update' customer.id %}">{% translate "Edit" %}</a>
+{% endif %}
+{% if perms.books.delete_customer %}
+<a class="btn btn-danger btn-sm" href="{% url 'customer_delete' customer.id %}">{% translate "Delete" %}</a>
+{% endif %}
+</td>
+</tr>
+{% empty %}
+<tr>
+<td colspan="5" class="text-center muted-text py-4">{% translate "No customers yet. Add one to speed up invoice creation." %}</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+
+{% endblock %}

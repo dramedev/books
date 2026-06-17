@@ -579,11 +579,18 @@ html[dir="rtl"] .chat-panel{
 </a>
 {% endif %}
 
-{% if perms.books.view_invoice %}
+{% if perms.books.view_invoice or perms.books.view_customer %}
 <div class="sidebar-section">{% translate "Billing" %}</div>
+{% if perms.books.view_customer %}
+<a class="sidebar-link {% if url_name == 'customer_list' or url_name == 'customer_create' or url_name == 'customer_update' %}active{% endif %}" href="{% url 'customer_list' %}">
+<i class="bi bi-people"></i> {% translate "Customers" %}
+</a>
+{% endif %}
+{% if perms.books.view_invoice %}
 <a class="sidebar-link {% if url_name == 'invoice_list' or url_name == 'invoice_detail' or url_name == 'invoice_create' %}active{% endif %}" href="{% url 'invoice_list' %}">
 <i class="bi bi-receipt"></i> {% translate "Invoices" %}
 </a>
+{% endif %}
 {% endif %}
 
 {% if perms.books.view_printrun or perms.books.view_royaltyrate %}
