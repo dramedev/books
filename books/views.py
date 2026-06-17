@@ -6,6 +6,7 @@ import json
 import math
 import random
 from datetime import timedelta
+from decimal import Decimal
 from io import BytesIO
 
 from django.conf import settings
@@ -772,6 +773,11 @@ REVENUE_EXPRESSION = ExpressionWrapper(
 
 PURCHASE_COST_EXPRESSION = ExpressionWrapper(
     F("quantity") * F("unit_cost"),
+    output_field=DecimalField(max_digits=10, decimal_places=2),
+)
+
+_RETURN_AMOUNT_EXPRESSION = ExpressionWrapper(
+    F("quantity") * F("sale__unit_price"),
     output_field=DecimalField(max_digits=10, decimal_places=2),
 )
 
@@ -2907,3 +2913,209 @@ def redeem_access_code(request):
                 return redirect("dashboard")
 
     return render(request, "registration/redeem_access_code.html", {"form": form})
+
+
+# ---------------------------------------------------------------------------
+# Profit / Loss Report
+# ---------------------------------------------------------------------------
+
+def _pl_data(user, start_date, end_date):
+    sales_qs = Sale.objects.filter(owner=user)
+    if start_date:
+        sales_qs = sales_qs.filter(sale_date__gte=start_date)
+    if end_date:
+        sales_qs = sales_qs.filter(sale_date__lte=end_date)
+
+    revenue_by_book = {
+        item["book_id"]: item["revenue"] or 0
+        for item in sales_qs.values("book_id").annotate(revenue=Sum(REVENUE_EXPRESSION))
+    }
+    units_by_book = {
+        item["book_id"]: item["units"] or 0
+        for item in sales_qs.values("book_id").annotate(units=Sum("quantity"))
+    }
+
+    returns_by_book = {
+        item["sale__book_id"]: item["amount"] or 0
+        for item in Return.objects.filter(sale__in=sales_qs)
+        .values("sale__book_id")
+        .annotate(amount=Sum(_RETURN_AMOUNT_EXPRESSION))
+    }
+
+    reorders_qs = Reorder.objects.filter(owner=user, status=Reorder.STATUS_RECEIVED)
+    if start_date:
+        reorders_qs = reorders_qs.filter(received_at__date__gte=start_date)
+    if end_date:
+        reorders_qs = reorders_qs.filter(received_at__date__lte=end_date)
+    purchase_by_book = {
+        item["book_id"]: item["cost"] or 0
+        for item in reorders_qs.values("book_id").annotate(cost=Sum(PURCHASE_COST_EXPRESSION))
+    }
+
+    book_ids = set(revenue_by_book)
+    books = (
+        Book.objects.filter(id__in=book_ids, owner=user)
+        .select_related("category")
+        .order_by("title")
+    )
+
+    royalties_by_book = {}
+    for rate in RoyaltyRate.objects.filter(book__in=books, owner=user):
+        rev = Decimal(str(revenue_by_book.get(rate.book_id, 0)))
+        royalties_by_book[rate.book_id] = (
+            royalties_by_book.get(rate.book_id, Decimal(0)) + rev * rate.rate / 100
+        )
+
+    rows = []
+    totals = {k: Decimal(0) for k in ("revenue", "returns", "net_revenue", "purchase_cost", "distribution", "royalties", "net_profit")}
+
+    for book in books:
+        revenue = Decimal(str(revenue_by_book.get(book.id, 0)))
+        returns = Decimal(str(returns_by_book.get(book.id, 0)))
+        net_revenue = revenue - returns
+        purchase_cost = Decimal(str(purchase_by_book.get(book.id, 0)))
+        distribution = book.distribution_expense
+        royalties = royalties_by_book.get(book.id, Decimal(0))
+        net_profit = net_revenue - purchase_cost - distribution - royalties
+
+        rows.append({
+            "book": book,
+            "units": units_by_book.get(book.id, 0),
+            "revenue": revenue,
+            "returns": returns,
+            "net_revenue": net_revenue,
+            "purchase_cost": purchase_cost,
+            "distribution_expense": distribution,
+            "royalties": royalties,
+            "net_profit": net_profit,
+        })
+
+        totals["revenue"] += revenue
+        totals["returns"] += returns
+        totals["net_revenue"] += net_revenue
+        totals["purchase_cost"] += purchase_cost
+        totals["distribution"] += distribution
+        totals["royalties"] += royalties
+        totals["net_profit"] += net_profit
+
+    return rows, totals
+
+
+@login_required
+@permission_required("books.view_book", raise_exception=True)
+def profit_loss_report(request):
+    start_date = request.GET.get("start_date", "").strip()
+    end_date = request.GET.get("end_date", "").strip()
+    rows, totals = _pl_data(request.user, start_date, end_date)
+
+    return render(request, "books/profit_loss_report.html", {
+        "rows": rows,
+        "start_date": start_date,
+        "end_date": end_date,
+        **totals,
+    })
+
+
+@login_required
+@permission_required("books.view_book", raise_exception=True)
+def export_profit_loss_pdf(request):
+    from reportlab.lib import colors
+    from reportlab.lib.pagesizes import landscape, letter
+    from reportlab.lib.styles import getSampleStyleSheet
+    from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
+
+    _register_pdf_fonts()
+    body_font, bold_font = _pdf_fonts()
+
+    start_date = request.GET.get("start_date", "").strip()
+    end_date = request.GET.get("end_date", "").strip()
+    rows, totals = _pl_data(request.user, start_date, end_date)
+
+    buffer = BytesIO()
+    document = SimpleDocTemplate(
+        buffer,
+        pagesize=landscape(letter),
+        leftMargin=24,
+        rightMargin=24,
+        topMargin=24,
+        bottomMargin=24,
+    )
+
+    styles = getSampleStyleSheet()
+    title_style = styles["Title"]
+    title_style.fontName = bold_font
+
+    period = ""
+    if start_date and end_date:
+        period = f" ({start_date} – {end_date})"
+    elif start_date:
+        period = f" (from {start_date})"
+    elif end_date:
+        period = f" (to {end_date})"
+
+    elements = [
+        Paragraph(_pdf_text(gettext("Profit / Loss Report") + period), title_style),
+        Spacer(1, 12),
+    ]
+
+    headers = [
+        _pdf_text(gettext("Book")),
+        _pdf_text(gettext("Units")),
+        _pdf_text(gettext("Revenue")),
+        _pdf_text(gettext("Returns")),
+        _pdf_text(gettext("Net Revenue")),
+        _pdf_text(gettext("Purchase Cost")),
+        _pdf_text(gettext("Distribution")),
+        _pdf_text(gettext("Royalties")),
+        _pdf_text(gettext("Net Profit")),
+    ]
+
+    data = [headers]
+    for row in rows:
+        data.append([
+            _pdf_text(row["book"].title),
+            str(row["units"]),
+            str(row["revenue"]),
+            str(row["returns"]),
+            str(row["net_revenue"]),
+            str(row["purchase_cost"]),
+            str(row["distribution_expense"]),
+            str(row["royalties"]),
+            str(row["net_profit"]),
+        ])
+
+    data.append([
+        _pdf_text(gettext("TOTAL")),
+        "",
+        str(totals["revenue"]),
+        str(totals["returns"]),
+        str(totals["net_revenue"]),
+        str(totals["purchase_cost"]),
+        str(totals["distribution"]),
+        str(totals["royalties"]),
+        str(totals["net_profit"]),
+    ])
+
+    table = Table(data, colWidths=[140, 40, 65, 65, 70, 75, 70, 65, 70], repeatRows=1)
+    table.setStyle(
+        TableStyle([
+            ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#1f1f1f")),
+            ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+            ("FONTNAME", (0, 0), (-1, 0), bold_font),
+            ("FONTNAME", (0, 1), (-1, -2), body_font),
+            ("FONTSIZE", (0, 0), (-1, -1), 7),
+            ("GRID", (0, 0), (-1, -1), 0.25, colors.grey),
+            ("VALIGN", (0, 0), (-1, -1), "TOP"),
+            ("BACKGROUND", (0, -1), (-1, -1), colors.HexColor("#1f1f1f")),
+            ("TEXTCOLOR", (0, -1), (-1, -1), colors.white),
+            ("FONTNAME", (0, -1), (-1, -1), bold_font),
+        ])
+    )
+    elements.append(table)
+
+    document.build(elements)
+    buffer.seek(0)
+
+    response = HttpResponse(buffer.getvalue(), content_type="application/pdf")
+    response["Content-Disposition"] = 'attachment; filename="rumi-press-profit-loss.pdf"'
+    return response

@@ -82,4 +82,6 @@ urlpatterns = [
     path("integrations/<int:id>/edit/", views.integration_update, name="integration_update"),
     path("integrations/<int:id>/delete/", views.integration_delete, name="integration_delete"),
     path("webhooks/shopify/<int:integration_id>/", views.shopify_webhook, name="shopify_webhook"),
+    path("reports/profit-loss/", views.profit_loss_report, name="profit_loss_report"),
+    path("reports/profit-loss/pdf/", views.export_profit_loss_pdf, name="export_profit_loss_pdf"),
 ]

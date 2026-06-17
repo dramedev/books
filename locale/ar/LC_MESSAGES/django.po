@@ -1474,4 +1474,37 @@ msgstr "المفتاح السري لـ API"
 msgid "Webhook secret"
 msgstr "المفتاح السري لـ webhook"
 
+msgid "P&L Report"
+msgstr "تقرير الأرباح والخسائر"
+
+msgid "Profit / Loss Report"
+msgstr "تقرير الأرباح والخسائر"
+
+msgid "Revenue minus purchase costs, distribution expenses, and royalties."
+msgstr "الإيرادات مطروحاً منها تكاليف الشراء ومصاريف التوزيع وحقوق المؤلف."
+
+msgid "Net Revenue"
+msgstr "صافي الإيرادات"
+
+msgid "Net Profit"
+msgstr "صافي الربح"
+
+msgid "Purchase Cost"
+msgstr "تكلفة الشراء"
+
+msgid "Distribution"
+msgstr "التوزيع"
+
+msgid "Returns"
+msgstr "المرتجعات"
+
+msgid "Export PDF"
+msgstr "تصدير PDF"
+
+msgid "No sales found for the selected period. Adjust the date range and try again."
+msgstr "لا توجد مبيعات للفترة المحددة. قم بتعديل نطاق التاريخ وحاول مجدداً."
+
+msgid "TOTAL"
+msgstr "الإجمالي"
+
 

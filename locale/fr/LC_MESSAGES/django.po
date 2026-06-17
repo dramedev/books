@@ -1475,4 +1475,37 @@ msgstr "Secret API"
 msgid "Webhook secret"
 msgstr "Secret webhook"
 
+msgid "P&L Report"
+msgstr "Rapport P&L"
+
+msgid "Profit / Loss Report"
+msgstr "Rapport Profit / Perte"
+
+msgid "Revenue minus purchase costs, distribution expenses, and royalties."
+msgstr "Chiffre d'affaires moins coûts d'achat, frais de distribution et redevances."
+
+msgid "Net Revenue"
+msgstr "Chiffre d'affaires net"
+
+msgid "Net Profit"
+msgstr "Bénéfice net"
+
+msgid "Purchase Cost"
+msgstr "Coût d'achat"
+
+msgid "Distribution"
+msgstr "Distribution"
+
+msgid "Returns"
+msgstr "Retours"
+
+msgid "Export PDF"
+msgstr "Exporter PDF"
+
+msgid "No sales found for the selected period. Adjust the date range and try again."
+msgstr "Aucune vente trouvée pour la période sélectionnée. Ajustez les dates et réessayez."
+
+msgid "TOTAL"
+msgstr "TOTAL"
+
 
