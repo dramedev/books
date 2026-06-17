@@ -1607,6 +1607,122 @@ def reorder_delete(request, id):
 
 
 @login_required
+@permission_required("books.add_book", raise_exception=True)
+def import_books_csv(request):
+    results = None
+
+    if request.method == "POST" and request.FILES.get("csv_file"):
+        f = request.FILES["csv_file"]
+
+        if not f.name.lower().endswith(".csv"):
+            messages.error(request, gettext("Please upload a .csv file."))
+            return redirect("import_books_csv")
+
+        try:
+            text = f.read().decode("utf-8-sig")
+        except UnicodeDecodeError:
+            messages.error(request, gettext("File must be UTF-8 encoded."))
+            return redirect("import_books_csv")
+
+        reader = csv.DictReader(text.splitlines())
+
+        # Normalise header names to lower-case, strip spaces
+        reader.fieldnames = [h.strip().lower() for h in (reader.fieldnames or [])]
+
+        created = updated = skipped = 0
+        errors = []
+
+        for i, row in enumerate(reader, start=2):  # row 1 is header
+            title = (row.get("title") or "").strip()
+            if not title:
+                errors.append(gettext("Row %(n)s: title is required.") % {"n": i})
+                skipped += 1
+                continue
+
+            isbn = (row.get("isbn") or "").strip() or None
+            subtitle = (row.get("subtitle") or "").strip()
+            publisher = (row.get("publisher") or "").strip()
+            published_date_raw = (row.get("published date") or row.get("published_date") or "").strip()
+            category_name = (row.get("category") or "").strip()
+            expense_raw = (row.get("distribution expense") or row.get("distribution_expense") or "").strip()
+
+            # Resolve category
+            category = None
+            if category_name:
+                category, _ = Category.objects.get_or_create(owner=request.user, name=category_name)
+
+            # Resolve published date
+            published_date = None
+            if published_date_raw:
+                from datetime import date as _date
+                try:
+                    published_date = _date.fromisoformat(published_date_raw)
+                except ValueError:
+                    pass
+
+            # Resolve distribution expense
+            from decimal import InvalidOperation
+            try:
+                expense = Decimal(expense_raw) if expense_raw else Decimal("0")
+            except InvalidOperation:
+                expense = Decimal("0")
+
+            # Find existing book by ISBN or create new
+            book = None
+            is_new = False
+            if isbn:
+                book = Book.objects.filter(owner=request.user, isbn=isbn).first()
+
+            if book is None:
+                book = Book(owner=request.user)
+                is_new = True
+
+            book.title = title
+            book.subtitle = subtitle
+            book.publisher = publisher
+            book.distribution_expense = expense
+            if published_date:
+                book.published_date = published_date
+            if category:
+                book.category = category
+            if isbn:
+                book.isbn = isbn
+            book.save()
+
+            # Resolve authors
+            authors_raw = (row.get("authors") or "").strip()
+            if authors_raw:
+                author_objs = []
+                for name in authors_raw.split(","):
+                    name = name.strip()
+                    if name:
+                        author, _ = Author.objects.get_or_create(owner=request.user, name=name)
+                        author_objs.append(author)
+                if author_objs:
+                    book.authors.set(author_objs)
+
+            if is_new:
+                created += 1
+            else:
+                updated += 1
+
+        results = {"created": created, "updated": updated, "skipped": skipped, "errors": errors}
+
+    return render(request, "books/import_books.html", {"results": results})
+
+
+@login_required
+@permission_required("books.view_book", raise_exception=True)
+def import_books_template(request):
+    """Return an empty CSV with the correct headers for the user to fill in."""
+    response = HttpResponse(content_type="text/csv")
+    response["Content-Disposition"] = 'attachment; filename="rumi-press-import-template.csv"'
+    writer = csv.writer(response)
+    writer.writerow(["ISBN", "Title", "Subtitle", "Authors", "Publisher", "Published Date", "Category", "Distribution Expense"])
+    return response
+
+
+@login_required
 @permission_required("books.view_book", raise_exception=True)
 def export_books_csv(request):
     response = HttpResponse(content_type="text/csv")

@@ -1000,6 +1000,76 @@ msgstr "« L'efficacité consiste à mieux faire ce qui est déjà fait. » — 
 msgid "\"The best way to predict the future is to create it.\" — Peter Drucker"
 msgstr "« La meilleure façon de prédire l'avenir est de le créer. » — Peter Drucker"
 
+# --- CSV import ---
+msgid "Import Books"
+msgstr "Importer des livres"
+
+msgid "Upload a CSV file to create or update books in bulk."
+msgstr "Téléversez un fichier CSV pour créer ou mettre à jour des livres en masse."
+
+msgid "Import results"
+msgstr "Résultats de l'import"
+
+msgid "Created"
+msgstr "Créés"
+
+msgid "Updated"
+msgstr "Mis à jour"
+
+msgid "Skipped"
+msgstr "Ignorés"
+
+msgid "Row errors:"
+msgstr "Erreurs de lignes :"
+
+msgid "Upload CSV"
+msgstr "Téléverser le CSV"
+
+msgid "CSV file"
+msgstr "Fichier CSV"
+
+msgid "Maximum file size: 5 MB. Encoding: UTF-8."
+msgstr "Taille maximale : 5 Mo. Encodage : UTF-8."
+
+msgid "Import"
+msgstr "Importer"
+
+msgid "Format guide"
+msgstr "Guide du format"
+
+msgid "The first row must be a header. Supported columns:"
+msgstr "La première ligne doit être un en-tête. Colonnes supportées :"
+
+msgid "Column"
+msgstr "Colonne"
+
+msgid "Required"
+msgstr "Requis"
+
+msgid "Used to match existing books for update"
+msgstr "Utilisé pour identifier les livres existants à mettre à jour"
+
+msgid "Comma-separated names"
+msgstr "Noms séparés par des virgules"
+
+msgid "Created automatically if new"
+msgstr "Créée automatiquement si nouvelle"
+
+msgid "Decimal number"
+msgstr "Nombre décimal"
+
+msgid "Download template"
+msgstr "Télécharger le modèle"
+
+msgid "Please upload a .csv file."
+msgstr "Veuillez téléverser un fichier .csv."
+
+msgid "File must be UTF-8 encoded."
+msgstr "Le fichier doit être encodé en UTF-8."
+
+msgid "Row %(n)s: title is required."
+msgstr "Ligne %(n)s : le titre est requis."
+
 # --- Password reset ---
 msgid "Reset your password"
 msgstr "Réinitialiser votre mot de passe"

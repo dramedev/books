@@ -1000,6 +1000,76 @@ msgstr "«الكفاءة هي أن تؤدي بشكل أفضل ما يُؤدى ب
 msgid "\"The best way to predict the future is to create it.\" — Peter Drucker"
 msgstr "«أفضل طريقة للتنبؤ بالمستقبل هي صنعه.» — بيتر دراكر"
 
+# --- CSV import ---
+msgid "Import Books"
+msgstr "استيراد الكتب"
+
+msgid "Upload a CSV file to create or update books in bulk."
+msgstr "ارفع ملف CSV لإنشاء الكتب أو تحديثها بالجملة."
+
+msgid "Import results"
+msgstr "نتائج الاستيراد"
+
+msgid "Created"
+msgstr "تم الإنشاء"
+
+msgid "Updated"
+msgstr "تم التحديث"
+
+msgid "Skipped"
+msgstr "تم التخطي"
+
+msgid "Row errors:"
+msgstr "أخطاء الصفوف:"
+
+msgid "Upload CSV"
+msgstr "رفع ملف CSV"
+
+msgid "CSV file"
+msgstr "ملف CSV"
+
+msgid "Maximum file size: 5 MB. Encoding: UTF-8."
+msgstr "الحجم الأقصى: 5 ميغابايت. الترميز: UTF-8."
+
+msgid "Import"
+msgstr "استيراد"
+
+msgid "Format guide"
+msgstr "دليل الصيغة"
+
+msgid "The first row must be a header. Supported columns:"
+msgstr "يجب أن يكون الصف الأول رأسًا للأعمدة. الأعمدة المدعومة:"
+
+msgid "Column"
+msgstr "العمود"
+
+msgid "Required"
+msgstr "مطلوب"
+
+msgid "Used to match existing books for update"
+msgstr "يُستخدم لمطابقة الكتب الموجودة للتحديث"
+
+msgid "Comma-separated names"
+msgstr "أسماء مفصولة بفواصل"
+
+msgid "Created automatically if new"
+msgstr "يُنشأ تلقائيًا إذا كان جديدًا"
+
+msgid "Decimal number"
+msgstr "رقم عشري"
+
+msgid "Download template"
+msgstr "تحميل القالب"
+
+msgid "Please upload a .csv file."
+msgstr "يرجى رفع ملف بصيغة .csv."
+
+msgid "File must be UTF-8 encoded."
+msgstr "يجب أن يكون الملف مرمّزًا بـ UTF-8."
+
+msgid "Row %(n)s: title is required."
+msgstr "الصف %(n)s: العنوان مطلوب."
+
 # --- Password reset ---
 msgid "Reset your password"
 msgstr "إعادة تعيين كلمة المرور"

@@ -29,6 +29,9 @@
 {% endif %}
 
 {% if perms.books.add_book %}
+<a class="btn btn-outline-secondary" href="{% url 'import_books_csv' %}">
+<i class="bi bi-upload"></i> {% translate "Import" %}
+</a>
 <a class="btn btn-primary" href="{% url 'book_create' %}">
 {% translate "Add Book" %}
 </a>
