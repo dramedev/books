@@ -1179,31 +1179,12 @@ def _adjust_stock(book_id, delta, owner, location=None):
     book.stock_on_hand = total
 
     if book.is_low_stock and not book.low_stock_alert_sent:
-        _send_low_stock_email(owner, book)
         book.low_stock_alert_sent = True
     elif not book.is_low_stock and book.low_stock_alert_sent:
         book.low_stock_alert_sent = False
 
     book.save(update_fields=["stock_on_hand", "low_stock_alert_sent"])
     return book
-
-
-def _send_low_stock_email(user, book):
-    if not user.email:
-        return
-
-    send_mail(
-        subject=f"RumiPress: Low stock alert - {book.title}",
-        message=(
-            f"Hi {user.username},\n\n"
-            f"'{book.title}' is running low on stock: {book.stock_on_hand} remaining "
-            f"(reorder threshold {book.reorder_threshold}).\n\n"
-            "Consider creating a reorder to restock this title."
-        ),
-        from_email=settings.DEFAULT_FROM_EMAIL,
-        recipient_list=[user.email],
-        fail_silently=True,
-    )
 
 
 def _send_reorder_status_email(user, reorder):
