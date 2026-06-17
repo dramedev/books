@@ -1000,6 +1000,58 @@ msgstr "« L'efficacité consiste à mieux faire ce qui est déjà fait. » — 
 msgid "\"The best way to predict the future is to create it.\" — Peter Drucker"
 msgstr "« La meilleure façon de prédire l'avenir est de le créer. » — Peter Drucker"
 
+# --- Password reset ---
+msgid "Reset your password"
+msgstr "Réinitialiser votre mot de passe"
+
+msgid "Enter your email address and we'll send you a link to reset your password."
+msgstr "Saisissez votre adresse e-mail et nous vous enverrons un lien pour réinitialiser votre mot de passe."
+
+msgid "Send reset link"
+msgstr "Envoyer le lien"
+
+msgid "Back to login"
+msgstr "Retour à la connexion"
+
+msgid "Check your email"
+msgstr "Vérifiez vos e-mails"
+
+msgid "If an account exists for that address, we've sent a password reset link. Check your inbox (and spam folder)."
+msgstr "Si un compte est associé à cette adresse, nous avons envoyé un lien de réinitialisation. Vérifiez votre boîte de réception (et le dossier spam)."
+
+msgid "Set a new password"
+msgstr "Définir un nouveau mot de passe"
+
+msgid "Enter your new password below."
+msgstr "Saisissez votre nouveau mot de passe ci-dessous."
+
+msgid "New password"
+msgstr "Nouveau mot de passe"
+
+msgid "Confirm new password"
+msgstr "Confirmer le nouveau mot de passe"
+
+msgid "Set new password"
+msgstr "Définir le mot de passe"
+
+msgid "Link expired"
+msgstr "Lien expiré"
+
+msgid "This password reset link is invalid or has already been used. Please request a new one."
+msgstr "Ce lien de réinitialisation est invalide ou a déjà été utilisé. Veuillez en demander un nouveau."
+
+msgid "Request new link"
+msgstr "Demander un nouveau lien"
+
+msgid "Password changed"
+msgstr "Mot de passe modifié"
+
+msgid "Your password has been set. You can now log in with your new password."
+msgstr "Votre mot de passe a été défini. Vous pouvez maintenant vous connecter avec votre nouveau mot de passe."
+
+msgid "Forgot your password?"
+msgstr "Mot de passe oublié ?"
+
 # --- Sidebar sections ---
 msgid "Billing"
 msgstr "Facturation"

@@ -1000,6 +1000,58 @@ msgstr "«الكفاءة هي أن تؤدي بشكل أفضل ما يُؤدى ب
 msgid "\"The best way to predict the future is to create it.\" — Peter Drucker"
 msgstr "«أفضل طريقة للتنبؤ بالمستقبل هي صنعه.» — بيتر دراكر"
 
+# --- Password reset ---
+msgid "Reset your password"
+msgstr "إعادة تعيين كلمة المرور"
+
+msgid "Enter your email address and we'll send you a link to reset your password."
+msgstr "أدخل بريدك الإلكتروني وسنرسل لك رابطًا لإعادة تعيين كلمة المرور."
+
+msgid "Send reset link"
+msgstr "إرسال رابط الإعادة"
+
+msgid "Back to login"
+msgstr "العودة إلى تسجيل الدخول"
+
+msgid "Check your email"
+msgstr "تحقق من بريدك الإلكتروني"
+
+msgid "If an account exists for that address, we've sent a password reset link. Check your inbox (and spam folder)."
+msgstr "إذا كان هناك حساب مرتبط بهذا البريد، فقد أرسلنا رابط إعادة التعيين. تحقق من صندوق الوارد (ومجلد البريد العشوائي)."
+
+msgid "Set a new password"
+msgstr "تعيين كلمة مرور جديدة"
+
+msgid "Enter your new password below."
+msgstr "أدخل كلمة مرورك الجديدة أدناه."
+
+msgid "New password"
+msgstr "كلمة المرور الجديدة"
+
+msgid "Confirm new password"
+msgstr "تأكيد كلمة المرور الجديدة"
+
+msgid "Set new password"
+msgstr "تعيين كلمة المرور الجديدة"
+
+msgid "Link expired"
+msgstr "الرابط منتهي الصلاحية"
+
+msgid "This password reset link is invalid or has already been used. Please request a new one."
+msgstr "رابط إعادة التعيين هذا غير صالح أو تم استخدامه مسبقًا. يرجى طلب رابط جديد."
+
+msgid "Request new link"
+msgstr "طلب رابط جديد"
+
+msgid "Password changed"
+msgstr "تم تغيير كلمة المرور"
+
+msgid "Your password has been set. You can now log in with your new password."
+msgstr "تم تعيين كلمة مرورك. يمكنك الآن تسجيل الدخول بكلمة المرور الجديدة."
+
+msgid "Forgot your password?"
+msgstr "هل نسيت كلمة مرورك؟"
+
 # --- Sidebar sections ---
 msgid "Billing"
 msgstr "الفواتير"

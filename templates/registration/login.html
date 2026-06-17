@@ -33,9 +33,13 @@
 {{ form.password }}
 </div>
 
-<button class="btn btn-primary">
+<button class="btn btn-primary w-100">
 {% translate "Login" %}
 </button>
+
+<p class="mt-2 mb-0 text-end small">
+<a href="{% url 'password_reset' %}">{% translate "Forgot your password?" %}</a>
+</p>
 
 {% if next %}
 <input type="hidden" name="next" value="{{ next }}">
