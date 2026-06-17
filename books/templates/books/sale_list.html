@@ -49,7 +49,9 @@
 <th>{% translate "Category" %}</th>
 <th>{% translate "Quantity" %}</th>
 <th>{% translate "Unit Price" %}</th>
-<th>{% translate "Revenue" %}</th>
+<th>{% translate "Currency" %}</th>
+<th>{% translate "Tax %" %}</th>
+<th>{% translate "Total" %}</th>
 <th>{% translate "Channel" %}</th>
 <th>{% translate "Actions" %}</th>
 </tr>
@@ -61,7 +63,9 @@
 <td>{{ sale.book.category }}</td>
 <td>{{ sale.quantity }}</td>
 <td>{{ sale.unit_price }}</td>
-<td>{{ sale.revenue }}</td>
+<td>{{ sale.currency }}</td>
+<td>{% if sale.tax_rate %}{{ sale.tax_rate }}%{% else %}-{% endif %}</td>
+<td>{{ sale.total }}</td>
 <td>{{ sale.channel|default:"-" }}</td>
 <td>
 {% if perms.books.change_sale %}
@@ -86,12 +90,13 @@
 
 {% empty %}
 <tr>
-<td colspan="8" class="text-center muted-text py-4">
+<td colspan="10" class="text-center muted-text py-4">
 {% translate "No sales recorded yet." %}
 </td>
 </tr>
 {% endfor %}
 </table>
+
 </div>
 
 

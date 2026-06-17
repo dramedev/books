@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+<div>
+<h1 class="mb-1">{% translate "Print Runs" %}</h1>
+<p class="muted-text mb-0">{% translate "Track production print runs and their costs." %}</p>
+</div>
+</div>
+
+<div class="table-responsive">
+<table class="table table-striped align-middle">
+<tr>
+<th>{% translate "Date" %}</th>
+<th>{% translate "Book" %}</th>
+<th>{% translate "Category" %}</th>
+<th>{% translate "Quantity" %}</th>
+<th>{% translate "Cost / Unit" %}</th>
+<th>{% translate "Total Cost" %}</th>
+<th>{% translate "Note" %}</th>
+<th>{% translate "Actions" %}</th>
+</tr>
+
+{% for run in runs %}
+<tr>
+<td>{{ run.run_date }}</td>
+<td>{{ run.book.title }}</td>
+<td>{{ run.book.category }}</td>
+<td>{{ run.quantity }}</td>
+<td>{{ run.cost_per_unit }}</td>
+<td><strong>{{ run.total_cost }}</strong></td>
+<td>{{ run.note|default:"-" }}</td>
+<td>
+{% if perms.books.delete_printrun %}
+<a class="btn btn-danger btn-sm" href="{% url 'print_run_delete' run.id %}">{% translate "Delete" %}</a>
+{% endif %}
+</td>
+</tr>
+{% empty %}
+<tr><td colspan="8" class="text-center muted-text py-4">{% translate "No print runs recorded yet." %}</td></tr>
+{% endfor %}
+</table>
+</div>
+
+{% if page_obj.paginator.num_pages > 1 %}
+<nav><ul class="pagination">
+{% if page_obj.has_previous %}<li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}">{% translate "Previous" %}</a></li>{% endif %}
+<li class="page-item disabled"><span class="page-link">{% blocktranslate with number=page_obj.number total=page_obj.paginator.num_pages %}Page {{ number }} of {{ total }}{% endblocktranslate %}</span></li>
+{% if page_obj.has_next %}<li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}">{% translate "Next" %}</a></li>{% endif %}
+</ul></nav>
+{% endif %}
+
+{% endblock %}

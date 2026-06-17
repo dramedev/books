@@ -3,7 +3,7 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.password_validation import validate_password
 from django.utils.translation import gettext_lazy as _
 
-from .models import Author, Book, Category, Profile, Reorder, Return, Sale, StockAdjustment, Supplier
+from .models import Author, Book, Category, Invoice, InvoiceItem, PrintRun, Profile, Reorder, Return, RoyaltyRate, Sale, StockAdjustment, Supplier
 
 
 class BookForm(forms.ModelForm):
@@ -27,7 +27,6 @@ class BookForm(forms.ModelForm):
             "published_date",
             "category",
             "distribution_expense",
-            "stock_on_hand",
             "reorder_threshold",
         ]
 
@@ -75,12 +74,6 @@ class BookForm(forms.ModelForm):
                 attrs={
                     "class": "form-control",
                     "step": "0.01"
-                }
-            ),
-            "stock_on_hand": forms.NumberInput(
-                attrs={
-                    "class": "form-control",
-                    "min": "0"
                 }
             ),
             "reorder_threshold": forms.NumberInput(
@@ -145,41 +138,20 @@ class SaleForm(forms.ModelForm):
             "book",
             "quantity",
             "unit_price",
+            "currency",
+            "tax_rate",
             "sale_date",
             "channel",
         ]
 
         widgets = {
-            "book": forms.Select(
-                attrs={
-                    "class": "form-select"
-                }
-            ),
-            "quantity": forms.NumberInput(
-                attrs={
-                    "class": "form-control",
-                    "min": "1"
-                }
-            ),
-            "unit_price": forms.NumberInput(
-                attrs={
-                    "class": "form-control",
-                    "step": "0.01"
-                }
-            ),
-            "sale_date": forms.DateInput(
-                format="%Y-%m-%d",
-                attrs={
-                    "class": "form-control",
-                    "type": "date"
-                }
-            ),
-            "channel": forms.TextInput(
-                attrs={
-                    "class": "form-control",
-                    "placeholder": _("Channel (optional)")
-                }
-            ),
+            "book": forms.Select(attrs={"class": "form-select"}),
+            "quantity": forms.NumberInput(attrs={"class": "form-control", "min": "1"}),
+            "unit_price": forms.NumberInput(attrs={"class": "form-control", "step": "0.01"}),
+            "currency": forms.Select(attrs={"class": "form-select"}),
+            "tax_rate": forms.NumberInput(attrs={"class": "form-control", "min": "0", "step": "0.01"}),
+            "sale_date": forms.DateInput(format="%Y-%m-%d", attrs={"class": "form-control", "type": "date"}),
+            "channel": forms.TextInput(attrs={"class": "form-control", "placeholder": _("Channel (optional)")}),
         }
 
 
@@ -448,3 +420,93 @@ class RedeemAccessCodeForm(forms.Form):
         label=_("Access code"),
         widget=forms.TextInput(attrs={"class": "form-control", "autofocus": True}),
     )
+
+
+
+class InvoiceForm(forms.ModelForm):
+
+    class Meta:
+        model = Invoice
+
+        fields = [
+            "customer_name",
+            "customer_email",
+            "customer_address",
+            "invoice_date",
+            "due_date",
+            "currency",
+            "note",
+        ]
+
+        widgets = {
+            "customer_name": forms.TextInput(attrs={"class": "form-control"}),
+            "customer_email": forms.EmailInput(attrs={"class": "form-control"}),
+            "customer_address": forms.Textarea(attrs={"class": "form-control", "rows": 3}),
+            "invoice_date": forms.DateInput(format="%Y-%m-%d", attrs={"class": "form-control", "type": "date"}),
+            "due_date": forms.DateInput(format="%Y-%m-%d", attrs={"class": "form-control", "type": "date"}),
+            "currency": forms.Select(attrs={"class": "form-select"}),
+            "note": forms.Textarea(attrs={"class": "form-control", "rows": 2, "placeholder": _("Note (optional)")}),
+        }
+
+
+
+class InvoiceItemForm(forms.ModelForm):
+
+    def __init__(self, *args, user=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        if user is not None:
+            self.fields["book"].queryset = Book.objects.filter(owner=user)
+        self.fields["book"].required = False
+        self.fields["book"].empty_label = _("No book (custom item)")
+
+    class Meta:
+        model = InvoiceItem
+
+        fields = ["book", "description", "quantity", "unit_price", "tax_rate"]
+
+        widgets = {
+            "book": forms.Select(attrs={"class": "form-select"}),
+            "description": forms.TextInput(attrs={"class": "form-control"}),
+            "quantity": forms.NumberInput(attrs={"class": "form-control", "min": "1"}),
+            "unit_price": forms.NumberInput(attrs={"class": "form-control", "step": "0.01"}),
+            "tax_rate": forms.NumberInput(attrs={"class": "form-control", "min": "0", "step": "0.01"}),
+        }
+
+
+
+class PrintRunForm(forms.ModelForm):
+
+    class Meta:
+        model = PrintRun
+
+        fields = ["quantity", "cost_per_unit", "run_date", "note"]
+
+        widgets = {
+            "quantity": forms.NumberInput(attrs={"class": "form-control", "min": "1"}),
+            "cost_per_unit": forms.NumberInput(attrs={"class": "form-control", "step": "0.01"}),
+            "run_date": forms.DateInput(format="%Y-%m-%d", attrs={"class": "form-control", "type": "date"}),
+            "note": forms.TextInput(attrs={"class": "form-control", "placeholder": _("Note (optional)")}),
+        }
+
+
+
+class RoyaltyRateForm(forms.ModelForm):
+
+    def __init__(self, *args, user=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        if user is not None:
+            self.fields["book"].queryset = Book.objects.filter(owner=user)
+            self.fields["author"].queryset = Author.objects.filter(owner=user)
+
+    class Meta:
+        model = RoyaltyRate
+
+        fields = ["book", "author", "rate", "effective_from", "note"]
+
+        widgets = {
+            "book": forms.Select(attrs={"class": "form-select"}),
+            "author": forms.Select(attrs={"class": "form-select"}),
+            "rate": forms.NumberInput(attrs={"class": "form-control", "min": "0", "max": "100", "step": "0.01"}),
+            "effective_from": forms.DateInput(format="%Y-%m-%d", attrs={"class": "form-control", "type": "date"}),
+            "note": forms.TextInput(attrs={"class": "form-control", "placeholder": _("Note (optional)")}),
+        }

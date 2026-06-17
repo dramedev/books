@@ -18,7 +18,22 @@
 <label class="form-label" for="{{ field.id_for_label }}">
 {{ field.label }}
 </label>
+
+{% if field.html_name == 'isbn' %}
+<div class="input-group">
 {{ field }}
+<button type="button" class="btn btn-outline-light" id="scanBtn" title="{% translate 'Scan barcode' %}">
+<i class="bi bi-upc-scan"></i> {% translate "Scan" %}
+</button>
+</div>
+<div id="scanBox" style="display:none; margin-top:0.5rem;">
+<video id="scanVideo" playsinline style="width:100%; border-radius:8px; max-height:260px; background:#000;"></video>
+<p class="small muted-text mt-1 mb-1" id="scanStatus"></p>
+<button type="button" class="btn btn-sm btn-outline-light" id="scanStop">{% translate "Stop scanning" %}</button>
+</div>
+{% else %}
+{{ field }}
+{% endif %}
 
 {% if field.help_text %}
 <div class="form-text">{{ field.help_text }}</div>
@@ -39,6 +54,71 @@
 </a>
 </form>
 </div>
+
+
+<script>
+(function(){
+    const scanBtn = document.getElementById('scanBtn');
+    if(!scanBtn) return;
+
+    const scanBox = document.getElementById('scanBox');
+    const scanVideo = document.getElementById('scanVideo');
+    const scanStatus = document.getElementById('scanStatus');
+    const scanStop = document.getElementById('scanStop');
+    const isbnField = document.getElementById('id_isbn');
+    let stream = null;
+    let scanning = false;
+
+    function stopScan(){
+        scanning = false;
+        if(stream){ stream.getTracks().forEach(function(t){ t.stop(); }); stream = null; }
+        scanVideo.srcObject = null;
+        scanBox.style.display = 'none';
+        scanStatus.textContent = '';
+    }
+
+    scanStop.addEventListener('click', stopScan);
+
+    scanBtn.addEventListener('click', async function(){
+        if(!('BarcodeDetector' in window)){
+            scanBox.style.display = 'block';
+            scanStatus.textContent = "{% translate 'Barcode scanning requires Chrome or Edge. You can still type the ISBN directly.' %}";
+            return;
+        }
+
+        try{
+            stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+            scanVideo.srcObject = stream;
+            scanVideo.play();
+            scanBox.style.display = 'block';
+            scanStatus.textContent = "{% translate 'Scanning — point camera at barcode...' %}";
+            scanning = true;
+
+            const detector = new BarcodeDetector({ formats: ['ean_13', 'ean_8', 'code_128', 'isbn'] });
+
+            async function tick(){
+                if(!scanning) return;
+                try{
+                    const results = await detector.detect(scanVideo);
+                    if(results.length > 0){
+                        isbnField.value = results[0].rawValue;
+                        scanStatus.textContent = "{% translate 'Detected:' %} " + results[0].rawValue;
+                        stopScan();
+                        return;
+                    }
+                } catch(e){}
+                if(scanning) requestAnimationFrame(tick);
+            }
+
+            scanVideo.addEventListener('playing', function(){ requestAnimationFrame(tick); }, { once: true });
+
+        } catch(e){
+            scanBox.style.display = 'block';
+            scanStatus.textContent = "{% translate 'Camera access denied or unavailable.' %}";
+        }
+    });
+})();
+</script>
 
 
 {% endblock %}

@@ -90,9 +90,30 @@
 </form>
 
 
+{% if perms.books.delete_book %}
+<form method="post" action="{% url 'book_bulk_delete' %}" id="bulkForm">
+{% csrf_token %}
+{% endif %}
+
+<div id="bulkBar" style="display:none;" class="d-flex align-items-center gap-3 mb-2 p-2 rounded" style="background:var(--surface-alt); border:1px solid var(--border);">
+<span id="bulkCount" class="muted-text small"></span>
+{% if perms.books.delete_book %}
+<button type="submit" form="bulkForm" class="btn btn-danger btn-sm"
+    onclick="return confirm('{% translate "Delete selected books? This cannot be undone." %}')">
+<i class="bi bi-trash"></i> {% translate "Delete selected" %}
+</button>
+{% endif %}
+<button type="button" class="btn btn-outline-light btn-sm" id="bulkClear">{% translate "Clear selection" %}</button>
+</div>
+
 <div class="table-responsive">
 <table class="table table-striped align-middle">
 <tr>
+{% if perms.books.delete_book %}
+<th style="width:36px;">
+<input type="checkbox" id="selectAll" class="form-check-input" title="{% translate 'Select all' %}">
+</th>
+{% endif %}
 <th>{% translate "ISBN" %}</th>
 <th>{% translate "Title" %}</th>
 <th>{% translate "Author" %}</th>
@@ -105,6 +126,11 @@
 
 {% for book in books %}
 <tr>
+{% if perms.books.delete_book %}
+<td>
+<input type="checkbox" name="book_ids" value="{{ book.id }}" class="form-check-input book-checkbox">
+</td>
+{% endif %}
 <td>{{ book.isbn|default:"-" }}</td>
 <td><a href="{% url 'book_detail' book.id %}">{{ book.title }}</a></td>
 <td>
@@ -140,13 +166,17 @@
 
 {% empty %}
 <tr>
-<td colspan="8" class="text-center muted-text py-4">
+<td colspan="9" class="text-center muted-text py-4">
 {% translate "No books match the current filters." %}
 </td>
 </tr>
 {% endfor %}
 </table>
 </div>
+
+{% if perms.books.delete_book %}
+</form>
+{% endif %}
 
 
 {% if page_obj.paginator.num_pages > 1 %}
@@ -174,6 +204,47 @@
 </ul>
 </nav>
 {% endif %}
+
+
+<script>
+(function(){
+    const selectAll = document.getElementById('selectAll');
+    const bulkBar = document.getElementById('bulkBar');
+    const bulkCount = document.getElementById('bulkCount');
+    const bulkClear = document.getElementById('bulkClear');
+    const checkboxes = document.querySelectorAll('.book-checkbox');
+
+    if(!selectAll) return;
+
+    function updateBar(){
+        const checked = document.querySelectorAll('.book-checkbox:checked');
+        if(checked.length > 0){
+            bulkBar.style.display = 'flex';
+            bulkCount.textContent = checked.length + ' {% translate "selected" %}';
+        } else {
+            bulkBar.style.display = 'none';
+        }
+        selectAll.indeterminate = checked.length > 0 && checked.length < checkboxes.length;
+        selectAll.checked = checked.length === checkboxes.length && checkboxes.length > 0;
+    }
+
+    selectAll.addEventListener('change', function(){
+        checkboxes.forEach(function(cb){ cb.checked = selectAll.checked; });
+        updateBar();
+    });
+
+    checkboxes.forEach(function(cb){
+        cb.addEventListener('change', updateBar);
+    });
+
+    bulkClear.addEventListener('click', function(){
+        checkboxes.forEach(function(cb){ cb.checked = false; });
+        selectAll.checked = false;
+        selectAll.indeterminate = false;
+        bulkBar.style.display = 'none';
+    });
+})();
+</script>
 
 
 {% endblock %}

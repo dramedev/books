@@ -1,7 +1,16 @@
+from decimal import Decimal
+
 from django.conf import settings
 from django.db import models
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
+
+
+CURRENCY_CHOICES = [
+    ("USD", "USD"), ("EUR", "EUR"), ("GBP", "GBP"),
+    ("SAR", "SAR"), ("AED", "AED"), ("MAD", "MAD"),
+    ("DZD", "DZD"), ("TND", "TND"), ("EGP", "EGP"), ("TRY", "TRY"),
+]
 
 
 class Category(models.Model):
@@ -161,6 +170,22 @@ class Sale(models.Model):
     )
 
 
+    currency = models.CharField(
+        max_length=3,
+        choices=CURRENCY_CHOICES,
+        default="USD",
+        verbose_name=_("Currency")
+    )
+
+
+    tax_rate = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        default=0,
+        verbose_name=_("Tax rate (%)")
+    )
+
+
     class Meta:
         ordering = ["-sale_date"]
 
@@ -172,6 +197,16 @@ class Sale(models.Model):
     @property
     def revenue(self):
         return self.quantity * self.unit_price
+
+
+    @property
+    def tax_amount(self):
+        return self.quantity * self.unit_price * self.tax_rate / Decimal(100)
+
+
+    @property
+    def total(self):
+        return self.revenue + self.tax_amount
 
 
 
@@ -328,6 +363,216 @@ class Return(models.Model):
     @property
     def refund_amount(self):
         return self.quantity * self.sale.unit_price
+
+
+
+class Invoice(models.Model):
+
+    STATUS_DRAFT = "draft"
+    STATUS_SENT = "sent"
+    STATUS_PAID = "paid"
+
+    STATUS_CHOICES = [
+        (STATUS_DRAFT, _("Draft")),
+        (STATUS_SENT, _("Sent")),
+        (STATUS_PAID, _("Paid")),
+    ]
+
+    owner = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="owned_invoices",
+    )
+
+    invoice_number = models.CharField(max_length=20, blank=True, verbose_name=_("Invoice number"))
+
+    customer_name = models.CharField(max_length=200, verbose_name=_("Customer name"))
+
+    customer_email = models.EmailField(blank=True, verbose_name=_("Customer email"))
+
+    customer_address = models.TextField(blank=True, verbose_name=_("Customer address"))
+
+    invoice_date = models.DateField(verbose_name=_("Invoice date"))
+
+    due_date = models.DateField(null=True, blank=True, verbose_name=_("Due date"))
+
+    currency = models.CharField(
+        max_length=3,
+        choices=CURRENCY_CHOICES,
+        default="USD",
+        verbose_name=_("Currency"),
+    )
+
+    status = models.CharField(
+        max_length=10,
+        choices=STATUS_CHOICES,
+        default=STATUS_DRAFT,
+        verbose_name=_("Status"),
+    )
+
+    note = models.TextField(blank=True, verbose_name=_("Note"))
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+
+    class Meta:
+        ordering = ["-created_at"]
+
+
+    def __str__(self):
+        return f"{self.invoice_number or 'Draft'} – {self.customer_name}"
+
+
+    @property
+    def subtotal(self):
+        return sum((item.subtotal for item in self.items.all()), Decimal(0))
+
+
+    @property
+    def tax_total(self):
+        return sum((item.tax_amount for item in self.items.all()), Decimal(0))
+
+
+    @property
+    def grand_total(self):
+        return sum((item.total for item in self.items.all()), Decimal(0))
+
+
+    @property
+    def status_badge_class(self):
+        return {
+            self.STATUS_DRAFT: "bg-secondary",
+            self.STATUS_SENT: "bg-info",
+            self.STATUS_PAID: "bg-success",
+        }.get(self.status, "bg-secondary")
+
+
+
+class InvoiceItem(models.Model):
+
+    invoice = models.ForeignKey(
+        Invoice,
+        on_delete=models.CASCADE,
+        related_name="items",
+        verbose_name=_("Invoice"),
+    )
+
+    book = models.ForeignKey(
+        Book,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="invoice_items",
+        verbose_name=_("Book"),
+    )
+
+    description = models.CharField(max_length=200, verbose_name=_("Description"))
+
+    quantity = models.PositiveIntegerField(default=1, verbose_name=_("Quantity"))
+
+    unit_price = models.DecimalField(max_digits=8, decimal_places=2, verbose_name=_("Unit price"))
+
+    tax_rate = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        default=0,
+        verbose_name=_("Tax rate (%)"),
+    )
+
+
+    def __str__(self):
+        return self.description
+
+
+    @property
+    def subtotal(self):
+        return self.quantity * self.unit_price
+
+
+    @property
+    def tax_amount(self):
+        return self.subtotal * self.tax_rate / Decimal(100)
+
+
+    @property
+    def total(self):
+        return self.subtotal + self.tax_amount
+
+
+
+class PrintRun(models.Model):
+
+    owner = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="owned_print_runs",
+    )
+
+    book = models.ForeignKey(
+        Book,
+        on_delete=models.CASCADE,
+        related_name="print_runs",
+        verbose_name=_("Book"),
+    )
+
+    quantity = models.PositiveIntegerField(verbose_name=_("Quantity"))
+
+    cost_per_unit = models.DecimalField(max_digits=8, decimal_places=2, verbose_name=_("Cost per unit"))
+
+    run_date = models.DateField(verbose_name=_("Run date"))
+
+    note = models.CharField(max_length=200, blank=True, verbose_name=_("Note"))
+
+
+    class Meta:
+        ordering = ["-run_date"]
+
+
+    def __str__(self):
+        return f"{self.book.title} – {self.run_date}"
+
+
+    @property
+    def total_cost(self):
+        return self.quantity * self.cost_per_unit
+
+
+
+class RoyaltyRate(models.Model):
+
+    owner = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="owned_royalty_rates",
+    )
+
+    book = models.ForeignKey(
+        Book,
+        on_delete=models.CASCADE,
+        related_name="royalty_rates",
+        verbose_name=_("Book"),
+    )
+
+    author = models.ForeignKey(
+        Author,
+        on_delete=models.CASCADE,
+        related_name="royalty_rates",
+        verbose_name=_("Author"),
+    )
+
+    rate = models.DecimalField(max_digits=5, decimal_places=2, verbose_name=_("Rate (%)"))
+
+    effective_from = models.DateField(verbose_name=_("Effective from"))
+
+    note = models.CharField(max_length=200, blank=True, verbose_name=_("Note"))
+
+
+    class Meta:
+        ordering = ["-effective_from"]
+
+
+    def __str__(self):
+        return f"{self.book.title} – {self.author.name} – {self.rate}%"
 
 
 

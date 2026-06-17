@@ -554,6 +554,27 @@ html[dir="rtl"] .chat-panel{
 </a>
 {% endif %}
 
+{% if perms.books.view_invoice %}
+<div class="sidebar-section">{% translate "Billing" %}</div>
+<a class="sidebar-link {% if url_name == 'invoice_list' or url_name == 'invoice_detail' or url_name == 'invoice_create' %}active{% endif %}" href="{% url 'invoice_list' %}">
+<i class="bi bi-receipt"></i> {% translate "Invoices" %}
+</a>
+{% endif %}
+
+{% if perms.books.view_printrun or perms.books.view_royaltyrate %}
+<div class="sidebar-section">{% translate "Production" %}</div>
+{% if perms.books.view_printrun %}
+<a class="sidebar-link {% if url_name == 'print_run_list' %}active{% endif %}" href="{% url 'print_run_list' %}">
+<i class="bi bi-printer"></i> {% translate "Print Runs" %}
+</a>
+{% endif %}
+{% if perms.books.view_royaltyrate %}
+<a class="sidebar-link {% if url_name == 'royalty_list' or url_name == 'royalty_report' %}active{% endif %}" href="{% url 'royalty_list' %}">
+<i class="bi bi-percent"></i> {% translate "Royalties" %}
+</a>
+{% endif %}
+{% endif %}
+
 <div class="sidebar-section">{% translate "Help" %}</div>
 
 <a class="sidebar-link {% if url_name == 'about' %}active{% endif %}" href="{% url 'about' %}">

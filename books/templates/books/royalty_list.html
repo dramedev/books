@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+<div>
+<h1 class="mb-1">{% translate "Royalty Rates" %}</h1>
+<p class="muted-text mb-0">{% translate "Author royalty rates per book." %}</p>
+</div>
+<div class="d-flex gap-2">
+<a class="btn btn-outline-light" href="{% url 'royalty_report' %}">{% translate "Royalty Report" %}</a>
+{% if perms.books.add_royaltyrate %}
+<a class="btn btn-primary" href="{% url 'royalty_create' %}">{% translate "Add Rate" %}</a>
+{% endif %}
+</div>
+</div>
+
+<div class="table-responsive">
+<table class="table table-striped align-middle">
+<tr>
+<th>{% translate "Book" %}</th>
+<th>{% translate "Author" %}</th>
+<th>{% translate "Rate (%)" %}</th>
+<th>{% translate "Effective From" %}</th>
+<th>{% translate "Note" %}</th>
+<th>{% translate "Actions" %}</th>
+</tr>
+
+{% for rate in rates %}
+<tr>
+<td>{{ rate.book.title }}</td>
+<td>{{ rate.author.name }}</td>
+<td>{{ rate.rate }}%</td>
+<td>{{ rate.effective_from }}</td>
+<td>{{ rate.note|default:"-" }}</td>
+<td>
+{% if perms.books.delete_royaltyrate %}
+<a class="btn btn-danger btn-sm" href="{% url 'royalty_delete' rate.id %}">{% translate "Delete" %}</a>
+{% endif %}
+</td>
+</tr>
+{% empty %}
+<tr><td colspan="6" class="text-center muted-text py-4">{% translate "No royalty rates defined yet." %}</td></tr>
+{% endfor %}
+</table>
+</div>
+
+{% endblock %}

@@ -1,0 +1,139 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+<div>
+<h1 class="mb-1">{{ invoice.invoice_number }}</h1>
+<p class="muted-text mb-0">{{ invoice.customer_name }}</p>
+</div>
+<div class="d-flex gap-2 flex-wrap">
+<a class="btn btn-outline-light" href="{% url 'invoice_pdf' invoice.id %}"><i class="bi bi-file-pdf"></i> {% translate "PDF" %}</a>
+
+{% if perms.books.change_invoice %}
+{% if invoice.status == "draft" %}
+<form method="POST" action="{% url 'invoice_update_status' invoice.id 'sent' %}">{% csrf_token %}
+<button class="btn btn-info btn-sm">{% translate "Mark as sent" %}</button>
+</form>
+{% endif %}
+{% if invoice.status == "sent" %}
+<form method="POST" action="{% url 'invoice_update_status' invoice.id 'paid' %}">{% csrf_token %}
+<button class="btn btn-success btn-sm">{% translate "Mark as paid" %}</button>
+</form>
+{% endif %}
+{% endif %}
+
+{% if perms.books.delete_invoice %}
+<a class="btn btn-danger btn-sm" href="{% url 'invoice_delete' invoice.id %}">{% translate "Delete" %}</a>
+{% endif %}
+</div>
+</div>
+
+<div class="row g-3 mb-4">
+<div class="col-md-6">
+<div class="page-panel h-100">
+<h6 class="muted-text mb-2">{% translate "Invoice details" %}</h6>
+<dl class="row mb-0">
+<dt class="col-5">{% translate "Number" %}</dt><dd class="col-7">{{ invoice.invoice_number }}</dd>
+<dt class="col-5">{% translate "Status" %}</dt><dd class="col-7"><span class="badge {{ invoice.status_badge_class }}">{{ invoice.get_status_display }}</span></dd>
+<dt class="col-5">{% translate "Date" %}</dt><dd class="col-7">{{ invoice.invoice_date }}</dd>
+<dt class="col-5">{% translate "Due" %}</dt><dd class="col-7">{{ invoice.due_date|default:"–" }}</dd>
+<dt class="col-5">{% translate "Currency" %}</dt><dd class="col-7">{{ invoice.currency }}</dd>
+{% if invoice.note %}<dt class="col-5">{% translate "Note" %}</dt><dd class="col-7">{{ invoice.note }}</dd>{% endif %}
+</dl>
+</div>
+</div>
+<div class="col-md-6">
+<div class="page-panel h-100">
+<h6 class="muted-text mb-2">{% translate "Customer" %}</h6>
+<dl class="row mb-0">
+<dt class="col-5">{% translate "Name" %}</dt><dd class="col-7">{{ invoice.customer_name }}</dd>
+{% if invoice.customer_email %}<dt class="col-5">{% translate "Email" %}</dt><dd class="col-7">{{ invoice.customer_email }}</dd>{% endif %}
+{% if invoice.customer_address %}<dt class="col-5">{% translate "Address" %}</dt><dd class="col-7" style="white-space:pre-line;">{{ invoice.customer_address }}</dd>{% endif %}
+</dl>
+</div>
+</div>
+</div>
+
+<div class="page-panel mb-4">
+<h5 class="mb-3">{% translate "Line items" %}</h5>
+<div class="table-responsive">
+<table class="table align-middle mb-3">
+<tr>
+<th>{% translate "Description" %}</th>
+<th>{% translate "Book" %}</th>
+<th>{% translate "Qty" %}</th>
+<th>{% translate "Unit Price" %}</th>
+<th>{% translate "Tax %" %}</th>
+<th>{% translate "Subtotal" %}</th>
+<th>{% translate "Tax" %}</th>
+<th>{% translate "Total" %}</th>
+{% if perms.books.delete_invoiceitem %}<th></th>{% endif %}
+</tr>
+{% for item in invoice.items.all %}
+<tr>
+<td>{{ item.description }}</td>
+<td>{{ item.book|default:"–" }}</td>
+<td>{{ item.quantity }}</td>
+<td>{{ item.unit_price }}</td>
+<td>{{ item.tax_rate }}%</td>
+<td>{{ item.subtotal }}</td>
+<td>{{ item.tax_amount }}</td>
+<td><strong>{{ item.total }}</strong></td>
+{% if perms.books.delete_invoiceitem %}
+<td>
+<form method="POST" action="{% url 'invoice_item_delete' item.id %}">{% csrf_token %}
+<button class="btn btn-danger btn-sm"><i class="bi bi-trash"></i></button>
+</form>
+</td>
+{% endif %}
+</tr>
+{% empty %}
+<tr><td colspan="9" class="text-center muted-text py-3">{% translate "No items yet. Add one below." %}</td></tr>
+{% endfor %}
+</table>
+
+<div class="d-flex justify-content-end gap-4 pe-2">
+<span class="muted-text">{% translate "Subtotal" %}: <strong>{{ invoice.subtotal }}</strong></span>
+<span class="muted-text">{% translate "Tax" %}: <strong>{{ invoice.tax_total }}</strong></span>
+<span>{% translate "Grand Total" %}: <strong>{{ invoice.grand_total }} {{ invoice.currency }}</strong></span>
+</div>
+</div>
+</div>
+
+{% if perms.books.add_invoiceitem and invoice.status == "draft" %}
+<div class="page-panel">
+<h5 class="mb-3">{% translate "Add item" %}</h5>
+<form method="POST" action="{% url 'invoice_item_add' invoice.id %}">
+{% csrf_token %}
+<div class="row g-3">
+<div class="col-md-3">
+<label class="form-label">{{ item_form.book.label }}</label>
+{{ item_form.book }}
+</div>
+<div class="col-md-3">
+<label class="form-label">{{ item_form.description.label }}</label>
+{{ item_form.description }}
+</div>
+<div class="col-md-1">
+<label class="form-label">{{ item_form.quantity.label }}</label>
+{{ item_form.quantity }}
+</div>
+<div class="col-md-2">
+<label class="form-label">{{ item_form.unit_price.label }}</label>
+{{ item_form.unit_price }}
+</div>
+<div class="col-md-2">
+<label class="form-label">{{ item_form.tax_rate.label }}</label>
+{{ item_form.tax_rate }}
+</div>
+<div class="col-md-1 d-flex align-items-end">
+<button class="btn btn-success w-100">{% translate "Add" %}</button>
+</div>
+</div>
+</form>
+</div>
+{% endif %}
+
+{% endblock %}

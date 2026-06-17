@@ -26,17 +26,21 @@ from .forms import (
     AuthorForm,
     BookForm,
     CategoryForm,
+    InvoiceForm,
+    InvoiceItemForm,
+    PrintRunForm,
     ProfileForm,
     RedeemAccessCodeForm,
     ReorderForm,
     ReturnForm,
+    RoyaltyRateForm,
     SaleForm,
     SignupForm,
     StockAdjustmentForm,
     SupplierForm,
     VerifyEmailForm,
 )
-from .models import AccessCode, Author, Book, Category, Profile, Reorder, Return, Sale, StockAdjustment, Supplier
+from .models import AccessCode, Author, Book, Category, Invoice, InvoiceItem, PrintRun, Profile, Reorder, Return, RoyaltyRate, Sale, StockAdjustment, Supplier
 from .permissions import ensure_roles
 
 
@@ -130,7 +134,10 @@ def _sale_export_headers():
         gettext("Category"),
         gettext("Quantity"),
         gettext("Unit Price"),
-        gettext("Revenue"),
+        gettext("Currency"),
+        gettext("Tax Rate (%)"),
+        gettext("Tax Amount"),
+        gettext("Total"),
         gettext("Channel"),
     ]
 
@@ -183,7 +190,10 @@ def _sale_export_rows(sales):
             sale.book.category.name,
             sale.quantity,
             sale.unit_price,
-            sale.revenue,
+            sale.currency,
+            sale.tax_rate,
+            sale.tax_amount,
+            sale.total,
             sale.channel,
         ]
 
@@ -277,6 +287,19 @@ def _filter_context(request):
         "filters": request.GET,
         "query_string": query_params.urlencode(),
     }
+
+
+@login_required
+@permission_required("books.delete_book", raise_exception=True)
+@require_POST
+def book_bulk_delete(request):
+    ids = request.POST.getlist("book_ids")
+    if ids:
+        deleted, _ = Book.objects.filter(id__in=ids, owner=request.user).delete()
+        messages.success(request, gettext("%(count)s book(s) deleted.") % {"count": deleted})
+    else:
+        messages.warning(request, gettext("No books selected."))
+    return redirect("book_list")
 
 
 @login_required
@@ -1893,6 +1916,364 @@ def export_reorders_pdf(request):
     response["Content-Disposition"] = 'attachment; filename="rumi-press-reorders.pdf"'
 
     return response
+
+
+def _next_invoice_number(owner):
+    from datetime import date as _date
+    year = _date.today().year
+    prefix = f"INV-{year}-"
+    last = (
+        Invoice.objects.filter(owner=owner, invoice_number__startswith=prefix)
+        .order_by("-invoice_number")
+        .values_list("invoice_number", flat=True)
+        .first()
+    )
+    seq = (int(last.split("-")[-1]) + 1) if last else 1
+    return f"{prefix}{seq:04d}"
+
+
+@login_required
+@permission_required("books.view_invoice", raise_exception=True)
+def invoice_list(request):
+    invoices = Invoice.objects.filter(owner=request.user)
+    status = request.GET.get("status")
+    if status in dict(Invoice.STATUS_CHOICES):
+        invoices = invoices.filter(status=status)
+
+    paginator = Paginator(invoices, 10)
+    page_obj = paginator.get_page(request.GET.get("page"))
+
+    return render(request, "books/invoice_list.html", {
+        "invoices": page_obj.object_list,
+        "page_obj": page_obj,
+        "status_choices": Invoice.STATUS_CHOICES,
+        "selected_status": status,
+    })
+
+
+@login_required
+@permission_required("books.add_invoice", raise_exception=True)
+def invoice_create(request):
+    form = InvoiceForm()
+
+    if request.method == "POST":
+        form = InvoiceForm(request.POST)
+        if form.is_valid():
+            invoice = form.save(commit=False)
+            invoice.owner = request.user
+            invoice.invoice_number = _next_invoice_number(request.user)
+            invoice.save()
+            messages.success(request, gettext("Invoice %(number)s created.") % {"number": invoice.invoice_number})
+            return redirect("invoice_detail", id=invoice.id)
+
+    return render(request, "books/invoice_form.html", {"form": form})
+
+
+@login_required
+@permission_required("books.view_invoice", raise_exception=True)
+def invoice_detail(request, id):
+    invoice = get_object_or_404(Invoice, id=id, owner=request.user)
+    item_form = InvoiceItemForm(user=request.user)
+
+    return render(request, "books/invoice_detail.html", {
+        "invoice": invoice,
+        "item_form": item_form,
+    })
+
+
+@login_required
+@permission_required("books.add_invoiceitem", raise_exception=True)
+@require_POST
+def invoice_item_add(request, invoice_id):
+    invoice = get_object_or_404(Invoice, id=invoice_id, owner=request.user)
+    form = InvoiceItemForm(request.POST, user=request.user)
+
+    if form.is_valid():
+        item = form.save(commit=False)
+        item.invoice = invoice
+        item.save()
+        messages.success(request, gettext("Item added."))
+    else:
+        for field_errors in form.errors.values():
+            for error in field_errors:
+                messages.error(request, error)
+
+    return redirect("invoice_detail", id=invoice.id)
+
+
+@login_required
+@permission_required("books.delete_invoiceitem", raise_exception=True)
+@require_POST
+def invoice_item_delete(request, id):
+    item = get_object_or_404(InvoiceItem, id=id, invoice__owner=request.user)
+    invoice_id = item.invoice_id
+    item.delete()
+    messages.success(request, gettext("Item removed."))
+    return redirect("invoice_detail", id=invoice_id)
+
+
+@login_required
+@permission_required("books.change_invoice", raise_exception=True)
+@require_POST
+def invoice_update_status(request, id, action):
+    invoice = get_object_or_404(Invoice, id=id, owner=request.user)
+
+    transitions = {
+        "sent": (Invoice.STATUS_DRAFT, Invoice.STATUS_SENT),
+        "paid": (Invoice.STATUS_SENT, Invoice.STATUS_PAID),
+    }
+
+    if action not in transitions:
+        return redirect("invoice_list")
+
+    required, new_status = transitions[action]
+    if invoice.status != required:
+        messages.error(request, gettext("Cannot update invoice from its current status."))
+        return redirect("invoice_detail", id=invoice.id)
+
+    invoice.status = new_status
+    invoice.save(update_fields=["status"])
+
+    if new_status == Invoice.STATUS_SENT and invoice.customer_email:
+        send_mail(
+            subject=f"Invoice {invoice.invoice_number} from Rumi Press",
+            message=(
+                f"Dear {invoice.customer_name},\n\n"
+                f"Please find invoice {invoice.invoice_number} attached.\n"
+                f"Amount due: {invoice.grand_total} {invoice.currency}\n"
+                + (f"Due date: {invoice.due_date}\n" if invoice.due_date else "")
+                + f"\n{invoice.note}" if invoice.note else ""
+            ),
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            recipient_list=[invoice.customer_email],
+            fail_silently=True,
+        )
+
+    messages.success(request, gettext("Invoice marked as %(status)s.") % {"status": invoice.get_status_display()})
+    return redirect("invoice_detail", id=invoice.id)
+
+
+@login_required
+@permission_required("books.delete_invoice", raise_exception=True)
+def invoice_delete(request, id):
+    invoice = get_object_or_404(Invoice, id=id, owner=request.user)
+
+    if request.method == "POST":
+        invoice.delete()
+        messages.success(request, gettext("Invoice deleted."))
+        return redirect("invoice_list")
+
+    return render(request, "books/confirm_delete.html", {
+        "object_type": gettext("invoice"),
+        "object_name": f"{invoice.invoice_number} – {invoice.customer_name}",
+        "cancel_url": reverse("invoice_detail", args=[invoice.id]),
+    })
+
+
+@login_required
+@permission_required("books.view_invoice", raise_exception=True)
+def invoice_pdf(request, id):
+    from reportlab.lib import colors
+    from reportlab.lib.pagesizes import letter
+    from reportlab.lib.styles import getSampleStyleSheet
+    from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
+
+    _register_pdf_fonts()
+    body_font, bold_font = _pdf_fonts()
+
+    invoice = get_object_or_404(Invoice, id=id, owner=request.user)
+    items = invoice.items.all()
+
+    buffer = BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=letter, leftMargin=48, rightMargin=48, topMargin=48, bottomMargin=48)
+    styles = getSampleStyleSheet()
+
+    elements = [
+        Paragraph(_pdf_text(f"INVOICE – {invoice.invoice_number}"), styles["Title"]),
+        Spacer(1, 8),
+        Paragraph(_pdf_text(f"{gettext('Customer')}: {invoice.customer_name}"), styles["Normal"]),
+    ]
+
+    if invoice.customer_address:
+        elements.append(Paragraph(_pdf_text(invoice.customer_address.replace("\n", " | ")), styles["Normal"]))
+    if invoice.customer_email:
+        elements.append(Paragraph(_pdf_text(f"{gettext('Email')}: {invoice.customer_email}"), styles["Normal"]))
+
+    elements += [
+        Paragraph(_pdf_text(f"{gettext('Date')}: {invoice.invoice_date}"), styles["Normal"]),
+        Spacer(1, 12),
+    ]
+
+    if invoice.due_date:
+        elements.append(Paragraph(_pdf_text(f"{gettext('Due')}: {invoice.due_date}"), styles["Normal"]))
+
+    rows = [[
+        _pdf_text(gettext("Description")),
+        _pdf_text(gettext("Qty")),
+        _pdf_text(gettext("Unit Price")),
+        _pdf_text(gettext("Tax %")),
+        _pdf_text(gettext("Total")),
+    ]]
+    for item in items:
+        rows.append([
+            _pdf_text(item.description),
+            str(item.quantity),
+            str(item.unit_price),
+            str(item.tax_rate),
+            str(item.total),
+        ])
+
+    rows.append(["", "", "", _pdf_text(gettext("Grand Total")), _pdf_text(f"{invoice.grand_total} {invoice.currency}")])
+
+    table = Table(rows, repeatRows=1, colWidths=[220, 50, 80, 60, 80])
+    table.setStyle(TableStyle([
+        ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#1f1f1f")),
+        ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+        ("FONTNAME", (0, 0), (-1, 0), bold_font),
+        ("FONTNAME", (0, 1), (-1, -1), body_font),
+        ("FONTSIZE", (0, 0), (-1, -1), 8),
+        ("GRID", (0, 0), (-1, -2), 0.25, colors.grey),
+        ("FONTNAME", (-2, -1), (-1, -1), bold_font),
+        ("LINEABOVE", (-2, -1), (-1, -1), 1, colors.black),
+    ]))
+
+    elements += [Spacer(1, 16), table]
+
+    if invoice.note:
+        elements += [Spacer(1, 12), Paragraph(_pdf_text(f"{gettext('Note')}: {invoice.note}"), styles["Normal"])]
+
+    doc.build(elements)
+    buffer.seek(0)
+
+    response = HttpResponse(buffer.getvalue(), content_type="application/pdf")
+    response["Content-Disposition"] = f'attachment; filename="invoice-{invoice.invoice_number}.pdf"'
+    return response
+
+
+@login_required
+@permission_required("books.view_printrun", raise_exception=True)
+def print_run_list(request):
+    runs = PrintRun.objects.filter(owner=request.user).select_related("book", "book__category")
+    paginator = Paginator(runs, 10)
+    page_obj = paginator.get_page(request.GET.get("page"))
+
+    return render(request, "books/print_run_list.html", {
+        "runs": page_obj.object_list,
+        "page_obj": page_obj,
+    })
+
+
+@login_required
+@permission_required("books.add_printrun", raise_exception=True)
+def print_run_create(request, book_id):
+    book = get_object_or_404(Book, id=book_id, owner=request.user)
+
+    if request.method == "POST":
+        form = PrintRunForm(request.POST)
+        if form.is_valid():
+            run = form.save(commit=False)
+            run.owner = request.user
+            run.book = book
+            run.save()
+            messages.success(request, gettext("Print run recorded."))
+            return redirect("print_run_list")
+    else:
+        form = PrintRunForm()
+
+    return render(request, "books/print_run_form.html", {"form": form, "book": book})
+
+
+@login_required
+@permission_required("books.delete_printrun", raise_exception=True)
+def print_run_delete(request, id):
+    run = get_object_or_404(PrintRun, id=id, owner=request.user)
+
+    if request.method == "POST":
+        run.delete()
+        messages.success(request, gettext("Print run deleted."))
+        return redirect("print_run_list")
+
+    return render(request, "books/confirm_delete.html", {
+        "object_type": gettext("print run"),
+        "object_name": f"{run.book.title} – {run.run_date}",
+        "cancel_url": reverse("print_run_list"),
+    })
+
+
+@login_required
+@permission_required("books.view_royaltyrate", raise_exception=True)
+def royalty_list(request):
+    rates = RoyaltyRate.objects.filter(owner=request.user).select_related("book", "author")
+    return render(request, "books/royalty_list.html", {"rates": rates})
+
+
+@login_required
+@permission_required("books.add_royaltyrate", raise_exception=True)
+def royalty_create(request):
+    form = RoyaltyRateForm(user=request.user)
+
+    if request.method == "POST":
+        form = RoyaltyRateForm(request.POST, user=request.user)
+        if form.is_valid():
+            rate = form.save(commit=False)
+            rate.owner = request.user
+            rate.save()
+            messages.success(request, gettext("Royalty rate added."))
+            return redirect("royalty_list")
+
+    return render(request, "books/royalty_form.html", {"form": form})
+
+
+@login_required
+@permission_required("books.delete_royaltyrate", raise_exception=True)
+def royalty_delete(request, id):
+    rate = get_object_or_404(RoyaltyRate, id=id, owner=request.user)
+
+    if request.method == "POST":
+        rate.delete()
+        messages.success(request, gettext("Royalty rate deleted."))
+        return redirect("royalty_list")
+
+    return render(request, "books/confirm_delete.html", {
+        "object_type": gettext("royalty rate"),
+        "object_name": str(rate),
+        "cancel_url": reverse("royalty_list"),
+    })
+
+
+@login_required
+@permission_required("books.view_royaltyrate", raise_exception=True)
+def royalty_report(request):
+    rates = RoyaltyRate.objects.filter(owner=request.user).select_related("book", "author")
+
+    start_date = request.GET.get("start_date", "").strip()
+    end_date = request.GET.get("end_date", "").strip()
+
+    rows = []
+    for rate in rates:
+        sales = Sale.objects.filter(owner=request.user, book=rate.book)
+        if start_date:
+            sales = sales.filter(sale_date__gte=start_date)
+        if end_date:
+            sales = sales.filter(sale_date__lte=end_date)
+
+        total_revenue = sum((s.revenue for s in sales), start=0)
+        royalty_amount = total_revenue * rate.rate / 100
+
+        rows.append({
+            "book": rate.book,
+            "author": rate.author,
+            "rate": rate.rate,
+            "effective_from": rate.effective_from,
+            "total_revenue": total_revenue,
+            "royalty_amount": royalty_amount,
+        })
+
+    return render(request, "books/royalty_report.html", {
+        "rows": rows,
+        "start_date": start_date,
+        "end_date": end_date,
+    })
 
 
 def _generate_verification_code():
