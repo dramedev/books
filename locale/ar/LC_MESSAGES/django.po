@@ -1173,6 +1173,9 @@ msgstr "التكلفة لكل وحدة"
 msgid "Royalties"
 msgstr "الأتعاب"
 
+msgid "Add Royalty Rate"
+msgstr "إضافة معدل أتعاب"
+
 msgid "Royalty Rates"
 msgstr "معدلات الأتعاب"
 
