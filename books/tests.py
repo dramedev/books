@@ -12,7 +12,10 @@ from django.urls import reverse
 from django.utils import timezone
 
 from . import ai_chat
-from .models import AccessCode, Author, Book, Category, Customer, Invoice, InvoiceItem, Profile, Sale
+from .models import (
+    AccessCode, Author, Book, Category, Customer, Invoice, InvoiceItem, PrintRun,
+    Profile, Sale, StockAdjustment,
+)
 from .views import _pl_data
 
 
@@ -1265,6 +1268,70 @@ class InvoiceBulkUpdateTests(TestCase):
         self.draft.refresh_from_db()
         self.assertEqual(self.draft.status, Invoice.STATUS_DRAFT)
         self.assertRedirects(response, reverse("invoice_list"))
+
+
+class PrintRunCompleteTests(TestCase):
+
+    def setUp(self):
+        User = get_user_model()
+        self.user = User.objects.create_user(username="owner", password="pass1234")
+        self.client.force_login(self.user)
+        grant(self.user, "view_printrun", "add_printrun", "change_printrun", "delete_printrun")
+
+        cat = Category.objects.create(owner=self.user, name="Fiction")
+        self.book = Book.objects.create(
+            owner=self.user,
+            title="Test Book",
+            publisher="Acme",
+            published_date=date(2024, 1, 1),
+            category=cat,
+            stock_on_hand=0,
+            reorder_threshold=5,
+            distribution_expense=Decimal("2.00"),
+        )
+        self.run = PrintRun.objects.create(
+            owner=self.user,
+            book=self.book,
+            quantity=50,
+            cost_per_unit=Decimal("3.00"),
+            run_date=date.today(),
+        )
+
+    def test_mark_complete_increases_stock_and_records_adjustment(self):
+        response = self.client.post(reverse("print_run_complete", args=[self.run.id]))
+        self.assertRedirects(response, reverse("print_run_list"))
+
+        self.run.refresh_from_db()
+        self.book.refresh_from_db()
+        self.assertEqual(self.run.status, PrintRun.STATUS_COMPLETED)
+        self.assertIsNotNone(self.run.completed_at)
+        self.assertEqual(self.book.stock_on_hand, 50)
+
+        adjustment = StockAdjustment.objects.get(book=self.book)
+        self.assertEqual(adjustment.change, 50)
+        self.assertEqual(adjustment.resulting_stock, 50)
+        self.assertEqual(adjustment.reason, StockAdjustment.REASON_PRODUCTION)
+
+    def test_mark_complete_twice_is_rejected(self):
+        self.client.post(reverse("print_run_complete", args=[self.run.id]))
+        self.client.post(reverse("print_run_complete", args=[self.run.id]))
+
+        self.book.refresh_from_db()
+        self.assertEqual(self.book.stock_on_hand, 50)
+        self.assertEqual(StockAdjustment.objects.filter(book=self.book).count(), 1)
+
+    def test_completed_print_run_cannot_be_deleted(self):
+        self.client.post(reverse("print_run_complete", args=[self.run.id]))
+        response = self.client.post(reverse("print_run_delete", args=[self.run.id]))
+
+        self.assertRedirects(response, reverse("print_run_list"))
+        self.assertTrue(PrintRun.objects.filter(id=self.run.id).exists())
+
+    def test_pending_print_run_can_be_deleted(self):
+        response = self.client.post(reverse("print_run_delete", args=[self.run.id]))
+
+        self.assertRedirects(response, reverse("print_run_list"))
+        self.assertFalse(PrintRun.objects.filter(id=self.run.id).exists())
 
 
 class ProfitLossReportTests(TestCase):

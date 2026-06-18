@@ -71,6 +71,7 @@ urlpatterns = [
     path("print-runs/", views.print_run_list, name="print_run_list"),
     path("print-runs/add/<int:book_id>/", views.print_run_create, name="print_run_create"),
     path("print-runs/<int:id>/delete/", views.print_run_delete, name="print_run_delete"),
+    path("print-runs/<int:id>/complete/", views.print_run_complete, name="print_run_complete"),
     path("royalties/", views.royalty_list, name="royalty_list"),
     path("royalties/add/", views.royalty_create, name="royalty_create"),
     path("royalties/<int:id>/delete/", views.royalty_delete, name="royalty_delete"),

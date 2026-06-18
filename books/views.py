@@ -2671,9 +2671,42 @@ def print_run_create(request, book_id):
 
 
 @login_required
+@permission_required("books.change_printrun", raise_exception=True)
+@require_POST
+def print_run_complete(request, id):
+    run = get_object_or_404(PrintRun, id=id, owner=request.user)
+
+    if run.status != PrintRun.STATUS_PENDING:
+        messages.error(request, gettext("This print run is already completed."))
+        return redirect("print_run_list")
+
+    run.status = PrintRun.STATUS_COMPLETED
+    run.completed_at = timezone.now()
+    run.save(update_fields=["status", "completed_at"])
+
+    book = _adjust_stock(run.book_id, run.quantity, request.user)
+    StockAdjustment.objects.create(
+        owner=request.user,
+        book=run.book,
+        change=run.quantity,
+        resulting_stock=book.stock_on_hand,
+        reason=StockAdjustment.REASON_PRODUCTION,
+        note=gettext("Print run completed (%(date)s)") % {"date": run.run_date},
+    )
+
+    messages.success(request, gettext("Print run marked complete; stock updated."))
+    _notify_stock_level(request, book)
+    return redirect("print_run_list")
+
+
+@login_required
 @permission_required("books.delete_printrun", raise_exception=True)
 def print_run_delete(request, id):
     run = get_object_or_404(PrintRun, id=id, owner=request.user)
+
+    if run.status == PrintRun.STATUS_COMPLETED:
+        messages.error(request, gettext("Completed print runs can't be deleted; the stock adjustment must be reversed manually."))
+        return redirect("print_run_list")
 
     if request.method == "POST":
         run.delete()

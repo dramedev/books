@@ -20,6 +20,7 @@
 <th>{% translate "Cost / Unit" %}</th>
 <th>{% translate "Total Cost" %}</th>
 <th>{% translate "Note" %}</th>
+<th>{% translate "Status" %}</th>
 <th>{% translate "Actions" %}</th>
 </tr>
 
@@ -33,13 +34,26 @@
 <td><strong>{{ run.total_cost }}</strong></td>
 <td>{{ run.note|default:"-" }}</td>
 <td>
-{% if perms.books.delete_printrun %}
+{% if run.status == "completed" %}
+<span class="badge bg-success">{% translate "Completed" %}</span>
+{% else %}
+<span class="badge bg-secondary">{% translate "Pending" %}</span>
+{% endif %}
+</td>
+<td class="d-flex gap-2 flex-wrap">
+{% if run.status == "pending" and perms.books.change_printrun %}
+<form method="post" action="{% url 'print_run_complete' run.id %}" class="d-inline">
+{% csrf_token %}
+<button type="submit" class="btn btn-success btn-sm">{% translate "Mark Complete" %}</button>
+</form>
+{% endif %}
+{% if run.status == "pending" and perms.books.delete_printrun %}
 <a class="btn btn-danger btn-sm" href="{% url 'print_run_delete' run.id %}">{% translate "Delete" %}</a>
 {% endif %}
 </td>
 </tr>
 {% empty %}
-<tr><td colspan="8" class="text-center muted-text py-4">{% translate "No print runs recorded yet." %}</td></tr>
+<tr><td colspan="9" class="text-center muted-text py-4">{% translate "No print runs recorded yet." %}</td></tr>
 {% endfor %}
 </table>
 </div>

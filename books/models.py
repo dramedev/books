@@ -548,6 +548,14 @@ class InvoiceItem(models.Model):
 
 class PrintRun(models.Model):
 
+    STATUS_PENDING = "pending"
+    STATUS_COMPLETED = "completed"
+
+    STATUS_CHOICES = [
+        (STATUS_PENDING, _("Pending")),
+        (STATUS_COMPLETED, _("Completed")),
+    ]
+
     owner = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
@@ -568,6 +576,15 @@ class PrintRun(models.Model):
     run_date = models.DateField(verbose_name=_("Run date"))
 
     note = models.CharField(max_length=200, blank=True, verbose_name=_("Note"))
+
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default=STATUS_PENDING,
+        verbose_name=_("Status"),
+    )
+
+    completed_at = models.DateTimeField(null=True, blank=True, verbose_name=_("Completed at"))
 
 
     class Meta:
@@ -628,6 +645,7 @@ class StockAdjustment(models.Model):
     REASON_LOST = "lost"
     REASON_FOUND = "found"
     REASON_CORRECTION = "correction"
+    REASON_PRODUCTION = "production"
     REASON_OTHER = "other"
 
     REASON_CHOICES = [
@@ -635,6 +653,7 @@ class StockAdjustment(models.Model):
         (REASON_LOST, _("Lost")),
         (REASON_FOUND, _("Found")),
         (REASON_CORRECTION, _("Correction")),
+        (REASON_PRODUCTION, _("Print run")),
         (REASON_OTHER, _("Other")),
     ]
 
