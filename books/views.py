@@ -11,8 +11,9 @@ from io import BytesIO
 
 from django.conf import settings
 from django.contrib import messages
-from django.contrib.auth import login
+from django.contrib.auth import login, update_session_auth_hash
 from django.contrib.auth.decorators import login_required, permission_required
+from django.contrib.auth.forms import PasswordChangeForm
 from django.contrib.auth.models import User
 from django.core.mail import send_mail
 from django.core.paginator import Paginator
@@ -38,6 +39,7 @@ from .forms import (
     InvoiceItemForm,
     LocationForm,
     PrintRunForm,
+    EmailUpdateForm,
     ProfileForm,
     RedeemAccessCodeForm,
     ReorderForm,
@@ -1225,20 +1227,51 @@ def dashboard(request):
     return render(request, "books/dashboard.html", context)
 
 
+def _bootstrap_widgets(form):
+    for field in form.fields.values():
+        field.widget.attrs.setdefault("class", "form-control")
+    return form
+
+
 @login_required
 def profile_update(request):
     profile, _ = Profile.objects.get_or_create(user=request.user)
-    form = ProfileForm(instance=profile)
+    avatar_form = ProfileForm(instance=profile)
+    email_form = _bootstrap_widgets(EmailUpdateForm(initial={"email": request.user.email}))
+    password_form = _bootstrap_widgets(PasswordChangeForm(user=request.user))
 
     if request.method == "POST":
-        form = ProfileForm(request.POST, request.FILES, instance=profile)
+        action = request.POST.get("action")
 
-        if form.is_valid():
-            form.save()
-            messages.success(request, gettext("Profile photo updated."))
-            return redirect("dashboard")
+        if action == "avatar":
+            avatar_form = ProfileForm(request.POST, request.FILES, instance=profile)
+            if avatar_form.is_valid():
+                avatar_form.save()
+                messages.success(request, gettext("Profile photo updated."))
+                return redirect("profile_update")
 
-    return render(request, "books/profile_form.html", {"form": form, "profile": profile})
+        elif action == "email":
+            email_form = _bootstrap_widgets(EmailUpdateForm(request.POST))
+            if email_form.is_valid():
+                request.user.email = email_form.cleaned_data["email"]
+                request.user.save(update_fields=["email"])
+                messages.success(request, gettext("Email address updated."))
+                return redirect("profile_update")
+
+        elif action == "password":
+            password_form = _bootstrap_widgets(PasswordChangeForm(request.user, request.POST))
+            if password_form.is_valid():
+                user = password_form.save()
+                update_session_auth_hash(request, user)
+                messages.success(request, gettext("Password updated."))
+                return redirect("profile_update")
+
+    return render(request, "books/profile_form.html", {
+        "avatar_form": avatar_form,
+        "email_form": email_form,
+        "password_form": password_form,
+        "profile": profile,
+    })
 
 
 @login_required

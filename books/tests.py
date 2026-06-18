@@ -1270,6 +1270,67 @@ class InvoiceBulkUpdateTests(TestCase):
         self.assertRedirects(response, reverse("invoice_list"))
 
 
+class ProfileUpdateTests(TestCase):
+
+    def setUp(self):
+        User = get_user_model()
+        self.user = User.objects.create_user(
+            username="owner", password="pass1234", email="old@example.com",
+        )
+        self.client.force_login(self.user)
+
+    def test_update_email(self):
+        response = self.client.post(reverse("profile_update"), {
+            "action": "email",
+            "email": "new@example.com",
+        })
+        self.assertRedirects(response, reverse("profile_update"))
+        self.user.refresh_from_db()
+        self.assertEqual(self.user.email, "new@example.com")
+
+    def test_update_email_rejects_invalid_address(self):
+        response = self.client.post(reverse("profile_update"), {
+            "action": "email",
+            "email": "not-an-email",
+        })
+        self.assertEqual(response.status_code, 200)
+        self.user.refresh_from_db()
+        self.assertEqual(self.user.email, "old@example.com")
+
+    def test_change_password(self):
+        response = self.client.post(reverse("profile_update"), {
+            "action": "password",
+            "old_password": "pass1234",
+            "new_password1": "NewPass5678!",
+            "new_password2": "NewPass5678!",
+        })
+        self.assertRedirects(response, reverse("profile_update"))
+        self.user.refresh_from_db()
+        self.assertTrue(self.user.check_password("NewPass5678!"))
+
+    def test_change_password_rejects_wrong_old_password(self):
+        response = self.client.post(reverse("profile_update"), {
+            "action": "password",
+            "old_password": "wrongpass",
+            "new_password1": "NewPass5678!",
+            "new_password2": "NewPass5678!",
+        })
+        self.assertEqual(response.status_code, 200)
+        self.user.refresh_from_db()
+        self.assertTrue(self.user.check_password("pass1234"))
+
+    def test_change_password_keeps_session_authenticated(self):
+        grant(self.user, "view_book")
+        self.client.post(reverse("profile_update"), {
+            "action": "password",
+            "old_password": "pass1234",
+            "new_password1": "NewPass5678!",
+            "new_password2": "NewPass5678!",
+        })
+        response = self.client.get(reverse("dashboard"))
+        self.assertEqual(response.status_code, 200)
+
+
 class PrintRunCompleteTests(TestCase):
 
     def setUp(self):

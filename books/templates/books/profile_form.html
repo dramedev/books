@@ -6,7 +6,7 @@
 
 
 <div class="page-panel" style="max-width:480px;">
-<h1 class="mb-3">{% translate "Profile Photo" %}</h1>
+<h1 class="mb-3">{% translate "Profile" %}</h1>
 
 <div class="d-flex align-items-center gap-3 mb-3">
 {% if profile.avatar %}
@@ -22,12 +22,13 @@
 </div>
 </div>
 
-<form method="POST" enctype="multipart/form-data">
+<form method="POST" enctype="multipart/form-data" class="mb-4">
 {% csrf_token %}
+<input type="hidden" name="action" value="avatar">
 
-{{ form.non_field_errors }}
+{{ avatar_form.non_field_errors }}
 
-{% for field in form %}
+{% for field in avatar_form %}
 <div class="mb-3">
 <label class="form-label" for="{{ field.id_for_label }}">
 {{ field.label }}
@@ -45,13 +46,71 @@
 {% endfor %}
 
 <button class="btn btn-success">
-{% translate "Save" %}
+{% translate "Save Photo" %}
 </button>
+</form>
+
+<hr class="mb-4">
+
+<h2 class="h5 mb-3">{% translate "Email Address" %}</h2>
+<form method="POST" class="mb-4">
+{% csrf_token %}
+<input type="hidden" name="action" value="email">
+
+{{ email_form.non_field_errors }}
+
+{% for field in email_form %}
+<div class="mb-3">
+<label class="form-label" for="{{ field.id_for_label }}">
+{{ field.label }}
+</label>
+{{ field }}
+
+{% for error in field.errors %}
+<div class="text-danger small">{{ error }}</div>
+{% endfor %}
+</div>
+{% endfor %}
+
+<button class="btn btn-success">
+{% translate "Update Email" %}
+</button>
+</form>
+
+<hr class="mb-4">
+
+<h2 class="h5 mb-3">{% translate "Change Password" %}</h2>
+<form method="POST" class="mb-4">
+{% csrf_token %}
+<input type="hidden" name="action" value="password">
+
+{{ password_form.non_field_errors }}
+
+{% for field in password_form %}
+<div class="mb-3">
+<label class="form-label" for="{{ field.id_for_label }}">
+{{ field.label }}
+</label>
+{{ field }}
+
+{% if field.help_text %}
+<div class="form-text">{{ field.help_text }}</div>
+{% endif %}
+
+{% for error in field.errors %}
+<div class="text-danger small">{{ error }}</div>
+{% endfor %}
+</div>
+{% endfor %}
+
+<button class="btn btn-success">
+{% translate "Change Password" %}
+</button>
+</form>
 
 <a class="btn btn-outline-light" href="{% url 'dashboard' %}">
-{% translate "Cancel" %}
+{% translate "Back to Dashboard" %}
 </a>
-</form>
 </div>
 
 

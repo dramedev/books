@@ -349,6 +349,14 @@ class ProfileForm(forms.ModelForm):
 
 
 
+class EmailUpdateForm(forms.Form):
+
+    email = forms.EmailField(
+        label=_("Email address"),
+        widget=forms.EmailInput(attrs={"class": "form-control"}),
+    )
+
+
 class SignupForm(forms.Form):
 
     username = forms.CharField(
