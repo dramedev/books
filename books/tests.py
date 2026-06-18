@@ -1395,6 +1395,58 @@ class PrintRunCompleteTests(TestCase):
         self.assertFalse(PrintRun.objects.filter(id=self.run.id).exists())
 
 
+class GlobalSearchTests(TestCase):
+
+    def setUp(self):
+        User = get_user_model()
+        self.user = User.objects.create_user(username="owner", password="pass1234")
+        self.other_user = User.objects.create_user(username="other", password="pass1234")
+        self.client.force_login(self.user)
+        grant(self.user, "view_book", "view_customer", "view_invoice")
+
+        cat = Category.objects.create(owner=self.user, name="Fiction")
+        self.book = Book.objects.create(
+            owner=self.user, title="The Great Gatsby", publisher="Acme",
+            published_date=date(2024, 1, 1), category=cat,
+            stock_on_hand=5, reorder_threshold=1, distribution_expense=Decimal("1.00"),
+        )
+        self.customer = Customer.objects.create(owner=self.user, name="Gatsby Reader", email="reader@example.com")
+        self.invoice = Invoice.objects.create(
+            owner=self.user, customer_name="Gatsby Reader", invoice_date=date.today(),
+            currency="USD", invoice_number="INV-GATSBY-01",
+        )
+        Book.objects.create(
+            owner=self.other_user, title="Other Owner Gatsby Book", publisher="X",
+            published_date=date(2024, 1, 1), category=Category.objects.create(owner=self.other_user, name="X"),
+            stock_on_hand=1, reorder_threshold=1, distribution_expense=Decimal("1.00"),
+        )
+
+    def test_search_finds_matches_across_types(self):
+        response = self.client.get(reverse("global_search"), {"q": "gatsby"})
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "The Great Gatsby")
+        self.assertContains(response, "Gatsby Reader")
+        self.assertContains(response, "INV-GATSBY-01")
+
+    def test_search_excludes_other_owners_data(self):
+        response = self.client.get(reverse("global_search"), {"q": "gatsby"})
+        self.assertNotContains(response, "Other Owner Gatsby Book")
+
+    def test_empty_query_returns_no_results(self):
+        response = self.client.get(reverse("global_search"))
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(response.context["has_results"])
+
+    def test_search_respects_missing_permissions(self):
+        from django.contrib.auth.models import Permission
+        self.user.user_permissions.remove(
+            *Permission.objects.filter(content_type__app_label="books", codename="view_invoice")
+        )
+        response = self.client.get(reverse("global_search"), {"q": "gatsby"})
+        self.assertNotContains(response, "INV-GATSBY-01")
+        self.assertContains(response, "The Great Gatsby")
+
+
 class InvoiceAgingReportTests(TestCase):
 
     def setUp(self):

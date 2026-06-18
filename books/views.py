@@ -1274,6 +1274,40 @@ def profile_update(request):
     })
 
 
+SEARCH_RESULT_LIMIT = 25
+
+
+@login_required
+def global_search(request):
+    query = request.GET.get("q", "").strip()
+
+    books = customers = invoices = []
+
+    if query:
+        if request.user.has_perm("books.view_book"):
+            books = Book.objects.filter(owner=request.user).filter(
+                Q(title__icontains=query) | Q(isbn__icontains=query) | Q(publisher__icontains=query)
+            ).select_related("category")[:SEARCH_RESULT_LIMIT]
+
+        if request.user.has_perm("books.view_customer"):
+            customers = Customer.objects.filter(owner=request.user).filter(
+                Q(name__icontains=query) | Q(email__icontains=query) | Q(phone__icontains=query)
+            )[:SEARCH_RESULT_LIMIT]
+
+        if request.user.has_perm("books.view_invoice"):
+            invoices = Invoice.objects.filter(owner=request.user).filter(
+                Q(invoice_number__icontains=query) | Q(customer_name__icontains=query)
+            )[:SEARCH_RESULT_LIMIT]
+
+    return render(request, "books/global_search.html", {
+        "query": query,
+        "books": books,
+        "customers": customers,
+        "invoices": invoices,
+        "has_results": bool(books or customers or invoices),
+    })
+
+
 @login_required
 def about(request):
     return render(request, "books/about.html")

@@ -9,6 +9,7 @@ urlpatterns = [
     path("redeem-code/", views.redeem_access_code, name="redeem_access_code"),
     path("", views.dashboard, name="dashboard"),
     path("profile/", views.profile_update, name="profile_update"),
+    path("search/", views.global_search, name="global_search"),
     path("books/", views.book_list, name="book_list"),
     path("books/bulk-delete/", views.book_bulk_delete, name="book_bulk_delete"),
     path("books/import/", views.import_books_csv, name="import_books_csv"),

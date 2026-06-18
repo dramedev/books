@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+<div>
+<h1 class="mb-1">{% translate "Search Results" %}</h1>
+{% if query %}
+<p class="muted-text mb-0">{% blocktranslate %}Results for "{{ query }}"{% endblocktranslate %}</p>
+{% endif %}
+</div>
+</div>
+
+<form method="get" class="filter-panel mb-4">
+<div class="row g-3 align-items-end">
+<div class="col-md-6">
+<label class="form-label">{% translate "Search books, customers, invoices" %}</label>
+<input type="search" name="q" class="form-control" value="{{ query }}" autofocus>
+</div>
+<div class="col-md-3 d-flex align-items-end gap-2">
+<button class="btn btn-success" type="submit">{% translate "Search" %}</button>
+</div>
+</div>
+</form>
+
+{% if not query %}
+
+<div class="card p-5 text-center">
+<p class="muted-text mb-0">{% translate "Enter a search term above." %}</p>
+</div>
+
+{% elif not has_results %}
+
+<div class="card p-5 text-center">
+<p class="muted-text mb-0">{% translate "No matches found." %}</p>
+</div>
+
+{% else %}
+
+{% if books %}
+<h2 class="h5 mb-2">{% translate "Books" %}</h2>
+<div class="table-responsive mb-4">
+<table class="table table-striped align-middle small">
+<thead>
+<tr>
+<th>{% translate "Title" %}</th>
+<th>{% translate "ISBN" %}</th>
+<th>{% translate "Publisher" %}</th>
+<th>{% translate "Category" %}</th>
+</tr>
+</thead>
+<tbody>
+{% for book in books %}
+<tr>
+<td><a href="{% url 'book_detail' book.id %}">{{ book.title }}</a></td>
+<td>{{ book.isbn|default:"-" }}</td>
+<td>{{ book.publisher }}</td>
+<td>{{ book.category|default:"-" }}</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+{% endif %}
+
+{% if customers %}
+<h2 class="h5 mb-2">{% translate "Customers" %}</h2>
+<div class="table-responsive mb-4">
+<table class="table table-striped align-middle small">
+<thead>
+<tr>
+<th>{% translate "Name" %}</th>
+<th>{% translate "Email" %}</th>
+<th>{% translate "Phone" %}</th>
+</tr>
+</thead>
+<tbody>
+{% for customer in customers %}
+<tr>
+<td><a href="{% url 'customer_detail' customer.id %}">{{ customer.name }}</a></td>
+<td>{{ customer.email|default:"-" }}</td>
+<td>{{ customer.phone|default:"-" }}</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+{% endif %}
+
+{% if invoices %}
+<h2 class="h5 mb-2">{% translate "Invoices" %}</h2>
+<div class="table-responsive mb-4">
+<table class="table table-striped align-middle small">
+<thead>
+<tr>
+<th>{% translate "Number" %}</th>
+<th>{% translate "Customer" %}</th>
+<th>{% translate "Date" %}</th>
+<th>{% translate "Status" %}</th>
+</tr>
+</thead>
+<tbody>
+{% for invoice in invoices %}
+<tr>
+<td><a href="{% url 'invoice_detail' invoice.id %}">{{ invoice.invoice_number }}</a></td>
+<td>{{ invoice.customer_name }}</td>
+<td>{{ invoice.invoice_date }}</td>
+<td><span class="badge {{ invoice.status_badge_class }}">{{ invoice.get_status_display }}</span></td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+{% endif %}
+
+{% endif %}
+
+{% endblock %}
