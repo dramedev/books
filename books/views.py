@@ -215,6 +215,35 @@ def _sale_export_rows(sales):
         ]
 
 
+def _invoice_export_headers():
+    return [
+        gettext("Number"),
+        gettext("Customer"),
+        gettext("Date"),
+        gettext("Due"),
+        gettext("Currency"),
+        gettext("Subtotal"),
+        gettext("Tax"),
+        gettext("Total"),
+        gettext("Status"),
+    ]
+
+
+def _invoice_export_rows(invoices):
+    for invoice in invoices:
+        yield [
+            invoice.invoice_number,
+            invoice.customer_name,
+            invoice.invoice_date.isoformat(),
+            invoice.due_date.isoformat() if invoice.due_date else "",
+            invoice.currency,
+            invoice.subtotal,
+            invoice.tax_total,
+            invoice.grand_total,
+            invoice.get_status_display(),
+        ]
+
+
 def _reorder_export_headers():
     return [
         gettext("Date"),
@@ -2190,6 +2219,118 @@ def export_reorders_pdf(request):
     return response
 
 
+@login_required
+@permission_required("books.view_invoice", raise_exception=True)
+def export_invoices_csv(request):
+    response = HttpResponse(content_type="text/csv")
+    response["Content-Disposition"] = 'attachment; filename="rumi-press-invoices.csv"'
+
+    writer = csv.writer(response)
+    writer.writerow(_invoice_export_headers())
+
+    for row in _invoice_export_rows(_invoice_filters(request)):
+        writer.writerow(row)
+
+    return response
+
+
+@login_required
+@permission_required("books.view_invoice", raise_exception=True)
+def export_invoices_excel(request):
+    from openpyxl import Workbook
+
+    workbook = Workbook()
+    worksheet = workbook.active
+    worksheet.title = "Invoices"
+    worksheet.append(_invoice_export_headers())
+
+    for row in _invoice_export_rows(_invoice_filters(request)):
+        worksheet.append(row)
+
+    for column in worksheet.columns:
+        max_length = max(len(str(cell.value or "")) for cell in column)
+        worksheet.column_dimensions[column[0].column_letter].width = min(
+            max_length + 2,
+            40,
+        )
+
+    buffer = BytesIO()
+    workbook.save(buffer)
+    buffer.seek(0)
+
+    response = HttpResponse(
+        buffer.getvalue(),
+        content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    )
+    response["Content-Disposition"] = 'attachment; filename="rumi-press-invoices.xlsx"'
+
+    return response
+
+
+@login_required
+@permission_required("books.view_invoice", raise_exception=True)
+def export_invoices_pdf(request):
+    from reportlab.lib import colors
+    from reportlab.lib.pagesizes import landscape, letter
+    from reportlab.lib.styles import getSampleStyleSheet
+    from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
+
+    _register_pdf_fonts()
+    body_font, bold_font = _pdf_fonts()
+
+    buffer = BytesIO()
+    document = SimpleDocTemplate(
+        buffer,
+        pagesize=landscape(letter),
+        leftMargin=24,
+        rightMargin=24,
+        topMargin=24,
+        bottomMargin=24,
+    )
+
+    styles = getSampleStyleSheet()
+    title_style = styles["Title"]
+    title_style.fontName = bold_font
+
+    elements = [
+        Paragraph(_pdf_text(gettext("Rumi Press Invoices")), title_style),
+        Spacer(1, 12),
+    ]
+
+    rows = [[_pdf_text(value) for value in _invoice_export_headers()]]
+
+    for row in _invoice_export_rows(_invoice_filters(request)):
+        rows.append([_pdf_text(value) for value in row])
+
+    table = Table(
+        rows,
+        repeatRows=1,
+        colWidths=[70, 140, 60, 60, 60, 70, 60, 70, 60],
+    )
+    table.setStyle(
+        TableStyle(
+            [
+                ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#1f1f1f")),
+                ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+                ("FONTNAME", (0, 0), (-1, 0), bold_font),
+                ("FONTNAME", (0, 1), (-1, -1), body_font),
+                ("FONTSIZE", (0, 0), (-1, -1), 7),
+                ("GRID", (0, 0), (-1, -1), 0.25, colors.grey),
+                ("VALIGN", (0, 0), (-1, -1), "TOP"),
+            ]
+        )
+    )
+
+    elements.append(table)
+    document.build(elements)
+    buffer.seek(0)
+
+    response = HttpResponse(buffer.getvalue(), content_type="application/pdf")
+    response["Content-Disposition"] = 'attachment; filename="rumi-press-invoices.pdf"'
+
+    return response
+
+
 def _next_invoice_number(owner):
     from datetime import date as _date
     year = _date.today().year
@@ -2204,9 +2345,7 @@ def _next_invoice_number(owner):
     return f"{prefix}{seq:04d}"
 
 
-@login_required
-@permission_required("books.view_invoice", raise_exception=True)
-def invoice_list(request):
+def _invoice_filters(request):
     invoices = Invoice.objects.filter(owner=request.user).prefetch_related("items")
     status = request.GET.get("status")
     today = timezone.now().date()
@@ -2216,11 +2355,25 @@ def invoice_list(request):
     elif status in dict(Invoice.STATUS_CHOICES):
         invoices = invoices.filter(status=status)
 
+    return invoices
+
+
+@login_required
+@permission_required("books.view_invoice", raise_exception=True)
+def invoice_list(request):
+    invoices = _invoice_filters(request)
+    status = request.GET.get("status")
+    today = timezone.now().date()
+
     overdue_count = Invoice.objects.filter(
         owner=request.user,
         due_date__lt=today,
         due_date__isnull=False,
     ).exclude(status=Invoice.STATUS_PAID).count()
+
+    query_params = request.GET.copy()
+    query_params.pop("page", None)
+    query_string = query_params.urlencode()
 
     paginator = Paginator(invoices, 10)
     page_obj = paginator.get_page(request.GET.get("page"))
@@ -2231,6 +2384,7 @@ def invoice_list(request):
         "status_choices": Invoice.STATUS_CHOICES,
         "selected_status": status,
         "overdue_count": overdue_count,
+        "query_string": query_string,
     })
 
 

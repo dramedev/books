@@ -8,9 +8,14 @@
 <h1 class="mb-1">{% translate "Invoices" %}</h1>
 <p class="muted-text mb-0">{% translate "Create and manage customer invoices." %}</p>
 </div>
+<div class="d-flex gap-2">
+<a class="btn btn-outline-light" href="{% url 'export_invoices_csv' %}?{{ query_string }}">{% translate "CSV" %}</a>
+<a class="btn btn-outline-light" href="{% url 'export_invoices_excel' %}?{{ query_string }}">{% translate "Excel" %}</a>
+<a class="btn btn-outline-light" href="{% url 'export_invoices_pdf' %}?{{ query_string }}">{% translate "PDF" %}</a>
 {% if perms.books.add_invoice %}
 <a class="btn btn-primary" href="{% url 'invoice_create' %}">{% translate "New Invoice" %}</a>
 {% endif %}
+</div>
 </div>
 
 <div class="mb-3 d-flex gap-2 flex-wrap align-items-center">
