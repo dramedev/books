@@ -3214,13 +3214,33 @@ def redeem_access_code(request):
 def customer_list(request):
     customers = Customer.objects.filter(owner=request.user).annotate(
         invoice_count=Count("invoices")
-    )
+    ).order_by("name")
     q = request.GET.get("q", "").strip()
     if q:
         customers = customers.filter(name__icontains=q)
     paginator = Paginator(customers, 25)
     page_obj = paginator.get_page(request.GET.get("page"))
     return render(request, "books/customer_list.html", {"customers": page_obj.object_list, "page_obj": page_obj, "q": q})
+
+
+@login_required
+@permission_required("books.view_customer", raise_exception=True)
+def customer_detail(request, id):
+    customer = get_object_or_404(Customer, id=id, owner=request.user)
+    invoices = customer.invoices.filter(owner=request.user).prefetch_related("items").order_by("-invoice_date")
+
+    total_billed = sum((invoice.grand_total for invoice in invoices), Decimal(0))
+    outstanding_balance = sum(
+        (invoice.grand_total for invoice in invoices if invoice.status != Invoice.STATUS_PAID),
+        Decimal(0),
+    )
+
+    return render(request, "books/customer_detail.html", {
+        "customer": customer,
+        "invoices": invoices,
+        "total_billed": total_billed,
+        "outstanding_balance": outstanding_balance,
+    })
 
 
 @login_required

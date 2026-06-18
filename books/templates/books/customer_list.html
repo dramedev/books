@@ -40,11 +40,12 @@
 <tbody>
 {% for customer in customers %}
 <tr>
-<td><strong>{{ customer.name }}</strong></td>
+<td><strong><a href="{% url 'customer_detail' customer.id %}">{{ customer.name }}</a></strong></td>
 <td>{{ customer.email|default:"—" }}</td>
 <td>{{ customer.phone|default:"—" }}</td>
 <td>{{ customer.invoice_count }}</td>
 <td class="d-flex gap-2">
+<a class="btn btn-outline-light btn-sm" href="{% url 'customer_detail' customer.id %}">{% translate "View" %}</a>
 {% if perms.books.change_customer %}
 <a class="btn btn-warning btn-sm" href="{% url 'customer_update' customer.id %}">{% translate "Edit" %}</a>
 {% endif %}
