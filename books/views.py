@@ -248,10 +248,12 @@ def _book_filters(request):
 
     search = request.GET.get("q", "").strip()
     category = request.GET.get("category", "")
+    author = request.GET.get("author", "")
     publisher = request.GET.get("publisher", "").strip()
     year = request.GET.get("year", "").strip()
     start_date = request.GET.get("start_date", "").strip()
     end_date = request.GET.get("end_date", "").strip()
+    low_stock = request.GET.get("low_stock", "")
 
     if search:
         books = books.filter(
@@ -265,6 +267,9 @@ def _book_filters(request):
     if category and category.isdigit():
         books = books.filter(category_id=category)
 
+    if author and author.isdigit():
+        books = books.filter(authors__id=author).distinct()
+
     if publisher:
         books = books.filter(publisher=publisher)
 
@@ -276,6 +281,9 @@ def _book_filters(request):
 
     if end_date:
         books = books.filter(published_date__lte=end_date)
+
+    if low_stock == "1":
+        books = books.filter(stock_on_hand__lte=F("reorder_threshold"))
 
     return books
 
@@ -292,6 +300,7 @@ def _filter_context(request):
 
     return {
         "categories": Category.objects.filter(owner=request.user).order_by("name"),
+        "authors": Author.objects.filter(owner=request.user).order_by("name"),
         "publishers": (
             Book.objects.filter(owner=request.user)
             .exclude(publisher="")

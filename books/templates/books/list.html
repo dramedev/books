@@ -53,9 +53,17 @@
 <select id="category" name="category" class="form-select">
 <option value="">{% translate "All categories" %}</option>
 {% for category in categories %}
-<option value="{{ category.id }}" {% if filters.category == category.id|stringformat:"s" %}selected{% endif %}>
-{{ category.name }}
-</option>
+<option value="{{ category.id }}" {% if filters.category == category.id|stringformat:"s" %}selected{% endif %}>{{ category.name }}</option>
+{% endfor %}
+</select>
+</div>
+
+<div class="col-md-2">
+<label class="form-label" for="author">{% translate "Author" %}</label>
+<select id="author" name="author" class="form-select">
+<option value="">{% translate "All authors" %}</option>
+{% for author in authors %}
+<option value="{{ author.id }}" {% if filters.author == author.id|stringformat:"s" %}selected{% endif %}>{{ author.name }}</option>
 {% endfor %}
 </select>
 </div>
@@ -65,9 +73,7 @@
 <select id="publisher" name="publisher" class="form-select">
 <option value="">{% translate "All publishers" %}</option>
 {% for publisher in publishers %}
-<option value="{{ publisher }}" {% if filters.publisher == publisher %}selected{% endif %}>
-{{ publisher }}
-</option>
+<option value="{{ publisher }}" {% if filters.publisher == publisher %}selected{% endif %}>{{ publisher }}</option>
 {% endfor %}
 </select>
 </div>
@@ -84,7 +90,14 @@
 </select>
 </div>
 
-<div class="col-md-3 d-flex gap-2">
+<div class="col-md-1 d-flex align-items-end">
+<div class="form-check mb-1">
+<input class="form-check-input" type="checkbox" name="low_stock" value="1" id="lowStockCheck" {% if filters.low_stock == "1" %}checked{% endif %}>
+<label class="form-check-label small" for="lowStockCheck">{% translate "Low stock" %}</label>
+</div>
+</div>
+
+<div class="col-md-auto d-flex gap-2 align-items-end">
 <button class="btn btn-success" type="submit">{% translate "Apply" %}</button>
 <a class="btn btn-outline-light" href="{% url 'book_list' %}">{% translate "Reset" %}</a>
 </div>
