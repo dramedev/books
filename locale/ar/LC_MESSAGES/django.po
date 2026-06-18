@@ -1546,4 +1546,29 @@ msgstr "العميل"
 msgid "Invoices"
 msgstr "الفواتير"
 
+msgid "Back to Customers"
+msgstr "العودة إلى العملاء"
+
+msgid "Mark Sent"
+msgstr "تحديد كمُرسَل"
+
+msgid "Mark Paid"
+msgstr "تحديد كمدفوع"
+
+msgid "All authors"
+msgstr "جميع المؤلفين"
+
+msgid "3M"
+msgstr "3 أشهر"
+
+msgid "6M"
+msgstr "6 أشهر"
+
+msgid "12M"
+msgstr "12 شهرًا"
+
+msgid "Units"
+msgstr "وحدات"
+
+
 

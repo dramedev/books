@@ -1547,4 +1547,29 @@ msgstr "le client"
 msgid "Invoices"
 msgstr "Factures"
 
+msgid "Back to Customers"
+msgstr "Retour aux clients"
+
+msgid "Mark Sent"
+msgstr "Marquer comme envoyé"
+
+msgid "Mark Paid"
+msgstr "Marquer comme payé"
+
+msgid "All authors"
+msgstr "Tous les auteurs"
+
+msgid "3M"
+msgstr "3 mois"
+
+msgid "6M"
+msgstr "6 mois"
+
+msgid "12M"
+msgstr "12 mois"
+
+msgid "Units"
+msgstr "Unités"
+
+
 
