@@ -18,6 +18,7 @@ ROLE_PERMISSIONS = {
         "add_location", "change_location", "delete_location", "view_location",
         "add_stocklevel", "change_stocklevel", "delete_stocklevel", "view_stocklevel",
         "add_integration", "change_integration", "delete_integration", "view_integration",
+        "add_customer", "change_customer", "delete_customer", "view_customer",
     ],
     "Staff": [
         "add_book", "change_book", "view_book",
@@ -35,12 +36,14 @@ ROLE_PERMISSIONS = {
         "add_location", "change_location", "view_location",
         "view_stocklevel",
         "view_integration",
+        "add_customer", "change_customer", "view_customer",
     ],
     "Viewer": [
         "view_book", "view_category", "view_author", "view_sale",
         "view_reorder", "view_supplier", "view_return", "view_stockadjustment",
         "view_invoice", "view_printrun", "view_royaltyrate",
         "view_location", "view_stocklevel", "view_integration",
+        "view_customer",
     ],
 }
 

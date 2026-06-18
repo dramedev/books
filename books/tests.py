@@ -12,7 +12,8 @@ from django.urls import reverse
 from django.utils import timezone
 
 from . import ai_chat
-from .models import AccessCode, Author, Book, Category, Profile, Sale
+from .models import AccessCode, Author, Book, Category, Customer, Invoice, InvoiceItem, Profile, Sale
+from .views import _pl_data
 
 
 def grant(user, *codenames):
@@ -269,6 +270,8 @@ class SaleStockAdjustmentTests(TestCase):
             "unit_price": "10.00",
             "sale_date": "2024-01-10",
             "channel": "online",
+            "currency": "USD",
+            "tax_rate": "0",
         }
         data.update(overrides)
         return data
@@ -663,9 +666,10 @@ class SetupRolesCommandTests(TestCase):
                 "codename", flat=True
             )
         )
+        from books.permissions import ROLE_PERMISSIONS
         self.assertEqual(
             viewer_codenames,
-            {"view_book", "view_category", "view_author", "view_sale"},
+            set(ROLE_PERMISSIONS["Viewer"]),
         )
 
 
@@ -1085,3 +1089,261 @@ class PendingActivationAdminTests(TestCase):
         self.assertContains(response, "verified_pending")
         self.assertNotContains(response, "not_verified")
         self.assertNotContains(response, "activated")
+
+
+class CustomerModelTests(TestCase):
+
+    def setUp(self):
+        User = get_user_model()
+        self.user = User.objects.create_user(username="owner", password="pass1234")
+        self.other = User.objects.create_user(username="other", password="pass1234")
+
+    def test_str_returns_name(self):
+        c = Customer.objects.create(owner=self.user, name="Bookshop A")
+        self.assertEqual(str(c), "Bookshop A")
+
+    def test_name_unique_per_owner(self):
+        Customer.objects.create(owner=self.user, name="Bookshop A")
+        with self.assertRaises(Exception):
+            Customer.objects.create(owner=self.user, name="Bookshop A")
+
+    def test_same_name_allowed_for_different_owners(self):
+        Customer.objects.create(owner=self.user, name="Bookshop A")
+        c2 = Customer.objects.create(owner=self.other, name="Bookshop A")
+        self.assertEqual(c2.owner, self.other)
+
+    def test_default_ordering_alphabetical(self):
+        Customer.objects.create(owner=self.user, name="Zara")
+        Customer.objects.create(owner=self.user, name="Alpha")
+        names = list(Customer.objects.filter(owner=self.user).values_list("name", flat=True))
+        self.assertEqual(names, ["Alpha", "Zara"])
+
+
+class CustomerViewTests(TestCase):
+
+    def setUp(self):
+        User = get_user_model()
+        self.user = User.objects.create_user(username="owner", password="pass1234")
+        self.other = User.objects.create_user(username="other", password="pass1234")
+        self.client.force_login(self.user)
+        grant(self.user, "view_customer", "add_customer", "change_customer", "delete_customer")
+        self.customer = Customer.objects.create(owner=self.user, name="Test Shop", email="shop@example.com")
+
+    def test_list_shows_own_customers_only(self):
+        Customer.objects.create(owner=self.other, name="Other Shop")
+        response = self.client.get(reverse("customer_list"))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Test Shop")
+        self.assertNotContains(response, "Other Shop")
+
+    def test_create_customer(self):
+        response = self.client.post(reverse("customer_create"), {
+            "name": "New Shop",
+            "email": "new@example.com",
+            "phone": "",
+            "address": "",
+            "notes": "",
+        })
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(Customer.objects.filter(owner=self.user, name="New Shop").exists())
+
+    def test_update_customer(self):
+        response = self.client.post(reverse("customer_update", args=[self.customer.id]), {
+            "name": "Renamed Shop",
+            "email": "shop@example.com",
+            "phone": "",
+            "address": "",
+            "notes": "",
+        })
+        self.assertEqual(response.status_code, 302)
+        self.customer.refresh_from_db()
+        self.assertEqual(self.customer.name, "Renamed Shop")
+
+    def test_delete_customer(self):
+        response = self.client.post(reverse("customer_delete", args=[self.customer.id]))
+        self.assertEqual(response.status_code, 302)
+        self.assertFalse(Customer.objects.filter(id=self.customer.id).exists())
+
+    def test_cannot_edit_other_owners_customer(self):
+        other_customer = Customer.objects.create(owner=self.other, name="Other Shop")
+        response = self.client.post(reverse("customer_update", args=[other_customer.id]), {
+            "name": "Hacked",
+            "email": "",
+            "phone": "",
+            "address": "",
+            "notes": "",
+        })
+        self.assertEqual(response.status_code, 404)
+
+    def test_list_requires_login(self):
+        self.client.logout()
+        response = self.client.get(reverse("customer_list"))
+        self.assertEqual(response.status_code, 302)
+
+
+class InvoiceModelTests(TestCase):
+
+    def setUp(self):
+        User = get_user_model()
+        self.user = User.objects.create_user(username="owner", password="pass1234")
+        self.invoice = Invoice.objects.create(
+            owner=self.user,
+            customer_name="Test Client",
+            invoice_date=date.today(),
+            currency="USD",
+        )
+
+    def _add_item(self, qty, price, tax_rate=0):
+        return InvoiceItem.objects.create(
+            invoice=self.invoice,
+            description="Book",
+            quantity=qty,
+            unit_price=Decimal(str(price)),
+            tax_rate=Decimal(str(tax_rate)),
+        )
+
+    def test_subtotal_sums_qty_times_price(self):
+        self._add_item(2, "10.00")
+        self._add_item(3, "5.00")
+        self.assertEqual(self.invoice.subtotal, Decimal("35.00"))
+
+    def test_grand_total_includes_tax(self):
+        self._add_item(1, "100.00", tax_rate="10")
+        self.assertEqual(self.invoice.grand_total, Decimal("110.00"))
+
+    def test_grand_total_zero_with_no_items(self):
+        self.assertEqual(self.invoice.grand_total, Decimal("0"))
+
+
+class ProfitLossReportTests(TestCase):
+
+    def setUp(self):
+        User = get_user_model()
+        self.user = User.objects.create_user(username="owner", password="pass1234")
+        self.client.force_login(self.user)
+        grant(self.user, "view_book")
+        cat = Category.objects.create(owner=self.user, name="Fiction")
+        self.book = Book.objects.create(
+            owner=self.user,
+            title="Test Book",
+            publisher="Acme",
+            published_date=date(2024, 1, 1),
+            category=cat,
+            stock_on_hand=50,
+            reorder_threshold=5,
+            distribution_expense=Decimal("2.00"),
+        )
+
+    def test_no_sales_returns_empty_rows(self):
+        rows, totals = _pl_data(self.user, None, None)
+        self.assertEqual(rows, [])
+        self.assertEqual(totals["net_profit"], Decimal("0"))
+
+    def test_revenue_calculated_correctly(self):
+        Sale.objects.create(
+            owner=self.user,
+            book=self.book,
+            quantity=10,
+            unit_price=Decimal("15.00"),
+            sale_date=date(2024, 1, 15),
+            channel="online",
+        )
+        rows, totals = _pl_data(self.user, None, None)
+        self.assertEqual(len(rows), 1)
+        self.assertEqual(rows[0]["revenue"], Decimal("150.00"))
+        self.assertEqual(rows[0]["units"], 10)
+
+    def test_date_filter_excludes_out_of_range_sales(self):
+        Sale.objects.create(
+            owner=self.user,
+            book=self.book,
+            quantity=5,
+            unit_price=Decimal("10.00"),
+            sale_date=date(2023, 12, 1),
+            channel="online",
+        )
+        rows, totals = _pl_data(self.user, "2024-01-01", "2024-12-31")
+        self.assertEqual(rows, [])
+
+    def test_report_view_accessible(self):
+        response = self.client.get(reverse("profit_loss_report"))
+        self.assertEqual(response.status_code, 200)
+
+    def test_isolation_excludes_other_user_sales(self):
+        User = get_user_model()
+        other = User.objects.create_user(username="other", password="pass1234")
+        cat2 = Category.objects.create(owner=other, name="Fiction")
+        book2 = Book.objects.create(
+            owner=other, title="Other Book", publisher="Acme",
+            published_date=date(2024, 1, 1), category=cat2,
+            stock_on_hand=10, reorder_threshold=2,
+            distribution_expense=Decimal("0.00"),
+        )
+        Sale.objects.create(
+            owner=other, book=book2, quantity=5,
+            unit_price=Decimal("20.00"), sale_date=date.today(), channel="online",
+        )
+        rows, totals = _pl_data(self.user, None, None)
+        self.assertEqual(rows, [])
+
+
+class LowStockDigestTests(TestCase):
+
+    def setUp(self):
+        User = get_user_model()
+        self.user = User.objects.create_user(
+            username="owner", password="pass1234", email="owner@example.com"
+        )
+        cat = Category.objects.create(owner=self.user, name="Fiction")
+        self.low_book = Book.objects.create(
+            owner=self.user,
+            title="Low Stock Book",
+            publisher="Acme",
+            published_date=date(2024, 1, 1),
+            category=cat,
+            stock_on_hand=1,
+            reorder_threshold=5,
+            distribution_expense=Decimal("0.00"),
+            low_stock_alert_sent=False,
+        )
+        self.ok_book = Book.objects.create(
+            owner=self.user,
+            title="Plenty Book",
+            publisher="Acme",
+            published_date=date(2024, 1, 1),
+            category=cat,
+            stock_on_hand=50,
+            reorder_threshold=5,
+            distribution_expense=Decimal("0.00"),
+            low_stock_alert_sent=False,
+        )
+
+    def test_sends_digest_email_for_low_stock_books(self):
+        call_command("send_low_stock_digest")
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertIn("owner@example.com", mail.outbox[0].to)
+        self.assertIn("Low Stock Book", mail.outbox[0].body)
+        self.assertNotIn("Plenty Book", mail.outbox[0].body)
+
+    def test_marks_books_as_alerted_after_send(self):
+        call_command("send_low_stock_digest")
+        self.low_book.refresh_from_db()
+        self.assertTrue(self.low_book.low_stock_alert_sent)
+
+    def test_skips_already_alerted_books(self):
+        self.low_book.low_stock_alert_sent = True
+        self.low_book.save()
+        call_command("send_low_stock_digest")
+        self.assertEqual(len(mail.outbox), 0)
+
+    def test_dry_run_sends_no_email_and_does_not_flag(self):
+        call_command("send_low_stock_digest", "--dry-run")
+        self.assertEqual(len(mail.outbox), 0)
+        self.low_book.refresh_from_db()
+        self.assertFalse(self.low_book.low_stock_alert_sent)
+
+    def test_no_email_sent_when_no_low_stock(self):
+        self.low_book.stock_on_hand = 99
+        self.low_book.save()
+        call_command("send_low_stock_digest")
+        self.assertEqual(len(mail.outbox), 0)
