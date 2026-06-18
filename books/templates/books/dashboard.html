@@ -120,7 +120,16 @@
 
 <div class="col-md-6">
 <div class="page-panel">
-<div style="width:100%;height:320px;">
+<div class="d-flex justify-content-between align-items-center mb-2">
+<span class="fw-semibold">{% translate "Sales Trend" %}</span>
+<div class="btn-group btn-group-sm" role="group" id="trendPeriodGroup">
+<button type="button" class="btn btn-outline-secondary" data-months="3">{% translate "3M" %}</button>
+<button type="button" class="btn btn-outline-secondary" data-months="6">{% translate "6M" %}</button>
+<button type="button" class="btn btn-outline-secondary" data-months="12">{% translate "12M" %}</button>
+<button type="button" class="btn btn-outline-secondary active" data-months="0">{% translate "All" %}</button>
+</div>
+</div>
+<div style="width:100%;height:290px;">
 <canvas id="trendChart"></canvas>
 </div>
 </div>
@@ -257,111 +266,171 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <script>
-const revenueCtx = document.getElementById("revenueChart");
+(function () {
+    const css = getComputedStyle(document.documentElement);
+    const textColor  = css.getPropertyValue("--text").trim()        || "#e8e9ec";
+    const mutedColor = css.getPropertyValue("--text-muted").trim()  || "#9aa0aa";
+    const gridColor  = css.getPropertyValue("--border").trim()      || "#2c2f36";
 
-new Chart(revenueCtx, {
-    type: "bar",
-    data: {
-        labels: {{ labels|safe }},
-        datasets: [
-            {
-                label: "{% translate 'Revenue' %}",
-                data: {{ revenues|safe }}
-            },
-            {
-                label: "{% translate 'Profit' %}",
-                data: {{ profits|safe }}
-            },
-            {
-                label: "{% translate 'Purchase Cost' %}",
-                data: {{ purchase_costs|safe }}
-            }
-        ]
-    },
-    options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-            legend: {
-                position: "bottom"
-            },
-            title: {
-                display: true,
-                text: "{% translate 'Revenue & Profit by Category' %}"
-            }
-        }
+    Chart.defaults.color       = textColor;
+    Chart.defaults.borderColor = gridColor;
+
+    const C = {
+        revenue: { line: "#4a9f7e", fill: "rgba(74,159,126,0.15)" },
+        profit:  { line: "#d39c4f", fill: "rgba(211,156,79,0.7)"  },
+        cost:    { line: "#c06060", fill: "rgba(192,96,96,0.15)"   },
+        units:   { line: "#6b9fd4", fill: "rgba(107,159,212,0.15)" },
+    };
+
+    function scaleBase() {
+        return {
+            ticks: { color: mutedColor },
+            title: { color: textColor },
+            grid:  { color: gridColor },
+        };
     }
-});
 
-const trendCtx = document.getElementById("trendChart");
-
-new Chart(trendCtx, {
-    type: "line",
-    data: {
-        labels: {{ trend_labels|safe }},
-        datasets: [
-            {
-                label: "{% translate 'Units Sold' %}",
-                data: {{ trend_units|safe }},
-                yAxisID: "units",
-                borderColor: "#3f6f9f",
-                backgroundColor: "#3f6f9f",
-                tension: 0.3
-            },
-            {
-                label: "{% translate 'Revenue' %}",
-                data: {{ trend_revenues|safe }},
-                yAxisID: "revenue",
-                borderColor: "#2f6f63",
-                backgroundColor: "#2f6f63",
-                tension: 0.3
-            },
-            {
-                label: "{% translate 'Purchase Cost' %}",
-                data: {{ trend_purchase_costs|safe }},
-                yAxisID: "revenue",
-                borderColor: "#9f5f3f",
-                backgroundColor: "#9f5f3f",
-                tension: 0.3
-            }
-        ]
-    },
-    options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-            legend: {
-                position: "bottom"
-            },
-            title: {
-                display: true,
-                text: "{% translate 'Sales Trend' %}"
-            }
-        },
-        scales: {
-            units: {
-                type: "linear",
-                position: "left",
-                title: {
-                    display: true,
-                    text: "{% translate 'Units Sold' %}"
-                }
-            },
-            revenue: {
-                type: "linear",
-                position: "right",
-                title: {
-                    display: true,
-                    text: "{% translate 'Revenue' %}"
+    // ── Bar chart: Revenue & Profit by Category ──────────────────────────────
+    new Chart(document.getElementById("revenueChart"), {
+        type: "bar",
+        data: {
+            labels: {{ labels|safe }},
+            datasets: [
+                {
+                    label: "{% translate 'Revenue' %}",
+                    data: {{ revenues|safe }},
+                    backgroundColor: "rgba(74,159,126,0.75)",
+                    borderColor: C.revenue.line,
+                    borderWidth: 1,
                 },
-                grid: {
-                    drawOnChartArea: false
-                }
-            }
-        }
-    }
-});
+                {
+                    label: "{% translate 'Profit' %}",
+                    data: {{ profits|safe }},
+                    backgroundColor: "rgba(211,156,79,0.75)",
+                    borderColor: C.profit.line,
+                    borderWidth: 1,
+                },
+                {
+                    label: "{% translate 'Purchase Cost' %}",
+                    data: {{ purchase_costs|safe }},
+                    backgroundColor: "rgba(192,96,96,0.75)",
+                    borderColor: C.cost.line,
+                    borderWidth: 1,
+                },
+            ],
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { position: "bottom", labels: { color: textColor, boxWidth: 12 } },
+                title:  { display: true, text: "{% translate 'Revenue & Profit by Category' %}", color: textColor },
+            },
+            scales: {
+                x: scaleBase(),
+                y: scaleBase(),
+            },
+        },
+    });
 
+    // ── Line chart: Sales Trend with period filter ────────────────────────────
+    const ALL_LABELS   = {{ trend_labels|safe }};
+    const ALL_UNITS    = {{ trend_units|safe }};
+    const ALL_REVENUES = {{ trend_revenues|safe }};
+    const ALL_COSTS    = {{ trend_purchase_costs|safe }};
+
+    function sliceData(months) {
+        if (!months) return { labels: ALL_LABELS, units: ALL_UNITS, revenues: ALL_REVENUES, costs: ALL_COSTS };
+        const n = Math.min(months, ALL_LABELS.length);
+        return {
+            labels:   ALL_LABELS.slice(-n),
+            units:    ALL_UNITS.slice(-n),
+            revenues: ALL_REVENUES.slice(-n),
+            costs:    ALL_COSTS.slice(-n),
+        };
+    }
+
+    const trendChart = new Chart(document.getElementById("trendChart"), {
+        type: "line",
+        data: {
+            labels: ALL_LABELS,
+            datasets: [
+                {
+                    label: "{% translate 'Units Sold' %}",
+                    data: ALL_UNITS,
+                    yAxisID: "units",
+                    borderColor: C.units.line,
+                    backgroundColor: C.units.fill,
+                    fill: true,
+                    tension: 0.35,
+                    pointRadius: 3,
+                    pointHoverRadius: 5,
+                },
+                {
+                    label: "{% translate 'Revenue' %}",
+                    data: ALL_REVENUES,
+                    yAxisID: "revenue",
+                    borderColor: C.revenue.line,
+                    backgroundColor: C.revenue.fill,
+                    fill: true,
+                    tension: 0.35,
+                    pointRadius: 3,
+                    pointHoverRadius: 5,
+                },
+                {
+                    label: "{% translate 'Purchase Cost' %}",
+                    data: ALL_COSTS,
+                    yAxisID: "revenue",
+                    borderColor: C.cost.line,
+                    backgroundColor: C.cost.fill,
+                    fill: true,
+                    tension: 0.35,
+                    pointRadius: 3,
+                    pointHoverRadius: 5,
+                },
+            ],
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: { mode: "index", intersect: false },
+            plugins: {
+                legend: { position: "bottom", labels: { color: textColor, boxWidth: 12 } },
+                title:  { display: false },
+            },
+            scales: {
+                x: scaleBase(),
+                units: {
+                    type: "linear",
+                    position: "left",
+                    ...scaleBase(),
+                    title: { display: true, text: "{% translate 'Units' %}", color: mutedColor },
+                },
+                revenue: {
+                    type: "linear",
+                    position: "right",
+                    ...scaleBase(),
+                    title: { display: true, text: "{% translate 'Revenue' %}", color: mutedColor },
+                    grid: { drawOnChartArea: false, color: gridColor },
+                },
+            },
+        },
+    });
+
+    document.getElementById("trendPeriodGroup").addEventListener("click", function (e) {
+        const btn = e.target.closest("[data-months]");
+        if (!btn) return;
+        document.querySelectorAll("#trendPeriodGroup [data-months]").forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+        const d = sliceData(parseInt(btn.dataset.months, 10));
+        trendChart.data.labels           = d.labels;
+        trendChart.data.datasets[0].data = d.units;
+        trendChart.data.datasets[1].data = d.revenues;
+        trendChart.data.datasets[2].data = d.costs;
+        trendChart.update();
+    });
+
+})();
 
 (function () {
     const quoteEl = document.getElementById("dashboard-quote");
