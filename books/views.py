@@ -16,7 +16,8 @@ from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib.auth.models import User
 from django.core.mail import send_mail
 from django.core.paginator import Paginator
-from django.db.models import Count, DecimalField, ExpressionWrapper, F, IntegerField, OuterRef, Q, Subquery, Sum, Value
+from django.db import models
+from django.db.models import Case, Count, DecimalField, ExpressionWrapper, F, IntegerField, OuterRef, Q, Subquery, Sum, Value, When
 from django.db.models.functions import Coalesce, TruncMonth
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
@@ -1095,6 +1096,33 @@ def dashboard(request):
         trend_revenues.append(float(sales_by_month.get(month, {}).get("revenue") or 0))
         trend_purchase_costs.append(float(purchase_by_month.get(month, {}).get("cost") or 0))
 
+    channel_breakdown = list(
+        sales.annotate(channel_name=Coalesce(
+            Case(
+                When(channel="", then=Value(None)),
+                default=F("channel"),
+                output_field=models.CharField(),
+            ),
+            Value(gettext("Unspecified")),
+        ))
+        .values("channel_name")
+        .annotate(revenue=Sum(REVENUE_EXPRESSION), units=Sum("quantity"))
+        .order_by("-revenue")
+    )
+
+    channel_labels = [item["channel_name"] for item in channel_breakdown]
+    channel_revenues = [float(item["revenue"] or 0) for item in channel_breakdown]
+    channel_total_revenue = sum(channel_revenues) or 1
+    channel_rows = [
+        {
+            "channel": item["channel_name"],
+            "revenue": item["revenue"] or 0,
+            "units": item["units"] or 0,
+            "share": round(float(item["revenue"] or 0) / channel_total_revenue * 100, 1),
+        }
+        for item in channel_breakdown
+    ]
+
     top_books = (
         books.annotate(units_sold=Sum("sales__quantity"))
         .filter(units_sold__gt=0)
@@ -1156,6 +1184,9 @@ def dashboard(request):
         "trend_units": json.dumps(trend_units),
         "trend_revenues": json.dumps(trend_revenues),
         "trend_purchase_costs": json.dumps(trend_purchase_costs),
+        "channel_labels": json.dumps(channel_labels),
+        "channel_revenues": json.dumps(channel_revenues),
+        "channel_rows": channel_rows,
         "top_books": top_books,
         "recent_sales": recent_sales,
         "pending_reorders_count": pending_reorders_count,
