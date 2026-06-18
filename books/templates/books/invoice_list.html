@@ -28,9 +28,28 @@
 </a>
 </div>
 
+{% if perms.books.change_invoice %}
+<form method="post" action="{% url 'invoice_bulk_update' %}" id="invoiceBulkForm">
+{% csrf_token %}
+<input type="hidden" name="next" value="{{ request.get_full_path }}">
+</form>
+
+<div id="invoiceBulkBar" style="display:none;" class="d-flex align-items-center gap-3 mb-2 p-2 rounded" style="background:var(--surface-alt); border:1px solid var(--border);">
+<span id="invoiceBulkCount" class="muted-text small"></span>
+<button type="submit" form="invoiceBulkForm" name="action" value="sent" class="btn btn-info btn-sm">{% translate "Mark Selected Sent" %}</button>
+<button type="submit" form="invoiceBulkForm" name="action" value="paid" class="btn btn-success btn-sm">{% translate "Mark Selected Paid" %}</button>
+<button type="button" class="btn btn-outline-light btn-sm" id="invoiceBulkClear">{% translate "Clear selection" %}</button>
+</div>
+{% endif %}
+
 <div class="table-responsive">
 <table class="table table-striped align-middle">
 <tr>
+{% if perms.books.change_invoice %}
+<th style="width:36px;">
+<input type="checkbox" id="selectAllInvoices" class="form-check-input" title="{% translate 'Select all' %}">
+</th>
+{% endif %}
 <th>{% translate "Number" %}</th>
 <th>{% translate "Customer" %}</th>
 <th>{% translate "Date" %}</th>
@@ -43,6 +62,11 @@
 
 {% for invoice in invoices %}
 <tr {% if invoice.is_overdue %}class="table-danger"{% endif %}>
+{% if perms.books.change_invoice %}
+<td>
+<input type="checkbox" name="ids" value="{{ invoice.id }}" form="invoiceBulkForm" class="form-check-input invoice-checkbox">
+</td>
+{% endif %}
 <td><a href="{% url 'invoice_detail' invoice.id %}">{{ invoice.invoice_number }}</a></td>
 <td>{{ invoice.customer_name }}</td>
 <td>{{ invoice.invoice_date }}</td>
@@ -78,7 +102,7 @@
 </td>
 </tr>
 {% empty %}
-<tr><td colspan="8" class="text-center muted-text py-4">{% translate "No invoices yet." %}</td></tr>
+<tr><td colspan="{% if perms.books.change_invoice %}9{% else %}8{% endif %}" class="text-center muted-text py-4">{% translate "No invoices yet." %}</td></tr>
 {% endfor %}
 </table>
 </div>
@@ -88,5 +112,45 @@
 {% else %}
 {% include "books/_pagination.html" %}
 {% endif %}
+
+<script>
+(function(){
+    const selectAll = document.getElementById('selectAllInvoices');
+    const bulkBar = document.getElementById('invoiceBulkBar');
+    const bulkCount = document.getElementById('invoiceBulkCount');
+    const bulkClear = document.getElementById('invoiceBulkClear');
+    const checkboxes = document.querySelectorAll('.invoice-checkbox');
+
+    if(!selectAll) return;
+
+    function updateBar(){
+        const checked = document.querySelectorAll('.invoice-checkbox:checked');
+        if(checked.length > 0){
+            bulkBar.style.display = 'flex';
+            bulkCount.textContent = checked.length + ' {% translate "selected" %}';
+        } else {
+            bulkBar.style.display = 'none';
+        }
+        selectAll.indeterminate = checked.length > 0 && checked.length < checkboxes.length;
+        selectAll.checked = checked.length === checkboxes.length && checkboxes.length > 0;
+    }
+
+    selectAll.addEventListener('change', function(){
+        checkboxes.forEach(function(cb){ cb.checked = selectAll.checked; });
+        updateBar();
+    });
+
+    checkboxes.forEach(function(cb){
+        cb.addEventListener('change', updateBar);
+    });
+
+    bulkClear.addEventListener('click', function(){
+        checkboxes.forEach(function(cb){ cb.checked = false; });
+        selectAll.checked = false;
+        selectAll.indeterminate = false;
+        bulkBar.style.display = 'none';
+    });
+})();
+</script>
 
 {% endblock %}

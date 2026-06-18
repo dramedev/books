@@ -61,6 +61,7 @@ urlpatterns = [
     path("invoices/export/csv/", views.export_invoices_csv, name="export_invoices_csv"),
     path("invoices/export/excel/", views.export_invoices_excel, name="export_invoices_excel"),
     path("invoices/export/pdf/", views.export_invoices_pdf, name="export_invoices_pdf"),
+    path("invoices/bulk-update/", views.invoice_bulk_update, name="invoice_bulk_update"),
     path("invoices/<int:id>/", views.invoice_detail, name="invoice_detail"),
     path("invoices/<int:id>/delete/", views.invoice_delete, name="invoice_delete"),
     path("invoices/<int:id>/pdf/", views.invoice_pdf, name="invoice_pdf"),

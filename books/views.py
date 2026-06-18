@@ -2453,24 +2453,21 @@ def invoice_item_delete(request, id):
     return redirect("invoice_detail", id=invoice_id)
 
 
-@login_required
-@permission_required("books.change_invoice", raise_exception=True)
-@require_POST
-def invoice_update_status(request, id, action):
-    invoice = get_object_or_404(Invoice, id=id, owner=request.user)
-
-    transitions = {
+def _invoice_status_transitions():
+    return {
         "sent": (Invoice.STATUS_DRAFT, Invoice.STATUS_SENT),
         "paid": (Invoice.STATUS_SENT, Invoice.STATUS_PAID),
     }
 
+
+def _advance_invoice_status(invoice, action):
+    transitions = _invoice_status_transitions()
     if action not in transitions:
-        return redirect("invoice_list")
+        return False
 
     required, new_status = transitions[action]
     if invoice.status != required:
-        messages.error(request, gettext("Cannot update invoice from its current status."))
-        return redirect("invoice_detail", id=invoice.id)
+        return False
 
     invoice.status = new_status
     invoice.save(update_fields=["status"])
@@ -2490,11 +2487,57 @@ def invoice_update_status(request, id, action):
             fail_silently=True,
         )
 
+    return True
+
+
+@login_required
+@permission_required("books.change_invoice", raise_exception=True)
+@require_POST
+def invoice_update_status(request, id, action):
+    invoice = get_object_or_404(Invoice, id=id, owner=request.user)
+
+    if action not in _invoice_status_transitions():
+        return redirect("invoice_list")
+
+    if not _advance_invoice_status(invoice, action):
+        messages.error(request, gettext("Cannot update invoice from its current status."))
+        return redirect("invoice_detail", id=invoice.id)
+
     messages.success(request, gettext("Invoice marked as %(status)s.") % {"status": invoice.get_status_display()})
     next_url = request.POST.get("next", "")
     if next_url.startswith("/"):
         return redirect(next_url)
     return redirect("invoice_detail", id=invoice.id)
+
+
+@login_required
+@permission_required("books.change_invoice", raise_exception=True)
+@require_POST
+def invoice_bulk_update(request):
+    action = request.POST.get("action")
+    ids = request.POST.getlist("ids")
+    next_url = request.POST.get("next", "")
+
+    if action not in _invoice_status_transitions() or not ids:
+        messages.error(request, gettext("Select at least one invoice and an action."))
+    else:
+        updated = 0
+        for invoice in Invoice.objects.filter(owner=request.user, id__in=ids):
+            if _advance_invoice_status(invoice, action):
+                updated += 1
+        skipped = len(ids) - updated
+
+        if updated:
+            messages.success(request, gettext("%(count)d invoice(s) updated.") % {"count": updated})
+        if skipped:
+            messages.warning(
+                request,
+                gettext("%(count)d invoice(s) skipped (incompatible status).") % {"count": skipped},
+            )
+
+    if next_url.startswith("/"):
+        return redirect(next_url)
+    return redirect("invoice_list")
 
 
 @login_required

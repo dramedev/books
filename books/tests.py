@@ -1215,6 +1215,58 @@ class InvoiceModelTests(TestCase):
         self.assertEqual(self.invoice.grand_total, Decimal("0"))
 
 
+class InvoiceBulkUpdateTests(TestCase):
+
+    def setUp(self):
+        User = get_user_model()
+        self.user = User.objects.create_user(username="owner", password="pass1234")
+        self.other_user = User.objects.create_user(username="other", password="pass1234")
+        self.client.force_login(self.user)
+        grant(self.user, "view_invoice", "change_invoice")
+
+        self.draft = Invoice.objects.create(
+            owner=self.user, customer_name="A", invoice_date=date.today(),
+            currency="USD", status=Invoice.STATUS_DRAFT,
+        )
+        self.sent = Invoice.objects.create(
+            owner=self.user, customer_name="B", invoice_date=date.today(),
+            currency="USD", status=Invoice.STATUS_SENT,
+        )
+        self.others_invoice = Invoice.objects.create(
+            owner=self.other_user, customer_name="C", invoice_date=date.today(),
+            currency="USD", status=Invoice.STATUS_DRAFT,
+        )
+
+    def test_bulk_mark_sent_updates_only_matching_drafts(self):
+        response = self.client.post(reverse("invoice_bulk_update"), {
+            "action": "sent",
+            "ids": [self.draft.id, self.sent.id],
+            "next": reverse("invoice_list"),
+        })
+        self.assertRedirects(response, reverse("invoice_list"))
+        self.draft.refresh_from_db()
+        self.sent.refresh_from_db()
+        self.assertEqual(self.draft.status, Invoice.STATUS_SENT)
+        self.assertEqual(self.sent.status, Invoice.STATUS_SENT)
+
+    def test_bulk_update_ignores_other_owners_invoices(self):
+        self.client.post(reverse("invoice_bulk_update"), {
+            "action": "sent",
+            "ids": [self.others_invoice.id],
+            "next": reverse("invoice_list"),
+        })
+        self.others_invoice.refresh_from_db()
+        self.assertEqual(self.others_invoice.status, Invoice.STATUS_DRAFT)
+
+    def test_bulk_update_requires_action_and_ids(self):
+        response = self.client.post(reverse("invoice_bulk_update"), {
+            "next": reverse("invoice_list"),
+        })
+        self.draft.refresh_from_db()
+        self.assertEqual(self.draft.status, Invoice.STATUS_DRAFT)
+        self.assertRedirects(response, reverse("invoice_list"))
+
+
 class ProfitLossReportTests(TestCase):
 
     def setUp(self):
