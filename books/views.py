@@ -437,19 +437,24 @@ def book_delete(request, id):
 @permission_required("books.view_book", raise_exception=True)
 def stock_list(request):
     books = Book.objects.filter(owner=request.user).select_related("category").order_by("stock_on_hand", "title")
+    low_only = request.GET.get("low") == "1"
 
-    if request.GET.get("low") == "1":
+    if low_only:
         books = books.filter(stock_on_hand__lte=F("reorder_threshold"))
 
     books = _annotate_stock_value(books)
     total_stock_value = books.aggregate(total=Sum("stock_value"))["total"] or 0
 
+    paginator = Paginator(books, 25)
+    page_obj = paginator.get_page(request.GET.get("page"))
+
     return render(
         request,
         "books/stock_list.html",
         {
-            "books": books,
-            "low_only": request.GET.get("low") == "1",
+            "books": page_obj.object_list,
+            "page_obj": page_obj,
+            "low_only": low_only,
             "total_stock_value": total_stock_value,
         },
     )
@@ -519,7 +524,9 @@ def stock_adjustment_create(request, book_id):
 @permission_required("books.view_category", raise_exception=True)
 def category_list(request):
     categories = Category.objects.filter(owner=request.user).annotate(book_count=Count("book")).order_by("name")
-    return render(request, "books/category_list.html", {"categories": categories})
+    paginator = Paginator(categories, 25)
+    page_obj = paginator.get_page(request.GET.get("page"))
+    return render(request, "books/category_list.html", {"categories": page_obj.object_list, "page_obj": page_obj})
 
 
 @login_required
@@ -603,7 +610,9 @@ def category_delete(request, id):
 @permission_required("books.view_author", raise_exception=True)
 def author_list(request):
     authors = Author.objects.filter(owner=request.user).annotate(book_count=Count("books")).order_by("name")
-    return render(request, "books/author_list.html", {"authors": authors})
+    paginator = Paginator(authors, 25)
+    page_obj = paginator.get_page(request.GET.get("page"))
+    return render(request, "books/author_list.html", {"authors": page_obj.object_list, "page_obj": page_obj})
 
 
 @login_required
@@ -687,7 +696,9 @@ def author_delete(request, id):
 @permission_required("books.view_supplier", raise_exception=True)
 def supplier_list(request):
     suppliers = Supplier.objects.filter(owner=request.user).annotate(reorder_count=Count("reorders")).order_by("name")
-    return render(request, "books/supplier_list.html", {"suppliers": suppliers})
+    paginator = Paginator(suppliers, 25)
+    page_obj = paginator.get_page(request.GET.get("page"))
+    return render(request, "books/supplier_list.html", {"suppliers": page_obj.object_list, "page_obj": page_obj})
 
 
 @login_required
@@ -2933,7 +2944,9 @@ def customer_list(request):
     q = request.GET.get("q", "").strip()
     if q:
         customers = customers.filter(name__icontains=q)
-    return render(request, "books/customer_list.html", {"customers": customers, "q": q})
+    paginator = Paginator(customers, 25)
+    page_obj = paginator.get_page(request.GET.get("page"))
+    return render(request, "books/customer_list.html", {"customers": page_obj.object_list, "page_obj": page_obj, "q": q})
 
 
 @login_required

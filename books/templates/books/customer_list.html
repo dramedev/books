@@ -62,4 +62,10 @@
 </table>
 </div>
 
+{% if q %}
+{% include "books/_pagination.html" with extra_qs="q="|add:q %}
+{% else %}
+{% include "books/_pagination.html" %}
+{% endif %}
+
 {% endblock %}

@@ -103,4 +103,11 @@
 </div>
 
 
+{% if low_only %}
+{% include "books/_pagination.html" with extra_qs="low=1" %}
+{% else %}
+{% include "books/_pagination.html" %}
+{% endif %}
+
+
 {% endblock %}
