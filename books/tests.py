@@ -14,7 +14,7 @@ from django.utils import timezone
 from . import ai_chat
 from .models import (
     AccessCode, Author, Book, Category, Customer, Invoice, InvoiceItem, PrintRun,
-    Profile, Sale, StockAdjustment,
+    Profile, Reorder, Sale, StockAdjustment, Supplier,
 )
 from .views import _invoice_aging_data, _pl_data
 
@@ -1329,6 +1329,67 @@ class ProfileUpdateTests(TestCase):
         })
         response = self.client.get(reverse("dashboard"))
         self.assertEqual(response.status_code, 200)
+
+
+class ReorderListFilterTests(TestCase):
+
+    def setUp(self):
+        User = get_user_model()
+        self.user = User.objects.create_user(username="owner", password="pass1234")
+        self.client.force_login(self.user)
+        grant(self.user, "view_reorder")
+
+        cat = Category.objects.create(owner=self.user, name="Fiction")
+        self.book = Book.objects.create(
+            owner=self.user, title="Test Book", publisher="Acme",
+            published_date=date(2024, 1, 1), category=cat,
+            stock_on_hand=10, reorder_threshold=5, distribution_expense=Decimal("2.00"),
+        )
+        self.supplier_a = Supplier.objects.create(owner=self.user, name="Supplier A")
+        self.supplier_b = Supplier.objects.create(owner=self.user, name="Supplier B")
+
+        self.reorder_a = Reorder.objects.create(
+            owner=self.user, book=self.book, supplier=self.supplier_a,
+            quantity=10, unit_cost=Decimal("1.00"), status=Reorder.STATUS_PENDING,
+        )
+        self.reorder_b = Reorder.objects.create(
+            owner=self.user, book=self.book, supplier=self.supplier_b,
+            quantity=20, unit_cost=Decimal("1.00"), status=Reorder.STATUS_ORDERED,
+        )
+        Reorder.objects.filter(id=self.reorder_a.id).update(
+            created_at=timezone.now() - timedelta(days=10)
+        )
+        Reorder.objects.filter(id=self.reorder_b.id).update(
+            created_at=timezone.now() - timedelta(days=1)
+        )
+
+    def test_filter_by_supplier(self):
+        response = self.client.get(reverse("reorder_list"), {"supplier": self.supplier_a.id})
+        reorders = list(response.context["reorders"])
+        self.assertEqual(reorders, [self.reorder_a])
+
+    def test_filter_by_status(self):
+        response = self.client.get(reverse("reorder_list"), {"status": Reorder.STATUS_ORDERED})
+        reorders = list(response.context["reorders"])
+        self.assertEqual(reorders, [self.reorder_b])
+
+    def test_filter_by_date_range(self):
+        start = (timezone.now() - timedelta(days=2)).date().isoformat()
+        response = self.client.get(reverse("reorder_list"), {"start_date": start})
+        reorders = list(response.context["reorders"])
+        self.assertEqual(reorders, [self.reorder_b])
+
+    def test_combined_filters(self):
+        response = self.client.get(reverse("reorder_list"), {
+            "supplier": self.supplier_a.id,
+            "status": Reorder.STATUS_PENDING,
+        })
+        reorders = list(response.context["reorders"])
+        self.assertEqual(reorders, [self.reorder_a])
+
+    def test_no_filters_returns_all(self):
+        response = self.client.get(reverse("reorder_list"))
+        self.assertEqual(len(response.context["reorders"]), 2)
 
 
 class PrintRunCompleteTests(TestCase):

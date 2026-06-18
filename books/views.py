@@ -1703,14 +1703,36 @@ def reorder_suggestions(request):
     )
 
 
+def _reorder_filters(request):
+    reorders = Reorder.objects.filter(owner=request.user).select_related("book", "book__category", "supplier")
+
+    status = request.GET.get("status", "").strip()
+    start_date = request.GET.get("start_date", "").strip()
+    end_date = request.GET.get("end_date", "").strip()
+    supplier_id = request.GET.get("supplier", "").strip()
+
+    if status in dict(Reorder.STATUS_CHOICES):
+        reorders = reorders.filter(status=status)
+    if start_date:
+        reorders = reorders.filter(created_at__date__gte=start_date)
+    if end_date:
+        reorders = reorders.filter(created_at__date__lte=end_date)
+    if supplier_id.isdigit():
+        reorders = reorders.filter(supplier_id=supplier_id)
+
+    return reorders
+
+
 @login_required
 @permission_required("books.view_reorder", raise_exception=True)
 def reorder_list(request):
-    reorders = Reorder.objects.filter(owner=request.user).select_related("book", "book__category", "supplier")
+    reorders = _reorder_filters(request)
 
-    status = request.GET.get("status")
-    if status in dict(Reorder.STATUS_CHOICES):
-        reorders = reorders.filter(status=status)
+    query_params = request.GET.copy()
+    query_params.pop("page", None)
+    query_string = query_params.urlencode()
+
+    suppliers = Supplier.objects.filter(owner=request.user).order_by("name")
 
     paginator = Paginator(reorders, 10)
     page_obj = paginator.get_page(request.GET.get("page"))
@@ -1722,7 +1744,10 @@ def reorder_list(request):
             "reorders": page_obj.object_list,
             "page_obj": page_obj,
             "status_choices": Reorder.STATUS_CHOICES,
-            "selected_status": status,
+            "selected_status": request.GET.get("status", "").strip(),
+            "suppliers": suppliers,
+            "filters": request.GET,
+            "query_string": query_string,
         },
     )
 
