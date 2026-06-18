@@ -14,6 +14,12 @@
 </div>
 
 <div class="d-flex gap-2">
+{% if perms.books.add_stockadjustment %}
+<a class="btn btn-outline-light" href="{% url 'stock_adjustment_create' book.id %}">
+{% translate "Adjust Stock" %}
+</a>
+{% endif %}
+
 {% if perms.books.change_book %}
 <a class="btn btn-warning" href="{% url 'book_update' book.id %}">
 {% translate "Edit" %}
@@ -94,31 +100,43 @@
 
 
 <div class="page-panel">
-<h2 class="mb-3">{% translate "Recent Sales" %}</h2>
+<h2 class="mb-3">{% translate "Stock History" %}</h2>
 
 <div class="table-responsive">
-<table class="table table-striped align-middle">
+<table class="table table-striped align-middle mb-0">
 <tr>
 <th>{% translate "Date" %}</th>
-<th>{% translate "Quantity" %}</th>
-<th>{% translate "Unit Price" %}</th>
-<th>{% translate "Revenue" %}</th>
-<th>{% translate "Channel" %}</th>
+<th>{% translate "Type" %}</th>
+<th>{% translate "Change" %}</th>
+<th>{% translate "Note" %}</th>
 </tr>
 
-{% for sale in sales %}
+{% for event in history %}
 <tr>
-<td>{{ sale.sale_date }}</td>
-<td>{{ sale.quantity }}</td>
-<td>{{ sale.unit_price }}</td>
-<td>{{ sale.revenue }}</td>
-<td>{{ sale.channel|default:"-" }}</td>
+<td>{{ event.date }}</td>
+<td>
+{% if event.type == "sale" %}
+<span class="badge bg-danger">{% translate "Sale" %}</span>
+{% elif event.type == "return" %}
+<span class="badge bg-success">{% translate "Return" %}</span>
+{% else %}
+<span class="badge bg-info text-dark">{% translate "Adjustment" %}</span>
+{% endif %}
+</td>
+<td>
+{% if event.delta > 0 %}
+<span class="text-success fw-semibold">+{{ event.delta }}</span>
+{% else %}
+<span class="text-danger fw-semibold">{{ event.delta }}</span>
+{% endif %}
+</td>
+<td class="muted-text">{{ event.note }}</td>
 </tr>
 
 {% empty %}
 <tr>
-<td colspan="5" class="text-center muted-text py-4">
-{% translate "No sales recorded for this book yet." %}
+<td colspan="4" class="text-center muted-text py-4">
+{% translate "No stock history for this book yet." %}
 </td>
 </tr>
 {% endfor %}

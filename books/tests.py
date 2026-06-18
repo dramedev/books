@@ -173,7 +173,7 @@ class BookDetailViewTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.context["total_quantity_sold"], 5)
         self.assertEqual(response.context["total_revenue"], Decimal("35.00"))
-        self.assertEqual(len(response.context["sales"]), 2)
+        self.assertEqual(len(response.context["history"]), 2)
 
     def test_detail_page_with_no_sales(self):
         response = self.client.get(reverse("book_detail", args=[self.book.id]))

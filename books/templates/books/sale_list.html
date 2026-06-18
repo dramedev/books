@@ -14,15 +14,15 @@
 </div>
 
 <div class="d-flex gap-2">
-<a class="btn btn-outline-light" href="{% url 'export_sales_csv' %}">
+<a class="btn btn-outline-light" href="{% url 'export_sales_csv' %}?{{ query_string }}">
 {% translate "CSV" %}
 </a>
 
-<a class="btn btn-outline-light" href="{% url 'export_sales_excel' %}">
+<a class="btn btn-outline-light" href="{% url 'export_sales_excel' %}?{{ query_string }}">
 {% translate "Excel" %}
 </a>
 
-<a class="btn btn-outline-light" href="{% url 'export_sales_pdf' %}">
+<a class="btn btn-outline-light" href="{% url 'export_sales_pdf' %}?{{ query_string }}">
 {% translate "PDF" %}
 </a>
 
@@ -39,6 +39,48 @@
 {% endif %}
 </div>
 </div>
+
+
+<form class="filter-panel mb-3" method="get">
+<div class="row g-3 align-items-end">
+
+<div class="col-md-2">
+<label class="form-label">{% translate "From" %}</label>
+<input type="date" name="start_date" class="form-control" value="{{ filters.start_date }}">
+</div>
+
+<div class="col-md-2">
+<label class="form-label">{% translate "To" %}</label>
+<input type="date" name="end_date" class="form-control" value="{{ filters.end_date }}">
+</div>
+
+<div class="col-md-3">
+<label class="form-label">{% translate "Book" %}</label>
+<select name="book" class="form-select">
+<option value="">{% translate "All books" %}</option>
+{% for book in books %}
+<option value="{{ book.id }}" {% if filters.book == book.id|stringformat:"s" %}selected{% endif %}>{{ book.title }}</option>
+{% endfor %}
+</select>
+</div>
+
+<div class="col-md-2">
+<label class="form-label">{% translate "Channel" %}</label>
+<select name="channel" class="form-select">
+<option value="">{% translate "All channels" %}</option>
+{% for ch in channels %}
+<option value="{{ ch }}" {% if filters.channel == ch %}selected{% endif %}>{{ ch }}</option>
+{% endfor %}
+</select>
+</div>
+
+<div class="col-md-auto d-flex gap-2 align-items-end">
+<button class="btn btn-success" type="submit">{% translate "Apply" %}</button>
+<a class="btn btn-outline-light" href="{% url 'sale_list' %}">{% translate "Reset" %}</a>
+</div>
+
+</div>
+</form>
 
 
 <div class="table-responsive">
@@ -100,7 +142,7 @@
 </div>
 
 
-{% include "books/_pagination.html" %}
+{% include "books/_pagination.html" with extra_qs=query_string %}
 
 
 {% endblock %}

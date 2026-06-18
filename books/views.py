@@ -369,17 +369,45 @@ def book_detail(request, id):
         owner=request.user,
     )
 
-    sales = book.sales.all()
-    totals = sales.aggregate(
+    sales_qs = book.sales.filter(owner=request.user)
+    totals = sales_qs.aggregate(
         total_quantity=Sum("quantity"),
         total_revenue=Sum(REVENUE_EXPRESSION),
     )
 
+    history = []
+
+    for sale in sales_qs:
+        history.append({
+            "date": sale.sale_date,
+            "type": "sale",
+            "delta": -sale.quantity,
+            "note": f"{sale.quantity} sold" + (f" via {sale.channel}" if sale.channel else ""),
+        })
+
+    for ret in Return.objects.filter(owner=request.user, sale__book=book).select_related("sale"):
+        history.append({
+            "date": ret.return_date,
+            "type": "return",
+            "delta": ret.quantity,
+            "note": ret.reason or "-",
+        })
+
+    for adj in book.stock_adjustments.filter(owner=request.user):
+        history.append({
+            "date": adj.created_at.date(),
+            "type": "adjustment",
+            "delta": adj.change,
+            "note": (f"{adj.get_reason_display()}: {adj.note}" if adj.note else adj.get_reason_display()),
+        })
+
+    history.sort(key=lambda x: x["date"], reverse=True)
+
     context = {
         "book": book,
-        "sales": sales[:10],
         "total_quantity_sold": totals["total_quantity"] or 0,
         "total_revenue": totals["total_revenue"] or 0,
+        "history": history[:50],
     }
 
     return render(request, "books/detail.html", context)
@@ -1257,10 +1285,42 @@ def _notify_stock_level(request, book):
         )
 
 
+def _sale_filters(request):
+    sales = Sale.objects.filter(owner=request.user).select_related("book", "book__category")
+    start_date = request.GET.get("start_date", "").strip()
+    end_date = request.GET.get("end_date", "").strip()
+    book_id = request.GET.get("book", "")
+    channel = request.GET.get("channel", "").strip()
+
+    if start_date:
+        sales = sales.filter(sale_date__gte=start_date)
+    if end_date:
+        sales = sales.filter(sale_date__lte=end_date)
+    if book_id and book_id.isdigit():
+        sales = sales.filter(book_id=book_id)
+    if channel:
+        sales = sales.filter(channel=channel)
+
+    return sales.order_by("-sale_date")
+
+
 @login_required
 @permission_required("books.view_sale", raise_exception=True)
 def sale_list(request):
-    sales = Sale.objects.filter(owner=request.user).select_related("book", "book__category").order_by("-sale_date")
+    sales = _sale_filters(request)
+
+    query_params = request.GET.copy()
+    query_params.pop("page", None)
+    query_string = query_params.urlencode()
+
+    books_qs = Book.objects.filter(owner=request.user).order_by("title")
+    channels = (
+        Sale.objects.filter(owner=request.user)
+        .exclude(channel="")
+        .values_list("channel", flat=True)
+        .distinct()
+        .order_by("channel")
+    )
 
     paginator = Paginator(sales, 10)
     page_obj = paginator.get_page(request.GET.get("page"))
@@ -1271,6 +1331,10 @@ def sale_list(request):
         {
             "sales": page_obj.object_list,
             "page_obj": page_obj,
+            "books": books_qs,
+            "channels": channels,
+            "filters": request.GET,
+            "query_string": query_string,
         },
     )
 
@@ -1874,9 +1938,7 @@ def export_sales_csv(request):
     writer = csv.writer(response)
     writer.writerow(_sale_export_headers())
 
-    sales = Sale.objects.filter(owner=request.user).select_related("book", "book__category")
-
-    for row in _sale_export_rows(sales):
+    for row in _sale_export_rows(_sale_filters(request)):
         writer.writerow(row)
 
     return response
@@ -1892,9 +1954,7 @@ def export_sales_excel(request):
     worksheet.title = "Sales"
     worksheet.append(_sale_export_headers())
 
-    sales = Sale.objects.filter(owner=request.user).select_related("book", "book__category")
-
-    for row in _sale_export_rows(sales):
+    for row in _sale_export_rows(_sale_filters(request)):
         worksheet.append(row)
 
     for column in worksheet.columns:
@@ -1947,11 +2007,9 @@ def export_sales_pdf(request):
         Spacer(1, 12),
     ]
 
-    sales = Sale.objects.filter(owner=request.user).select_related("book", "book__category")
-
     rows = [[_pdf_text(value) for value in _sale_export_headers()]]
 
-    for row in _sale_export_rows(sales):
+    for row in _sale_export_rows(_sale_filters(request)):
         rows.append([_pdf_text(value) for value in row])
 
     table = Table(
