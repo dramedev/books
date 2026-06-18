@@ -45,6 +45,19 @@
 <td class="d-flex gap-2 flex-wrap">
 <a class="btn btn-outline-light btn-sm" href="{% url 'invoice_detail' invoice.id %}">{% translate "View" %}</a>
 <a class="btn btn-outline-light btn-sm" href="{% url 'invoice_pdf' invoice.id %}">{% translate "PDF" %}</a>
+{% if perms.books.change_invoice %}
+{% if invoice.status == "draft" %}
+<form method="post" action="{% url 'invoice_update_status' invoice.id 'sent' %}" class="d-inline">
+{% csrf_token %}<input type="hidden" name="next" value="{{ request.get_full_path }}">
+<button type="submit" class="btn btn-info btn-sm">{% translate "Mark Sent" %}</button>
+</form>
+{% elif invoice.status == "sent" %}
+<form method="post" action="{% url 'invoice_update_status' invoice.id 'paid' %}" class="d-inline">
+{% csrf_token %}<input type="hidden" name="next" value="{{ request.get_full_path }}">
+<button type="submit" class="btn btn-success btn-sm">{% translate "Mark Paid" %}</button>
+</form>
+{% endif %}
+{% endif %}
 {% if perms.books.delete_invoice %}
 <a class="btn btn-danger btn-sm" href="{% url 'invoice_delete' invoice.id %}">{% translate "Delete" %}</a>
 {% endif %}

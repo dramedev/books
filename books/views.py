@@ -2220,6 +2220,9 @@ def invoice_update_status(request, id, action):
         )
 
     messages.success(request, gettext("Invoice marked as %(status)s.") % {"status": invoice.get_status_display()})
+    next_url = request.POST.get("next", "")
+    if next_url.startswith("/"):
+        return redirect(next_url)
     return redirect("invoice_detail", id=invoice.id)
 
 
