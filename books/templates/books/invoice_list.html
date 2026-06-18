@@ -13,11 +13,14 @@
 {% endif %}
 </div>
 
-<div class="mb-3 d-flex gap-2 flex-wrap">
+<div class="mb-3 d-flex gap-2 flex-wrap align-items-center">
 <a class="btn btn-sm {% if not selected_status %}btn-primary{% else %}btn-outline-light{% endif %}" href="{% url 'invoice_list' %}">{% translate "All" %}</a>
 {% for value, label in status_choices %}
 <a class="btn btn-sm {% if selected_status == value %}btn-primary{% else %}btn-outline-light{% endif %}" href="?status={{ value }}">{{ label }}</a>
 {% endfor %}
+<a class="btn btn-sm {% if selected_status == 'overdue' %}btn-danger{% else %}btn-outline-danger{% endif %}" href="?status=overdue">
+{% translate "Overdue" %}{% if overdue_count %} <span class="badge bg-light text-danger ms-1">{{ overdue_count }}</span>{% endif %}
+</a>
 </div>
 
 <div class="table-responsive">
@@ -34,11 +37,17 @@
 </tr>
 
 {% for invoice in invoices %}
-<tr>
+<tr {% if invoice.is_overdue %}class="table-danger"{% endif %}>
 <td><a href="{% url 'invoice_detail' invoice.id %}">{{ invoice.invoice_number }}</a></td>
 <td>{{ invoice.customer_name }}</td>
 <td>{{ invoice.invoice_date }}</td>
-<td>{{ invoice.due_date|default:"-" }}</td>
+<td>
+{% if invoice.is_overdue %}
+<span class="text-danger fw-semibold">{{ invoice.due_date }} <i class="bi bi-exclamation-triangle-fill"></i></span>
+{% else %}
+{{ invoice.due_date|default:"-" }}
+{% endif %}
+</td>
 <td>{{ invoice.currency }}</td>
 <td>{{ invoice.grand_total }}</td>
 <td><span class="badge {{ invoice.status_badge_class }}">{{ invoice.get_status_display }}</span></td>

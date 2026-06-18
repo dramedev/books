@@ -1080,6 +1080,13 @@ def dashboard(request):
         status__in=[Reorder.STATUS_PENDING, Reorder.STATUS_ORDERED],
     ).count()
 
+    today = timezone.now().date()
+    overdue_invoices_count = Invoice.objects.filter(
+        owner=request.user,
+        due_date__lt=today,
+        due_date__isnull=False,
+    ).exclude(status=Invoice.STATUS_PAID).count()
+
     low_stock_list = list(low_stock_books[:5])
     velocity_cutoff = timezone.now().date() - timedelta(days=REORDER_VELOCITY_WINDOW_DAYS)
     velocity_by_book = {
@@ -1124,6 +1131,7 @@ def dashboard(request):
         "top_books": top_books,
         "recent_sales": recent_sales,
         "pending_reorders_count": pending_reorders_count,
+        "overdue_invoices_count": overdue_invoices_count,
     }
 
     return render(request, "books/dashboard.html", context)
@@ -2112,8 +2120,18 @@ def _next_invoice_number(owner):
 def invoice_list(request):
     invoices = Invoice.objects.filter(owner=request.user).prefetch_related("items")
     status = request.GET.get("status")
-    if status in dict(Invoice.STATUS_CHOICES):
+    today = timezone.now().date()
+
+    if status == "overdue":
+        invoices = invoices.filter(due_date__lt=today, due_date__isnull=False).exclude(status=Invoice.STATUS_PAID)
+    elif status in dict(Invoice.STATUS_CHOICES):
         invoices = invoices.filter(status=status)
+
+    overdue_count = Invoice.objects.filter(
+        owner=request.user,
+        due_date__lt=today,
+        due_date__isnull=False,
+    ).exclude(status=Invoice.STATUS_PAID).count()
 
     paginator = Paginator(invoices, 10)
     page_obj = paginator.get_page(request.GET.get("page"))
@@ -2123,6 +2141,7 @@ def invoice_list(request):
         "page_obj": page_obj,
         "status_choices": Invoice.STATUS_CHOICES,
         "selected_status": status,
+        "overdue_count": overdue_count,
     })
 
 

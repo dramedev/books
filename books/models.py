@@ -477,6 +477,14 @@ class Invoice(models.Model):
 
 
     @property
+    def is_overdue(self):
+        return (
+            self.due_date is not None
+            and self.status != self.STATUS_PAID
+            and self.due_date < timezone.now().date()
+        )
+
+    @property
     def status_badge_class(self):
         return {
             self.STATUS_DRAFT: "bg-secondary",
