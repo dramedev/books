@@ -94,4 +94,5 @@ urlpatterns = [
     path("customers/<int:id>/delete/", views.customer_delete, name="customer_delete"),
     path("reports/profit-loss/", views.profit_loss_report, name="profit_loss_report"),
     path("reports/profit-loss/pdf/", views.export_profit_loss_pdf, name="export_profit_loss_pdf"),
+    path("reports/invoice-aging/", views.invoice_aging_report, name="invoice_aging_report"),
 ]

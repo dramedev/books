@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+<div>
+<h1 class="mb-1">{% translate "Invoice Aging Report" %}</h1>
+<p class="muted-text mb-0">{% translate "Outstanding invoices grouped by how overdue they are." %}</p>
+</div>
+</div>
+
+<div class="row g-3 mb-4">
+{% for key, bucket in buckets.items %}
+<div class="col-6 col-md-3">
+<div class="card p-3 text-center">
+<div style="font-size:1.4rem;font-weight:700;{% if key != 'current' %}color:#dc3545;{% else %}color:var(--accent);{% endif %}">
+{{ bucket.total|floatformat:2 }}
+</div>
+<div class="muted-text small">{{ bucket.label }}</div>
+<div class="muted-text small">{{ bucket.invoices|length }} {% translate "invoice(s)" %}</div>
+</div>
+</div>
+{% endfor %}
+</div>
+
+{% if grand_total %}
+
+{% for key, bucket in buckets.items %}
+{% if bucket.invoices %}
+<h2 class="h5 mt-4 mb-2 {% if key != 'current' %}text-danger{% endif %}">{{ bucket.label }}</h2>
+<div class="table-responsive mb-3">
+<table class="table table-striped align-middle small">
+<thead>
+<tr>
+<th>{% translate "Number" %}</th>
+<th>{% translate "Customer" %}</th>
+<th>{% translate "Due" %}</th>
+<th class="text-end">{% translate "Days Overdue" %}</th>
+<th>{% translate "Status" %}</th>
+<th class="text-end">{% translate "Amount" %}</th>
+</tr>
+</thead>
+<tbody>
+{% for entry in bucket.invoices %}
+<tr>
+<td><a href="{% url 'invoice_detail' entry.invoice.id %}">{{ entry.invoice.invoice_number }}</a></td>
+<td>{{ entry.invoice.customer_name }}</td>
+<td>{{ entry.invoice.due_date|default:"-" }}</td>
+<td class="text-end">{% if entry.days_overdue %}{{ entry.days_overdue }}{% else %}-{% endif %}</td>
+<td><span class="badge {{ entry.invoice.status_badge_class }}">{{ entry.invoice.get_status_display }}</span></td>
+<td class="text-end">{{ entry.total|floatformat:2 }}</td>
+</tr>
+{% endfor %}
+</tbody>
+<tfoot>
+<tr style="border-top:2px solid var(--border);">
+<td colspan="5"><strong>{% translate "Subtotal" %}</strong></td>
+<td class="text-end"><strong>{{ bucket.total|floatformat:2 }}</strong></td>
+</tr>
+</tfoot>
+</table>
+</div>
+{% endif %}
+{% endfor %}
+
+{% else %}
+
+<div class="card p-5 text-center">
+<p class="muted-text mb-0">{% translate "No outstanding invoices. All caught up." %}</p>
+</div>
+
+{% endif %}
+
+{% endblock %}

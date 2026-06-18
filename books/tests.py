@@ -16,7 +16,7 @@ from .models import (
     AccessCode, Author, Book, Category, Customer, Invoice, InvoiceItem, PrintRun,
     Profile, Sale, StockAdjustment,
 )
-from .views import _pl_data
+from .views import _invoice_aging_data, _pl_data
 
 
 def grant(user, *codenames):
@@ -1393,6 +1393,61 @@ class PrintRunCompleteTests(TestCase):
 
         self.assertRedirects(response, reverse("print_run_list"))
         self.assertFalse(PrintRun.objects.filter(id=self.run.id).exists())
+
+
+class InvoiceAgingReportTests(TestCase):
+
+    def setUp(self):
+        User = get_user_model()
+        self.user = User.objects.create_user(username="owner", password="pass1234")
+        self.client.force_login(self.user)
+        grant(self.user, "view_invoice")
+        self.today = timezone.now().date()
+
+    def _invoice(self, due_date, status=Invoice.STATUS_SENT, amount="100.00"):
+        invoice = Invoice.objects.create(
+            owner=self.user,
+            customer_name="Client",
+            invoice_date=self.today,
+            due_date=due_date,
+            currency="USD",
+            status=status,
+        )
+        InvoiceItem.objects.create(
+            invoice=invoice, description="Book", quantity=1, unit_price=Decimal(amount),
+        )
+        return invoice
+
+    def test_not_yet_due_invoice_in_current_bucket(self):
+        self._invoice(due_date=self.today + timedelta(days=10))
+        buckets, grand_total = _invoice_aging_data(self.user)
+        self.assertEqual(len(buckets["current"]["invoices"]), 1)
+        self.assertEqual(grand_total, Decimal("100.00"))
+
+    def test_overdue_invoice_buckets_by_days_late(self):
+        self._invoice(due_date=self.today - timedelta(days=10))
+        self._invoice(due_date=self.today - timedelta(days=45))
+        self._invoice(due_date=self.today - timedelta(days=90))
+
+        buckets, grand_total = _invoice_aging_data(self.user)
+        self.assertEqual(len(buckets["0_30"]["invoices"]), 1)
+        self.assertEqual(len(buckets["31_60"]["invoices"]), 1)
+        self.assertEqual(len(buckets["60_plus"]["invoices"]), 1)
+        self.assertEqual(grand_total, Decimal("300.00"))
+
+    def test_paid_invoices_excluded(self):
+        self._invoice(due_date=self.today - timedelta(days=10), status=Invoice.STATUS_PAID)
+        buckets, grand_total = _invoice_aging_data(self.user)
+        self.assertEqual(grand_total, Decimal("0"))
+
+    def test_invoice_without_due_date_is_current(self):
+        self._invoice(due_date=None)
+        buckets, grand_total = _invoice_aging_data(self.user)
+        self.assertEqual(len(buckets["current"]["invoices"]), 1)
+
+    def test_report_view_accessible(self):
+        response = self.client.get(reverse("invoice_aging_report"))
+        self.assertEqual(response.status_code, 200)
 
 
 class ProfitLossReportTests(TestCase):

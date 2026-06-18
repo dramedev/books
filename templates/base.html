@@ -590,6 +590,9 @@ html[dir="rtl"] .chat-panel{
 <a class="sidebar-link {% if url_name == 'invoice_list' or url_name == 'invoice_detail' or url_name == 'invoice_create' %}active{% endif %}" href="{% url 'invoice_list' %}">
 <i class="bi bi-receipt"></i> {% translate "Invoices" %}
 </a>
+<a class="sidebar-link {% if url_name == 'invoice_aging_report' %}active{% endif %}" href="{% url 'invoice_aging_report' %}">
+<i class="bi bi-hourglass-split"></i> {% translate "Invoice Aging" %}
+</a>
 {% endif %}
 {% endif %}
 

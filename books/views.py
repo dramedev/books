@@ -2590,6 +2590,57 @@ def invoice_delete(request, id):
     })
 
 
+INVOICE_AGING_BUCKETS = [
+    ("current", gettext_lazy("Current (not yet due)")),
+    ("0_30", gettext_lazy("1–30 days overdue")),
+    ("31_60", gettext_lazy("31–60 days overdue")),
+    ("60_plus", gettext_lazy("60+ days overdue")),
+]
+
+
+def _invoice_aging_data(user):
+    today = timezone.now().date()
+    invoices = (
+        Invoice.objects.filter(owner=user)
+        .exclude(status=Invoice.STATUS_PAID)
+        .prefetch_related("items")
+        .order_by("due_date")
+    )
+
+    buckets = {key: {"label": label, "invoices": [], "total": Decimal(0)} for key, label in INVOICE_AGING_BUCKETS}
+
+    for invoice in invoices:
+        total = invoice.grand_total
+
+        if invoice.due_date is None or invoice.due_date >= today:
+            key, days_overdue = "current", 0
+        else:
+            days_overdue = (today - invoice.due_date).days
+            if days_overdue <= 30:
+                key = "0_30"
+            elif days_overdue <= 60:
+                key = "31_60"
+            else:
+                key = "60_plus"
+
+        buckets[key]["invoices"].append({"invoice": invoice, "days_overdue": days_overdue, "total": total})
+        buckets[key]["total"] += total
+
+    grand_total = sum((bucket["total"] for bucket in buckets.values()), Decimal(0))
+    return buckets, grand_total
+
+
+@login_required
+@permission_required("books.view_invoice", raise_exception=True)
+def invoice_aging_report(request):
+    buckets, grand_total = _invoice_aging_data(request.user)
+
+    return render(request, "books/invoice_aging_report.html", {
+        "buckets": buckets,
+        "grand_total": grand_total,
+    })
+
+
 @login_required
 @permission_required("books.view_invoice", raise_exception=True)
 def invoice_pdf(request, id):
