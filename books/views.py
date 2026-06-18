@@ -1346,14 +1346,18 @@ def _adjust_stock(book_id, delta, owner, location=None):
             defaults={"name": "Main Warehouse"},
         )
 
+    book_has_stock_levels = StockLevel.objects.filter(book=book).exists()
+
     level, created = StockLevel.objects.get_or_create(
         owner=owner, book=book, location=location,
         defaults={"quantity": 0},
     )
 
-    # If no StockLevel existed and we're reducing stock, seed from the book total
-    # so the location reflects reality before this deduction.
-    if created and delta < 0:
+    # First-ever StockLevel for this book: seed from stock_on_hand so location
+    # tracking starts from reality instead of silently discarding it. Skip this
+    # when the book already has other locations, since their total is already
+    # reflected in stock_on_hand and seeding again would double-count it.
+    if created and not book_has_stock_levels:
         level.quantity = book.stock_on_hand
 
     level.quantity = max(0, level.quantity + delta)

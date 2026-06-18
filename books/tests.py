@@ -13,10 +13,10 @@ from django.utils import timezone
 
 from . import ai_chat
 from .models import (
-    AccessCode, Author, Book, Category, Customer, Invoice, InvoiceItem, PrintRun,
+    AccessCode, Author, Book, Category, Customer, Invoice, InvoiceItem, Location, PrintRun,
     Profile, Reorder, Sale, StockAdjustment, Supplier,
 )
-from .views import _invoice_aging_data, _pl_data
+from .views import _adjust_stock, _invoice_aging_data, _pl_data
 
 
 def grant(user, *codenames):
@@ -1390,6 +1390,35 @@ class ReorderListFilterTests(TestCase):
     def test_no_filters_returns_all(self):
         response = self.client.get(reverse("reorder_list"))
         self.assertEqual(len(response.context["reorders"]), 2)
+
+
+class AdjustStockTests(TestCase):
+
+    def setUp(self):
+        User = get_user_model()
+        self.user = User.objects.create_user(username="owner", password="pass1234")
+        cat = Category.objects.create(owner=self.user, name="Fiction")
+        self.book = Book.objects.create(
+            owner=self.user, title="Test Book", publisher="Acme",
+            published_date=date(2024, 1, 1), category=cat,
+            stock_on_hand=10, reorder_threshold=5, distribution_expense=Decimal("2.00"),
+        )
+
+    def test_first_positive_adjustment_adds_to_manually_set_stock(self):
+        book = _adjust_stock(self.book.id, 50, self.user)
+        self.assertEqual(book.stock_on_hand, 60)
+
+    def test_first_negative_adjustment_subtracts_from_manually_set_stock(self):
+        book = _adjust_stock(self.book.id, -3, self.user)
+        self.assertEqual(book.stock_on_hand, 7)
+
+    def test_second_location_does_not_double_count_existing_stock(self):
+        other_location = Location.objects.create(owner=self.user, name="Warehouse 2")
+
+        _adjust_stock(self.book.id, 50, self.user)
+        book = _adjust_stock(self.book.id, 5, self.user, location=other_location)
+
+        self.assertEqual(book.stock_on_hand, 65)
 
 
 class PrintRunCompleteTests(TestCase):
