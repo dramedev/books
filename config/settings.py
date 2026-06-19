@@ -21,16 +21,16 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 load_dotenv(BASE_DIR / ".env")
 
 
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
-
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-k^rrsrc4tq2hl&ny!l*5@x!z((#a_rl=7hae#e&p=6a_=xh5xl'
+SECRET_KEY = os.environ.get(
+    "SECRET_KEY",
+    "django-insecure-k^rrsrc4tq2hl&ny!l*5@x!z((#a_rl=7hae#e&p=6a_=xh5xl",
+)
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.environ.get("DEBUG", "True") == "True"
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [host.strip() for host in os.environ.get("ALLOWED_HOSTS", "").split(",") if host.strip()]
 
 
 # Application definition
