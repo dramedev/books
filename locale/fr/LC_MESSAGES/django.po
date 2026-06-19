@@ -1021,3 +1021,549 @@ msgstr "« L'efficacité consiste à mieux faire ce qui est déjà fait. » — 
 msgid "\"The best way to predict the future is to create it.\" — Peter Drucker"
 msgstr "« La meilleure façon de prédire l'avenir est de le créer. » — Peter Drucker"
 
+msgid "Import Books"
+msgstr "Importer des livres"
+
+msgid "Upload a CSV file to create or update books in bulk."
+msgstr "Téléversez un fichier CSV pour créer ou mettre à jour des livres en masse."
+
+msgid "Import results"
+msgstr "Résultats de l'import"
+
+msgid "Updated"
+msgstr "Mis à jour"
+
+msgid "Skipped"
+msgstr "Ignorés"
+
+msgid "Row errors:"
+msgstr "Erreurs de lignes :"
+
+msgid "Upload CSV"
+msgstr "Téléverser le CSV"
+
+msgid "CSV file"
+msgstr "Fichier CSV"
+
+msgid "Maximum file size: 5 MB. Encoding: UTF-8."
+msgstr "Taille maximale : 5 Mo. Encodage : UTF-8."
+
+msgid "Import"
+msgstr "Importer"
+
+msgid "Format guide"
+msgstr "Guide du format"
+
+msgid "The first row must be a header. Supported columns:"
+msgstr "La première ligne doit être un en-tête. Colonnes supportées :"
+
+msgid "Column"
+msgstr "Colonne"
+
+msgid "Required"
+msgstr "Requis"
+
+msgid "Used to match existing books for update"
+msgstr "Utilisé pour identifier les livres existants à mettre à jour"
+
+msgid "Comma-separated names"
+msgstr "Noms séparés par des virgules"
+
+msgid "Created automatically if new"
+msgstr "Créée automatiquement si nouvelle"
+
+msgid "Decimal number"
+msgstr "Nombre décimal"
+
+msgid "Download template"
+msgstr "Télécharger le modèle"
+
+msgid "Please upload a .csv file."
+msgstr "Veuillez téléverser un fichier .csv."
+
+msgid "File must be UTF-8 encoded."
+msgstr "Le fichier doit être encodé en UTF-8."
+
+msgid "Row %(n)s: title is required."
+msgstr "Ligne %(n)s : le titre est requis."
+
+msgid "Reset your password"
+msgstr "Réinitialiser votre mot de passe"
+
+msgid "Enter your email address and we'll send you a link to reset your password."
+msgstr "Saisissez votre adresse e-mail et nous vous enverrons un lien pour réinitialiser votre mot de passe."
+
+msgid "Send reset link"
+msgstr "Envoyer le lien"
+
+msgid "Back to login"
+msgstr "Retour à la connexion"
+
+msgid "Check your email"
+msgstr "Vérifiez vos e-mails"
+
+msgid "If an account exists for that address, we've sent a password reset link. Check your inbox (and spam folder)."
+msgstr "Si un compte est associé à cette adresse, nous avons envoyé un lien de réinitialisation. Vérifiez votre boîte de réception (et le dossier spam)."
+
+msgid "Set a new password"
+msgstr "Définir un nouveau mot de passe"
+
+msgid "Enter your new password below."
+msgstr "Saisissez votre nouveau mot de passe ci-dessous."
+
+msgid "New password"
+msgstr "Nouveau mot de passe"
+
+msgid "Confirm new password"
+msgstr "Confirmer le nouveau mot de passe"
+
+msgid "Set new password"
+msgstr "Définir le mot de passe"
+
+msgid "Link expired"
+msgstr "Lien expiré"
+
+msgid "This password reset link is invalid or has already been used. Please request a new one."
+msgstr "Ce lien de réinitialisation est invalide ou a déjà été utilisé. Veuillez en demander un nouveau."
+
+msgid "Request new link"
+msgstr "Demander un nouveau lien"
+
+msgid "Password changed"
+msgstr "Mot de passe modifié"
+
+msgid "Your password has been set. You can now log in with your new password."
+msgstr "Votre mot de passe a été défini. Vous pouvez maintenant vous connecter avec votre nouveau mot de passe."
+
+msgid "Forgot your password?"
+msgstr "Mot de passe oublié ?"
+
+msgid "Billing"
+msgstr "Facturation"
+
+msgid "Production"
+msgstr "Production"
+
+msgid "Operations"
+msgstr "Opérations"
+
+msgid "Royalties"
+msgstr "Droits d'auteur"
+
+msgid "%(count)s book(s) deleted."
+msgstr "%(count)s livre(s) supprimé(s)."
+
+msgid "No books selected."
+msgstr "Aucun livre sélectionné."
+
+msgid "Invoices"
+msgstr "Factures"
+
+msgid "Create and manage customer invoices."
+msgstr "Créez et gérez les factures clients."
+
+msgid "New Invoice"
+msgstr "Nouvelle facture"
+
+msgid "Number"
+msgstr "Numéro"
+
+msgid "Customer"
+msgstr "Client"
+
+msgid "Due"
+msgstr "Échéance"
+
+msgid "Currency"
+msgstr "Devise"
+
+msgid "Total"
+msgstr "Total"
+
+msgid "No invoices yet."
+msgstr "Aucune facture pour le moment."
+
+msgid "Create Invoice"
+msgstr "Créer la facture"
+
+msgid "Mark as sent"
+msgstr "Marquer comme envoyée"
+
+msgid "Mark as paid"
+msgstr "Marquer comme payée"
+
+msgid "Invoice details"
+msgstr "Détails de la facture"
+
+msgid "Address"
+msgstr "Adresse"
+
+msgid "Line items"
+msgstr "Lignes de facture"
+
+msgid "Qty"
+msgstr "Qté"
+
+msgid "Tax %"
+msgstr "TVA %"
+
+msgid "Subtotal"
+msgstr "Sous-total"
+
+msgid "Tax"
+msgstr "TVA"
+
+msgid "Grand Total"
+msgstr "Total général"
+
+msgid "No items yet. Add one below."
+msgstr "Aucune ligne pour le moment. Ajoutez-en une ci-dessous."
+
+msgid "Add item"
+msgstr "Ajouter une ligne"
+
+msgid "Add"
+msgstr "Ajouter"
+
+msgid "View"
+msgstr "Voir"
+
+msgid "Invoice %(number)s created."
+msgstr "Facture %(number)s créée."
+
+msgid "Item added."
+msgstr "Ligne ajoutée."
+
+msgid "Item removed."
+msgstr "Ligne supprimée."
+
+msgid "Cannot update invoice from its current status."
+msgstr "Impossible de modifier la facture depuis son statut actuel."
+
+msgid "Invoice marked as %(status)s."
+msgstr "Facture marquée comme %(status)s."
+
+msgid "Invoice deleted."
+msgstr "Facture supprimée."
+
+msgid "invoice"
+msgstr "la facture"
+
+msgid "No book (custom item)"
+msgstr "Aucun livre (ligne personnalisée)"
+
+msgid "Tax Rate (%)"
+msgstr "Taux de TVA (%)"
+
+msgid "Tax Amount"
+msgstr "Montant TVA"
+
+msgid "Customer name"
+msgstr "Nom du client"
+
+msgid "Customer email"
+msgstr "E-mail du client"
+
+msgid "Customer address"
+msgstr "Adresse du client"
+
+msgid "Invoice date"
+msgstr "Date de facture"
+
+msgid "Due date"
+msgstr "Date d'échéance"
+
+msgid "Description"
+msgstr "Description"
+
+msgid "Tax rate"
+msgstr "Taux de TVA"
+
+msgid "Print Runs"
+msgstr "Tirages"
+
+msgid "Track production print runs and their costs."
+msgstr "Suivez les tirages de production et leurs coûts."
+
+msgid "Cost / Unit"
+msgstr "Coût / unité"
+
+msgid "No print runs recorded yet."
+msgstr "Aucun tirage enregistré pour le moment."
+
+msgid "Print run recorded."
+msgstr "Tirage enregistré."
+
+msgid "Print run deleted."
+msgstr "Tirage supprimé."
+
+msgid "print run"
+msgstr "le tirage"
+
+msgid "Add Royalty Rate"
+msgstr "Ajouter un taux de droits d'auteur"
+
+msgid "Run date"
+msgstr "Date du tirage"
+
+msgid "Cost per unit"
+msgstr "Coût par unité"
+
+msgid "Royalty Rates"
+msgstr "Taux de droits d'auteur"
+
+msgid "Author royalty rates per book."
+msgstr "Taux de droits d'auteur par livre."
+
+msgid "Royalty Report"
+msgstr "Rapport des droits d'auteur"
+
+msgid "Add Rate"
+msgstr "Ajouter un taux"
+
+msgid "Rate (%)"
+msgstr "Taux (%)"
+
+msgid "Effective From"
+msgstr "En vigueur depuis"
+
+msgid "Effective from"
+msgstr "En vigueur depuis"
+
+msgid "No royalty rates defined yet."
+msgstr "Aucun taux de droits d'auteur défini pour le moment."
+
+msgid "Royalties owed to authors based on sales revenue."
+msgstr "Droits d'auteur dus sur la base du chiffre d'affaires."
+
+msgid "Rates"
+msgstr "Taux"
+
+msgid "Total Revenue"
+msgstr "Chiffre d'affaires total"
+
+msgid "Royalty Owed"
+msgstr "Droits dus"
+
+msgid "No royalty rates defined. Add rates first."
+msgstr "Aucun taux défini. Ajoutez des taux d'abord."
+
+msgid "Royalty rate added."
+msgstr "Taux de droits d'auteur ajouté."
+
+msgid "Royalty rate deleted."
+msgstr "Taux de droits d'auteur supprimé."
+
+msgid "royalty rate"
+msgstr "le taux de droits d'auteur"
+
+msgid "Locations"
+msgstr "Emplacements"
+
+msgid "Manage warehouse and store locations."
+msgstr "Gérez les entrepôts et points de vente."
+
+msgid "Add location"
+msgstr "Ajouter un emplacement"
+
+msgid "Transfer stock"
+msgstr "Transférer le stock"
+
+msgid "Default"
+msgstr "Par défaut"
+
+msgid "Total stock"
+msgstr "Stock total"
+
+msgid "Back to locations"
+msgstr "Retour aux emplacements"
+
+msgid "Stock held at this location."
+msgstr "Stock disponible à cet emplacement."
+
+msgid "No stock recorded at this location."
+msgstr "Aucun stock enregistré à cet emplacement."
+
+msgid "Move copies between locations."
+msgstr "Déplacez des exemplaires entre emplacements."
+
+msgid "Transfer"
+msgstr "Transférer"
+
+msgid "Location created."
+msgstr "Emplacement créé."
+
+msgid "Location updated."
+msgstr "Emplacement mis à jour."
+
+msgid "Location deleted."
+msgstr "Emplacement supprimé."
+
+msgid "Source and destination must differ."
+msgstr "La source et la destination doivent être différentes."
+
+msgid "Not enough stock at source location (available: %(n)s)."
+msgstr "Stock insuffisant à l'emplacement source (disponible : %(n)s)."
+
+msgid "Transferred %(qty)s copies of «%(book)s» from %(from)s to %(to)s."
+msgstr "%(qty)s exemplaire(s) de « %(book)s » transféré(s) de %(from)s vers %(to)s."
+
+msgid "Edit location"
+msgstr "Modifier l'emplacement"
+
+msgid "location"
+msgstr "l'emplacement"
+
+msgid "Default location"
+msgstr "Emplacement par défaut"
+
+msgid "From location"
+msgstr "Emplacement source"
+
+msgid "To location"
+msgstr "Emplacement destination"
+
+msgid "Integrations"
+msgstr "Intégrations"
+
+msgid "Connect RumiPress to Shopify, Amazon, and more."
+msgstr "Connectez RumiPress à Shopify, Amazon et plus encore."
+
+msgid "Add integration"
+msgstr "Ajouter une intégration"
+
+msgid "Platform"
+msgstr "Plateforme"
+
+msgid "Store / Seller ID"
+msgstr "Boutique / ID vendeur"
+
+msgid "Active"
+msgstr "Actif"
+
+msgid "Orders synced"
+msgstr "Commandes synchronisées"
+
+msgid "Last synced"
+msgstr "Dernière synchro"
+
+msgid "Shopify webhook URL:"
+msgstr "URL webhook Shopify :"
+
+msgid "(replace 0 with the integration ID)"
+msgstr "(remplacer 0 par l'ID de l'intégration)"
+
+msgid "No integrations yet."
+msgstr "Aucune intégration pour le moment."
+
+msgid "Edit integration"
+msgstr "Modifier l'intégration"
+
+msgid "Integration saved."
+msgstr "Intégration enregistrée."
+
+msgid "Integration updated."
+msgstr "Intégration mise à jour."
+
+msgid "Integration deleted."
+msgstr "Intégration supprimée."
+
+msgid "integration"
+msgstr "l'intégration"
+
+msgid "Store URL"
+msgstr "URL de la boutique"
+
+msgid "API key"
+msgstr "Clé API"
+
+msgid "API secret"
+msgstr "Secret API"
+
+msgid "Webhook secret"
+msgstr "Secret webhook"
+
+msgid "P&L Report"
+msgstr "Rapport P&L"
+
+msgid "Profit / Loss Report"
+msgstr "Rapport Profit / Perte"
+
+msgid "Revenue minus purchase costs, distribution expenses, and royalties."
+msgstr "Chiffre d'affaires moins coûts d'achat, frais de distribution et redevances."
+
+msgid "Net Revenue"
+msgstr "Chiffre d'affaires net"
+
+msgid "Net Profit"
+msgstr "Bénéfice net"
+
+msgid "Distribution"
+msgstr "Distribution"
+
+msgid "Export PDF"
+msgstr "Exporter PDF"
+
+msgid "No sales found for the selected period. Adjust the date range and try again."
+msgstr "Aucune vente trouvée pour la période sélectionnée. Ajustez les dates et réessayez."
+
+msgid "TOTAL"
+msgstr "TOTAL"
+
+msgid "Customers"
+msgstr "Clients"
+
+msgid "Add Customer"
+msgstr "Ajouter un client"
+
+msgid "Edit Customer"
+msgstr "Modifier le client"
+
+msgid "Saved customer records for quick invoice creation."
+msgstr "Fiches clients enregistrées pour créer des factures rapidement."
+
+msgid "Selecting a customer auto-fills the fields below."
+msgstr "Sélectionner un client remplit automatiquement les champs ci-dessous."
+
+msgid "No customers yet. Add one to speed up invoice creation."
+msgstr "Aucun client pour l'instant. Ajoutez-en un pour accélérer la facturation."
+
+msgid "— Select saved customer (optional) —"
+msgstr "— Sélectionner un client enregistré (optionnel) —"
+
+msgid "Customer created."
+msgstr "Client créé."
+
+msgid "Customer updated."
+msgstr "Client mis à jour."
+
+msgid "Customer deleted."
+msgstr "Client supprimé."
+
+msgid "customer"
+msgstr "le client"
+
+msgid "Back to Customers"
+msgstr "Retour aux clients"
+
+msgid "Mark Sent"
+msgstr "Marquer comme envoyé"
+
+msgid "Mark Paid"
+msgstr "Marquer comme payé"
+
+msgid "All authors"
+msgstr "Tous les auteurs"
+
+msgid "3M"
+msgstr "3 mois"
+
+msgid "6M"
+msgstr "6 mois"
+
+msgid "12M"
+msgstr "12 mois"
+
+msgid "Units"
+msgstr "Unités"
+
