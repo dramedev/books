@@ -16,7 +16,10 @@
 <div class="row g-3 align-items-end">
 <div class="col-md-6">
 <label class="form-label">{% translate "Search books, customers, invoices" %}</label>
+<div class="input-group">
+<span class="input-group-text"><i class="bi bi-search"></i></span>
 <input type="search" name="q" class="form-control" value="{{ query }}" autofocus>
+</div>
 </div>
 <div class="col-md-3 d-flex align-items-end gap-2">
 <button class="btn btn-success" type="submit">{% translate "Search" %}</button>

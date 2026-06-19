@@ -266,6 +266,12 @@ textarea{
     border-color:var(--border) !important;
 }
 
+.input-group-text{
+    background:var(--surface-alt);
+    color:var(--text-muted);
+    border-color:var(--border);
+}
+
 .muted-text{
     color:var(--text-muted);
 }
@@ -705,7 +711,8 @@ html[dir="rtl"] .chat-panel{
 </a>
 
 {% if user.is_authenticated %}
-<form method="get" action="{% url 'global_search' %}" class="topbar-search ms-auto" style="max-width:320px;width:100%;">
+<form method="get" action="{% url 'global_search' %}" class="topbar-search ms-auto input-group input-group-sm" style="max-width:320px;width:100%;">
+<span class="input-group-text"><i class="bi bi-search"></i></span>
 <input type="search" name="q" class="form-control form-control-sm" placeholder="{% translate 'Search books, customers, invoices…' %}" value="{{ request.GET.q }}">
 </form>
 <a class="d-lg-none ms-auto" style="color:var(--text);font-size:1.3rem;" href="{% url 'global_search' %}" aria-label="{% translate 'Search' %}">
