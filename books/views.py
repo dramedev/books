@@ -2549,6 +2549,12 @@ def _active_invoice_filters(request, query_params):
             "url": remove("start_date", "end_date"),
         })
 
+    customer_id = request.GET.get("customer", "")
+    if customer_id.isdigit():
+        customer = Customer.objects.filter(id=customer_id, owner=request.user).first()
+        if customer:
+            filters.append({"label": gettext("Customer: %(name)s") % {"name": customer.name}, "url": remove("customer")})
+
     return filters
 
 
@@ -3573,10 +3579,23 @@ def customer_list(request):
     ).order_by("name")
     q = request.GET.get("q", "").strip()
     if q:
-        customers = customers.filter(name__icontains=q)
+        customers = customers.filter(Q(name__icontains=q) | Q(email__icontains=q) | Q(phone__icontains=q))
+
+    query_params = request.GET.copy()
+    query_params.pop("page", None)
+    query_string = query_params.urlencode()
+
     paginator = Paginator(customers, 25)
     page_obj = paginator.get_page(request.GET.get("page"))
-    return render(request, "books/customer_list.html", {"customers": page_obj.object_list, "page_obj": page_obj, "q": q})
+
+    return render(request, "books/customer_list.html", {
+        "customers": page_obj.object_list,
+        "page_obj": page_obj,
+        "q": q,
+        "query_string": query_string,
+        "result_count_text": gettext("%(count)s customer(s) found") % {"count": paginator.count},
+        "has_any_customers": Customer.objects.filter(owner=request.user).exists(),
+    })
 
 
 @login_required

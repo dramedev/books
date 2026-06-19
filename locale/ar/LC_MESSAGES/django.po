@@ -1549,6 +1549,18 @@ msgstr "اختيار عميل يملأ الحقول أدناه تلقائياً.
 msgid "No customers yet. Add one to speed up invoice creation."
 msgstr "لا يوجد عملاء بعد. أضف عميلاً لتسريع إنشاء الفواتير."
 
+msgid "No customers match the current search."
+msgstr "لا يوجد عملاء يطابقون البحث الحالي."
+
+msgid "Name, email, phone"
+msgstr "الاسم، البريد الإلكتروني، الهاتف"
+
+msgid "%(count)s customer(s) found"
+msgstr "تم العثور على %(count)s عميل"
+
+msgid "Customer: %(name)s"
+msgstr "العميل: %(name)s"
+
 msgid "— Select saved customer (optional) —"
 msgstr "— اختر عميلاً محفوظاً (اختياري) —"
 

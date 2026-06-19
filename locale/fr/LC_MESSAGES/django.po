@@ -1549,6 +1549,18 @@ msgstr "Sélectionner un client remplit automatiquement les champs ci-dessous."
 msgid "No customers yet. Add one to speed up invoice creation."
 msgstr "Aucun client pour l'instant. Ajoutez-en un pour accélérer la facturation."
 
+msgid "No customers match the current search."
+msgstr "Aucun client ne correspond à la recherche actuelle."
+
+msgid "Name, email, phone"
+msgstr "Nom, e-mail, téléphone"
+
+msgid "%(count)s customer(s) found"
+msgstr "%(count)s client(s) trouvé(s)"
+
+msgid "Customer: %(name)s"
+msgstr "Client : %(name)s"
+
 msgid "— Select saved customer (optional) —"
 msgstr "— Sélectionner un client enregistré (optionnel) —"
 

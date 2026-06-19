@@ -16,8 +16,11 @@
 <form class="filter-panel mb-3" method="get">
 <div class="row g-3 align-items-end">
 <div class="col-md-4">
-<label class="form-label">{% translate "Search" %}</label>
-<input type="text" name="q" class="form-control" value="{{ q }}" placeholder="{% translate 'Name' %}">
+<label class="form-label" for="q">{% translate "Search" %}</label>
+<div class="input-group">
+<span class="input-group-text"><i class="bi bi-search"></i></span>
+<input id="q" type="text" name="q" class="form-control" value="{{ q }}" placeholder="{% translate 'Name, email, phone' %}">
+</div>
 </div>
 <div class="col-md-3 d-flex align-items-end gap-2">
 <button class="btn btn-success" type="submit">{% translate "Apply" %}</button>
@@ -25,6 +28,10 @@
 </div>
 </div>
 </form>
+
+<div class="mb-3">
+<span class="muted-text small">{{ result_count_text }}</span>
+</div>
 
 <div class="table-responsive">
 <table class="table table-striped align-middle">
@@ -43,30 +50,44 @@
 <td><strong><a href="{% url 'customer_detail' customer.id %}">{{ customer.name }}</a></strong></td>
 <td>{{ customer.email|default:"—" }}</td>
 <td>{{ customer.phone|default:"—" }}</td>
-<td>{{ customer.invoice_count }}</td>
+<td>
+{% if customer.invoice_count %}
+<a href="{% url 'invoice_list' %}?customer={{ customer.id }}">{{ customer.invoice_count }}</a>
+{% else %}
+{{ customer.invoice_count }}
+{% endif %}
+</td>
 <td class="d-flex gap-2">
-<a class="btn btn-outline-light btn-sm" href="{% url 'customer_detail' customer.id %}">{% translate "View" %}</a>
+<a class="btn btn-outline-light btn-sm" href="{% url 'customer_detail' customer.id %}" title="{% translate 'View' %}" aria-label="{% translate 'View' %}">
+<i class="bi bi-eye"></i>
+</a>
 {% if perms.books.change_customer %}
-<a class="btn btn-warning btn-sm" href="{% url 'customer_update' customer.id %}">{% translate "Edit" %}</a>
+<a class="btn btn-warning btn-sm" href="{% url 'customer_update' customer.id %}" title="{% translate 'Edit' %}" aria-label="{% translate 'Edit' %}">
+<i class="bi bi-pencil"></i>
+</a>
 {% endif %}
 {% if perms.books.delete_customer %}
-<a class="btn btn-danger btn-sm" href="{% url 'customer_delete' customer.id %}">{% translate "Delete" %}</a>
+<a class="btn btn-danger btn-sm" href="{% url 'customer_delete' customer.id %}" title="{% translate 'Delete' %}" aria-label="{% translate 'Delete' %}">
+<i class="bi bi-trash"></i>
+</a>
 {% endif %}
 </td>
 </tr>
 {% empty %}
 <tr>
-<td colspan="5" class="text-center muted-text py-4">{% translate "No customers yet. Add one to speed up invoice creation." %}</td>
+<td colspan="5" class="text-center muted-text py-4">
+{% if has_any_customers %}
+{% translate "No customers match the current search." %}
+{% else %}
+{% translate "No customers yet. Add one to speed up invoice creation." %}
+{% endif %}
+</td>
 </tr>
 {% endfor %}
 </tbody>
 </table>
 </div>
 
-{% if q %}
-{% include "books/_pagination.html" with extra_qs="q="|add:q %}
-{% else %}
-{% include "books/_pagination.html" %}
-{% endif %}
+{% include "books/_pagination.html" with extra_qs=query_string %}
 
 {% endblock %}

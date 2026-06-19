@@ -20,6 +20,7 @@
 
 <form class="filter-panel mb-3" method="get">
 {% if selected_status %}<input type="hidden" name="status" value="{{ selected_status }}">{% endif %}
+{% if filters.customer %}<input type="hidden" name="customer" value="{{ filters.customer }}">{% endif %}
 <div class="row g-3 align-items-end">
 <div class="col-md-4">
 <label class="form-label" for="q">{% translate "Search" %}</label>
