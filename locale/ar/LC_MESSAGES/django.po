@@ -811,6 +811,15 @@ msgstr "مبلغ الاسترداد"
 msgid "No returns recorded yet."
 msgstr "لا توجد مرتجعات مسجلة حتى الآن."
 
+msgid "No returns match the current filters."
+msgstr "لا توجد مرتجعات مطابقة للفلاتر الحالية."
+
+msgid "%(count)s return(s) found"
+msgstr "تم العثور على %(count)s مرتجع"
+
+msgid "Refunded"
+msgstr "تم استرداده"
+
 msgid "Return pages"
 msgstr "صفحات المرتجعات"
 

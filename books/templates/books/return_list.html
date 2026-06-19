@@ -19,8 +19,63 @@
 </div>
 
 
+<form class="filter-panel mb-3" method="get">
+<div class="row g-3 align-items-end">
+
+<div class="col-md-4">
+<label class="form-label">{% translate "Book" %}</label>
+<select name="book" class="form-select">
+<option value="">{% translate "All books" %}</option>
+{% for book in books %}
+<option value="{{ book.id }}" {% if filters.book == book.id|stringformat:"s" %}selected{% endif %}>{{ book.title }}</option>
+{% endfor %}
+</select>
+</div>
+
+<div class="col-md-2">
+<label class="form-label">{% translate "From" %}</label>
+<input type="date" name="start_date" class="form-control" value="{{ filters.start_date }}">
+</div>
+
+<div class="col-md-2">
+<label class="form-label">{% translate "To" %}</label>
+<input type="date" name="end_date" class="form-control" value="{{ filters.end_date }}">
+</div>
+
+<div class="col-md-auto d-flex gap-2 align-items-end">
+<button class="btn btn-success" type="submit">{% translate "Apply" %}</button>
+<a class="btn btn-outline-light" href="{% url 'return_list' %}">{% translate "Reset" %}</a>
+</div>
+
+</div>
+</form>
+
+<div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+<span class="muted-text small">{{ result_count_text }}</span>
+{% if active_filters %}
+<div class="d-flex flex-wrap gap-2">
+{% for active_filter in active_filters %}
+<a class="badge text-decoration-none" style="background:var(--surface-alt); color:var(--text); border:1px solid var(--border);" href="?{{ active_filter.url }}">
+{{ active_filter.label }} <i class="bi bi-x"></i>
+</a>
+{% endfor %}
+</div>
+{% endif %}
+</div>
+
+{% if refund_totals_by_currency %}
+<div class="mb-3 d-flex flex-wrap gap-3">
+{% for row in refund_totals_by_currency %}
+<span class="badge" style="background:var(--surface-alt); color:var(--text); border:1px solid var(--border);">
+{% translate "Refunded" %}: {{ row.total_amount }} {{ row.sale__currency }}
+</span>
+{% endfor %}
+</div>
+{% endif %}
+
 <div class="table-responsive">
 <table class="table table-striped align-middle">
+<thead>
 <tr>
 <th>{% translate "Date" %}</th>
 <th>{% translate "Book" %}</th>
@@ -29,18 +84,19 @@
 <th>{% translate "Refund amount" %}</th>
 <th>{% translate "Actions" %}</th>
 </tr>
-
+</thead>
+<tbody>
 {% for return in returns %}
 <tr>
 <td>{{ return.return_date }}</td>
-<td>{{ return.sale.book.title }}</td>
+<td><a href="{% url 'book_detail' return.sale.book.id %}">{{ return.sale.book.title }}</a></td>
 <td>{{ return.quantity }}</td>
 <td>{{ return.reason|default:"-" }}</td>
-<td>{{ return.refund_amount }}</td>
+<td>{{ return.refund_amount }} {{ return.sale.currency }}</td>
 <td>
 {% if perms.books.delete_return %}
-<a class="btn btn-danger btn-sm" href="{% url 'return_delete' return.id %}">
-{% translate "Delete" %}
+<a class="btn btn-danger btn-sm" href="{% url 'return_delete' return.id %}" title="{% translate 'Delete' %}" aria-label="{% translate 'Delete' %}">
+<i class="bi bi-trash"></i>
 </a>
 {% endif %}
 </td>
@@ -49,15 +105,20 @@
 {% empty %}
 <tr>
 <td colspan="6" class="text-center muted-text py-4">
+{% if has_any_returns %}
+{% translate "No returns match the current filters." %}
+{% else %}
 {% translate "No returns recorded yet." %}
+{% endif %}
 </td>
 </tr>
 {% endfor %}
+</tbody>
 </table>
 </div>
 
 
-{% include "books/_pagination.html" %}
+{% include "books/_pagination.html" with extra_qs=query_string %}
 
 
 {% endblock %}

@@ -811,6 +811,15 @@ msgstr "Montant du remboursement"
 msgid "No returns recorded yet."
 msgstr "Aucun retour enregistré pour le moment."
 
+msgid "No returns match the current filters."
+msgstr "Aucun retour ne correspond aux filtres actuels."
+
+msgid "%(count)s return(s) found"
+msgstr "%(count)s retour(s) trouvé(s)"
+
+msgid "Refunded"
+msgstr "Remboursé"
+
 msgid "Return pages"
 msgstr "Pages de retours"
 
