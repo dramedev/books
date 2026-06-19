@@ -451,6 +451,15 @@ msgstr "تم تسجيل تعديل المخزون."
 msgid "No stock adjustments recorded yet."
 msgstr "لا توجد تعديلات مخزون مسجلة حتى الآن."
 
+msgid "No stock adjustments match the current filters."
+msgstr "لا توجد تعديلات مخزون مطابقة للفلاتر الحالية."
+
+msgid "%(count)s adjustment(s) found"
+msgstr "تم العثور على %(count)s تعديل"
+
+msgid "All reasons"
+msgstr "جميع الأسباب"
+
 msgid "Damaged"
 msgstr "تالف"
 
@@ -462,6 +471,9 @@ msgstr "تم العثور عليه"
 
 msgid "Correction"
 msgstr "تصحيح"
+
+msgid "Print run"
+msgstr "تشغيل طباعة"
 
 msgid "Other"
 msgstr "أخرى"

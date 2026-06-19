@@ -608,6 +608,48 @@ def stock_list(request):
 def stock_adjustment_list(request):
     adjustments = StockAdjustment.objects.filter(owner=request.user).select_related("book", "book__category")
 
+    book_id = request.GET.get("book", "").strip()
+    reason = request.GET.get("reason", "").strip()
+    start_date = request.GET.get("start_date", "").strip()
+    end_date = request.GET.get("end_date", "").strip()
+
+    if book_id.isdigit():
+        adjustments = adjustments.filter(book_id=book_id)
+    if reason in dict(StockAdjustment.REASON_CHOICES):
+        adjustments = adjustments.filter(reason=reason)
+    if start_date:
+        adjustments = adjustments.filter(created_at__date__gte=start_date)
+    if end_date:
+        adjustments = adjustments.filter(created_at__date__lte=end_date)
+
+    books_qs = Book.objects.filter(owner=request.user).order_by("title")
+
+    query_params = request.GET.copy()
+    query_params.pop("page", None)
+    query_string = query_params.urlencode()
+
+    def remove(*keys):
+        params = query_params.copy()
+        for key in keys:
+            params.pop(key, None)
+        return params.urlencode()
+
+    active_filters = []
+    if book_id.isdigit():
+        book = books_qs.filter(id=book_id).first()
+        if book:
+            active_filters.append({"label": gettext("Book: %(title)s") % {"title": book.title}, "url": remove("book")})
+    if reason in dict(StockAdjustment.REASON_CHOICES):
+        active_filters.append({"label": dict(StockAdjustment.REASON_CHOICES)[reason], "url": remove("reason")})
+    if start_date or end_date:
+        active_filters.append({
+            "label": gettext("Date: %(start)s – %(end)s") % {
+                "start": start_date or gettext("any"),
+                "end": end_date or gettext("any"),
+            },
+            "url": remove("start_date", "end_date"),
+        })
+
     paginator = Paginator(adjustments, 10)
     page_obj = paginator.get_page(request.GET.get("page"))
 
@@ -617,6 +659,13 @@ def stock_adjustment_list(request):
         {
             "adjustments": page_obj.object_list,
             "page_obj": page_obj,
+            "books": books_qs,
+            "reason_choices": StockAdjustment.REASON_CHOICES,
+            "filters": request.GET,
+            "query_string": query_string,
+            "active_filters": active_filters,
+            "result_count_text": gettext("%(count)s adjustment(s) found") % {"count": paginator.count},
+            "has_any_adjustments": StockAdjustment.objects.filter(owner=request.user).exists(),
         },
     )
 

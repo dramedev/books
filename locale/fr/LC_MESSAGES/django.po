@@ -451,6 +451,15 @@ msgstr "Ajustement de stock enregistré."
 msgid "No stock adjustments recorded yet."
 msgstr "Aucun ajustement de stock enregistré pour le moment."
 
+msgid "No stock adjustments match the current filters."
+msgstr "Aucun ajustement de stock ne correspond aux filtres actuels."
+
+msgid "%(count)s adjustment(s) found"
+msgstr "%(count)s ajustement(s) trouvé(s)"
+
+msgid "All reasons"
+msgstr "Tous les motifs"
+
 msgid "Damaged"
 msgstr "Endommagé"
 
@@ -462,6 +471,9 @@ msgstr "Retrouvé"
 
 msgid "Correction"
 msgstr "Correction"
+
+msgid "Print run"
+msgstr "Tirage d'impression"
 
 msgid "Other"
 msgstr "Autre"

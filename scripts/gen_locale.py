@@ -195,10 +195,14 @@ FR = {
     "This would reduce stock below zero (current stock: %(stock)s).": "Cela réduirait le stock en dessous de zéro (stock actuel : %(stock)s).",
     "Stock adjustment recorded.": "Ajustement de stock enregistré.",
     "No stock adjustments recorded yet.": "Aucun ajustement de stock enregistré pour le moment.",
+    "No stock adjustments match the current filters.": "Aucun ajustement de stock ne correspond aux filtres actuels.",
+    "%(count)s adjustment(s) found": "%(count)s ajustement(s) trouvé(s)",
+    "All reasons": "Tous les motifs",
     "Damaged": "Endommagé",
     "Lost": "Perdu",
     "Found": "Retrouvé",
     "Correction": "Correction",
+    "Print run": "Tirage d'impression",
     "Other": "Autre",
 
     # Book detail
@@ -856,10 +860,14 @@ AR = {
     "This would reduce stock below zero (current stock: %(stock)s).": "سيؤدي هذا إلى خفض المخزون إلى أقل من الصفر (المخزون الحالي: %(stock)s).",
     "Stock adjustment recorded.": "تم تسجيل تعديل المخزون.",
     "No stock adjustments recorded yet.": "لا توجد تعديلات مخزون مسجلة حتى الآن.",
+    "No stock adjustments match the current filters.": "لا توجد تعديلات مخزون مطابقة للفلاتر الحالية.",
+    "%(count)s adjustment(s) found": "تم العثور على %(count)s تعديل",
+    "All reasons": "جميع الأسباب",
     "Damaged": "تالف",
     "Lost": "مفقود",
     "Found": "تم العثور عليه",
     "Correction": "تصحيح",
+    "Print run": "تشغيل طباعة",
     "Other": "أخرى",
 
     # Book detail
