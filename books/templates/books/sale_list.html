@@ -83,8 +83,32 @@
 </form>
 
 
+<div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+<span class="muted-text small">{{ result_count_text }}</span>
+{% if active_filters %}
+<div class="d-flex flex-wrap gap-2">
+{% for active_filter in active_filters %}
+<a class="badge text-decoration-none" style="background:var(--surface-alt); color:var(--text); border:1px solid var(--border);" href="?{{ active_filter.url }}">
+{{ active_filter.label }} <i class="bi bi-x"></i>
+</a>
+{% endfor %}
+</div>
+{% endif %}
+</div>
+
+{% if totals_by_currency %}
+<div class="mb-3 d-flex flex-wrap gap-3">
+{% for row in totals_by_currency %}
+<span class="badge" style="background:var(--surface-alt); color:var(--text); border:1px solid var(--border);">
+{{ row.total_quantity }} {% translate "units" %} · {{ row.total_amount }} {{ row.currency }}
+</span>
+{% endfor %}
+</div>
+{% endif %}
+
 <div class="table-responsive">
 <table class="table table-striped align-middle">
+<thead>
 <tr>
 <th>{% translate "Date" %}</th>
 <th>{% translate "Book" %}</th>
@@ -97,7 +121,8 @@
 <th>{% translate "Channel" %}</th>
 <th>{% translate "Actions" %}</th>
 </tr>
-
+</thead>
+<tbody>
 {% for sale in sales %}
 <tr>
 <td>{{ sale.sale_date }}</td>
@@ -109,22 +134,22 @@
 <td>{% if sale.tax_rate %}{{ sale.tax_rate }}%{% else %}-{% endif %}</td>
 <td>{{ sale.total }}</td>
 <td>{{ sale.channel|default:"-" }}</td>
-<td>
+<td class="d-flex gap-2 flex-wrap">
 {% if perms.books.change_sale %}
-<a class="btn btn-warning btn-sm" href="{% url 'sale_update' sale.id %}">
-{% translate "Edit" %}
+<a class="btn btn-warning btn-sm" href="{% url 'sale_update' sale.id %}" title="{% translate 'Edit' %}" aria-label="{% translate 'Edit' %}">
+<i class="bi bi-pencil"></i>
 </a>
 {% endif %}
 
 {% if perms.books.delete_sale %}
-<a class="btn btn-danger btn-sm" href="{% url 'sale_delete' sale.id %}">
-{% translate "Delete" %}
+<a class="btn btn-danger btn-sm" href="{% url 'sale_delete' sale.id %}" title="{% translate 'Delete' %}" aria-label="{% translate 'Delete' %}">
+<i class="bi bi-trash"></i>
 </a>
 {% endif %}
 
 {% if perms.books.add_return and sale.quantity > 0 %}
-<a class="btn btn-outline-light btn-sm" href="{% url 'return_create' sale.id %}">
-{% translate "Return" %}
+<a class="btn btn-outline-light btn-sm" href="{% url 'return_create' sale.id %}" title="{% translate 'Return' %}" aria-label="{% translate 'Return' %}">
+<i class="bi bi-arrow-return-left"></i>
 </a>
 {% endif %}
 </td>
@@ -133,10 +158,15 @@
 {% empty %}
 <tr>
 <td colspan="10" class="text-center muted-text py-4">
+{% if has_any_sales %}
+{% translate "No sales match the current filters." %}
+{% else %}
 {% translate "No sales recorded yet." %}
+{% endif %}
 </td>
 </tr>
 {% endfor %}
+</tbody>
 </table>
 
 </div>

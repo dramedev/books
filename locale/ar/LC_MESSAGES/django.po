@@ -313,6 +313,21 @@ msgstr "الوحدات المباعة"
 msgid "No sales recorded yet."
 msgstr "لا توجد مبيعات مسجلة حتى الآن."
 
+msgid "No sales match the current filters."
+msgstr "لا توجد مبيعات مطابقة للفلاتر الحالية."
+
+msgid "units"
+msgstr "وحدة"
+
+msgid "%(count)s sale(s) found"
+msgstr "تم العثور على %(count)s عملية بيع"
+
+msgid "Book: %(title)s"
+msgstr "الكتاب: %(title)s"
+
+msgid "Channel: %(channel)s"
+msgstr "القناة: %(channel)s"
+
 msgid "Date"
 msgstr "التاريخ"
 

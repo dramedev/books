@@ -313,6 +313,21 @@ msgstr "Unités vendues"
 msgid "No sales recorded yet."
 msgstr "Aucune vente enregistrée pour le moment."
 
+msgid "No sales match the current filters."
+msgstr "Aucune vente ne correspond aux filtres actuels."
+
+msgid "units"
+msgstr "unités"
+
+msgid "%(count)s sale(s) found"
+msgstr "%(count)s vente(s) trouvée(s)"
+
+msgid "Book: %(title)s"
+msgstr "Livre : %(title)s"
+
+msgid "Channel: %(channel)s"
+msgstr "Canal : %(channel)s"
+
 msgid "Date"
 msgstr "Date"
 

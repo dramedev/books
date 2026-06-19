@@ -899,6 +899,11 @@ PURCHASE_COST_EXPRESSION = ExpressionWrapper(
     output_field=DecimalField(max_digits=10, decimal_places=2),
 )
 
+SALE_TOTAL_EXPRESSION = ExpressionWrapper(
+    F("quantity") * F("unit_price") * (1 + F("tax_rate") / Decimal("100")),
+    output_field=DecimalField(max_digits=10, decimal_places=2),
+)
+
 _RETURN_AMOUNT_EXPRESSION = ExpressionWrapper(
     F("quantity") * F("sale__unit_price"),
     output_field=DecimalField(max_digits=10, decimal_places=2),
@@ -1486,6 +1491,42 @@ def _sale_filters(request):
     return sales.order_by("-sale_date")
 
 
+def _active_sale_filters(request, books_qs):
+    query_params = request.GET.copy()
+    query_params.pop("page", None)
+
+    def remove(*keys):
+        params = query_params.copy()
+        for key in keys:
+            params.pop(key, None)
+        return params.urlencode()
+
+    filters = []
+
+    start_date = request.GET.get("start_date", "").strip()
+    end_date = request.GET.get("end_date", "").strip()
+    if start_date or end_date:
+        filters.append({
+            "label": gettext("Date: %(start)s – %(end)s") % {
+                "start": start_date or gettext("any"),
+                "end": end_date or gettext("any"),
+            },
+            "url": remove("start_date", "end_date"),
+        })
+
+    book_id = request.GET.get("book", "")
+    if book_id.isdigit():
+        book = books_qs.filter(id=book_id).first()
+        if book:
+            filters.append({"label": gettext("Book: %(title)s") % {"title": book.title}, "url": remove("book")})
+
+    channel = request.GET.get("channel", "").strip()
+    if channel:
+        filters.append({"label": gettext("Channel: %(channel)s") % {"channel": channel}, "url": remove("channel")})
+
+    return filters
+
+
 @login_required
 @permission_required("books.view_sale", raise_exception=True)
 def sale_list(request):
@@ -1504,6 +1545,12 @@ def sale_list(request):
         .order_by("channel")
     )
 
+    totals_by_currency = list(
+        sales.values("currency")
+        .annotate(total_quantity=Sum("quantity"), total_amount=Sum(SALE_TOTAL_EXPRESSION))
+        .order_by("currency")
+    )
+
     paginator = Paginator(sales, 10)
     page_obj = paginator.get_page(request.GET.get("page"))
 
@@ -1517,6 +1564,10 @@ def sale_list(request):
             "channels": channels,
             "filters": request.GET,
             "query_string": query_string,
+            "active_filters": _active_sale_filters(request, books_qs),
+            "result_count_text": gettext("%(count)s sale(s) found") % {"count": paginator.count},
+            "has_any_sales": Sale.objects.filter(owner=request.user).exists(),
+            "totals_by_currency": totals_by_currency,
         },
     )
 
