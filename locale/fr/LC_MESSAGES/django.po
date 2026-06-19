@@ -583,6 +583,9 @@ msgstr "Tout afficher"
 msgid "Low stock only"
 msgstr "Stock faible uniquement"
 
+msgid "Title, category"
+msgstr "Titre, catégorie"
+
 msgid "Status"
 msgstr "Statut"
 

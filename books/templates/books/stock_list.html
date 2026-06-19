@@ -21,11 +21,11 @@
 {% endif %}
 
 {% if low_only %}
-<a class="btn btn-outline-light" href="{% url 'stock_list' %}">
+<a class="btn btn-outline-light" href="{{ toggle_low_url }}">
 {% translate "Show all" %}
 </a>
 {% else %}
-<a class="btn btn-outline-light" href="{% url 'stock_list' %}?low=1">
+<a class="btn btn-outline-light" href="{{ toggle_low_url }}">
 {% translate "Low stock only" %}
 </a>
 {% endif %}
@@ -43,8 +43,39 @@
 </div>
 
 
+<form class="filter-panel mb-3" method="get">
+{% if low_only %}<input type="hidden" name="low" value="1">{% endif %}
+<div class="row g-3 align-items-end">
+<div class="col-md-4">
+<label class="form-label" for="q">{% translate "Search" %}</label>
+<div class="input-group">
+<span class="input-group-text"><i class="bi bi-search"></i></span>
+<input id="q" type="text" name="q" class="form-control" value="{{ q }}" placeholder="{% translate 'Title, category' %}">
+</div>
+</div>
+<div class="col-md-3 d-flex gap-2 align-items-end">
+<button class="btn btn-success" type="submit">{% translate "Apply" %}</button>
+<a class="btn btn-outline-light" href="{% url 'stock_list' %}">{% translate "Reset" %}</a>
+</div>
+</div>
+</form>
+
+<div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+<span class="muted-text small">{{ result_count_text }}</span>
+{% if active_filters %}
+<div class="d-flex flex-wrap gap-2">
+{% for active_filter in active_filters %}
+<a class="badge text-decoration-none" style="background:var(--surface-alt); color:var(--text); border:1px solid var(--border);" href="?{{ active_filter.url }}">
+{{ active_filter.label }} <i class="bi bi-x"></i>
+</a>
+{% endfor %}
+</div>
+{% endif %}
+</div>
+
 <div class="table-responsive">
 <table class="table table-striped align-middle">
+<thead>
 <tr>
 <th>{% translate "Title" %}</th>
 <th>{% translate "Category" %}</th>
@@ -55,7 +86,8 @@
 <th>{% translate "Status" %}</th>
 <th>{% translate "Actions" %}</th>
 </tr>
-
+</thead>
+<tbody>
 {% for book in books %}
 <tr>
 <td>{{ book.title }}</td>
@@ -73,8 +105,8 @@
 </td>
 <td class="d-flex gap-2 flex-wrap">
 {% if perms.books.change_book %}
-<a class="btn btn-warning btn-sm" href="{% url 'book_update' book.id %}">
-{% translate "Edit" %}
+<a class="btn btn-warning btn-sm" href="{% url 'book_update' book.id %}" title="{% translate 'Edit' %}" aria-label="{% translate 'Edit' %}">
+<i class="bi bi-pencil"></i>
 </a>
 {% endif %}
 
@@ -85,8 +117,8 @@
 {% endif %}
 
 {% if perms.books.add_stockadjustment %}
-<a class="btn btn-outline-light btn-sm" href="{% url 'stock_adjustment_create' book.id %}">
-{% translate "Adjust" %}
+<a class="btn btn-outline-light btn-sm" href="{% url 'stock_adjustment_create' book.id %}" title="{% translate 'Adjust' %}" aria-label="{% translate 'Adjust' %}">
+<i class="bi bi-sliders"></i>
 </a>
 {% endif %}
 </td>
@@ -95,19 +127,20 @@
 {% empty %}
 <tr>
 <td colspan="8" class="text-center muted-text py-4">
+{% if has_any_books %}
+{% translate "No books match the current filters." %}
+{% else %}
 {% translate "No books to show." %}
+{% endif %}
 </td>
 </tr>
 {% endfor %}
+</tbody>
 </table>
 </div>
 
 
-{% if low_only %}
-{% include "books/_pagination.html" with extra_qs="low=1" %}
-{% else %}
-{% include "books/_pagination.html" %}
-{% endif %}
+{% include "books/_pagination.html" with extra_qs=query_string %}
 
 
 {% endblock %}

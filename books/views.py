@@ -549,12 +549,38 @@ def book_delete(request, id):
 def stock_list(request):
     books = Book.objects.filter(owner=request.user).select_related("category").order_by("stock_on_hand", "title")
     low_only = request.GET.get("low") == "1"
+    q = request.GET.get("q", "").strip()
 
     if low_only:
         books = books.filter(stock_on_hand__lte=F("reorder_threshold"))
+    if q:
+        books = books.filter(Q(title__icontains=q) | Q(category__name__icontains=q))
 
     books = _annotate_stock_value(books)
     total_stock_value = books.aggregate(total=Sum("stock_value"))["total"] or 0
+
+    query_params = request.GET.copy()
+    query_params.pop("page", None)
+    query_string = query_params.urlencode()
+
+    def remove(*keys):
+        params = query_params.copy()
+        for key in keys:
+            params.pop(key, None)
+        return params.urlencode()
+
+    active_filters = []
+    if q:
+        active_filters.append({"label": gettext('Search: "%(q)s"') % {"q": q}, "url": remove("q")})
+    if low_only:
+        active_filters.append({"label": gettext("Low stock only"), "url": remove("low")})
+
+    toggle_params = query_params.copy()
+    if low_only:
+        toggle_params.pop("low", None)
+    else:
+        toggle_params["low"] = "1"
+    toggle_low_url = "?" + toggle_params.urlencode()
 
     paginator = Paginator(books, 25)
     page_obj = paginator.get_page(request.GET.get("page"))
@@ -567,6 +593,12 @@ def stock_list(request):
             "page_obj": page_obj,
             "low_only": low_only,
             "total_stock_value": total_stock_value,
+            "q": q,
+            "query_string": query_string,
+            "active_filters": active_filters,
+            "toggle_low_url": toggle_low_url,
+            "result_count_text": gettext("%(count)s book(s) found") % {"count": paginator.count},
+            "has_any_books": Book.objects.filter(owner=request.user).exists(),
         },
     )
 

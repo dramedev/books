@@ -583,6 +583,9 @@ msgstr "عرض الكل"
 msgid "Low stock only"
 msgstr "المخزون المنخفض فقط"
 
+msgid "Title, category"
+msgstr "العنوان، الفئة"
+
 msgid "Status"
 msgstr "الحالة"
 
