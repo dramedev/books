@@ -9,7 +9,7 @@ from django.core import mail
 from django.core.management import call_command
 from django.test import TestCase
 from django.urls import reverse
-from django.utils import timezone
+from django.utils import timezone, translation
 
 from . import ai_chat
 from .models import (
@@ -1390,6 +1390,25 @@ class ReorderListFilterTests(TestCase):
     def test_no_filters_returns_all(self):
         response = self.client.get(reverse("reorder_list"))
         self.assertEqual(len(response.context["reorders"]), 2)
+
+
+class ArabicPdfFontTests(TestCase):
+
+    def setUp(self):
+        User = get_user_model()
+        self.user = User.objects.create_user(username="owner", password="pass1234")
+        self.client.force_login(self.user)
+        grant(self.user, "view_invoice")
+        self.invoice = Invoice.objects.create(
+            owner=self.user, customer_name="عميل", invoice_date=date.today(), currency="USD",
+        )
+
+    def test_arabic_invoice_pdf_renders_without_error(self):
+        with translation.override("ar"):
+            response = self.client.get(reverse("invoice_pdf", args=[self.invoice.id]))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response["Content-Type"], "application/pdf")
+        self.assertTrue(response.content.startswith(b"%PDF"))
 
 
 class SafeJsonTests(TestCase):

@@ -173,18 +173,19 @@ def _register_pdf_fonts():
     from reportlab.pdfbase import pdfmetrics
     from reportlab.pdfbase.ttfonts import TTFont
 
-    try:
-        pdfmetrics.registerFont(TTFont("Tahoma", r"C:\Windows\Fonts\tahoma.ttf"))
-        pdfmetrics.registerFont(TTFont("Tahoma-Bold", r"C:\Windows\Fonts\tahomabd.ttf"))
-    except Exception:
-        pass
+    # Bundled (OFL-licensed) so Arabic PDFs render correctly on any host, not
+    # just Windows. No separate bold instance is shipped, so both names point
+    # at the same regular-weight font.
+    font_path = settings.BASE_DIR / "books" / "static" / "books" / "fonts" / "NotoSansArabic.ttf"
+    pdfmetrics.registerFont(TTFont("NotoSansArabic", str(font_path)))
+    pdfmetrics.registerFont(TTFont("NotoSansArabic-Bold", str(font_path)))
 
     _PDF_FONTS_REGISTERED = True
 
 
 def _pdf_fonts():
     if translation.get_language() == "ar":
-        return "Tahoma", "Tahoma-Bold"
+        return "NotoSansArabic", "NotoSansArabic-Bold"
 
     return "Helvetica", "Helvetica-Bold"
 
