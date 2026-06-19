@@ -11,6 +11,15 @@ from django.db.models import Count, F, Sum
 from .models import AccessCode, Author, Book, Category, PendingActivation, Sale, StockAdjustment
 
 
+def _safe_json(value):
+    """json.dumps for embedding in a <script> block via the |safe filter.
+
+    Escapes "</" so user-entered strings (category names, etc.) can't contain
+    a literal "</script>" that would terminate the tag early and inject HTML.
+    """
+    return json.dumps(value).replace("</", "<\\/")
+
+
 
 @admin.register(Category)
 class CategoryAdmin(admin.ModelAdmin):
@@ -454,11 +463,11 @@ def custom_index(request, extra_context=None):
 
 
 
-    extra_context["labels"] = json.dumps(
+    extra_context["labels"] = _safe_json(
         labels
     )
 
-    extra_context["values"] = json.dumps(
+    extra_context["values"] = _safe_json(
         values
     )
 

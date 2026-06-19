@@ -16,7 +16,7 @@ from .models import (
     AccessCode, Author, Book, Category, Customer, Invoice, InvoiceItem, Location, PrintRun,
     Profile, Reorder, Sale, StockAdjustment, Supplier,
 )
-from .views import _adjust_stock, _invoice_aging_data, _pl_data
+from .views import _adjust_stock, _invoice_aging_data, _pl_data, _safe_json
 
 
 def grant(user, *codenames):
@@ -1390,6 +1390,37 @@ class ReorderListFilterTests(TestCase):
     def test_no_filters_returns_all(self):
         response = self.client.get(reverse("reorder_list"))
         self.assertEqual(len(response.context["reorders"]), 2)
+
+
+class SafeJsonTests(TestCase):
+
+    def test_escapes_script_close_tag(self):
+        payload = "</script><script>alert(1)</script>"
+        self.assertNotIn("</script>", _safe_json(payload))
+        self.assertIn("<\\/script>", _safe_json(payload))
+
+    def test_round_trips_through_json(self):
+        self.assertEqual(json.loads(_safe_json(["a", "b"])), ["a", "b"])
+
+    def test_dashboard_escapes_malicious_category_name(self):
+        User = get_user_model()
+        user = User.objects.create_user(username="owner", password="pass1234")
+        self.client.force_login(user)
+        grant(user, "view_book")
+
+        category = Category.objects.create(owner=user, name="</script><script>alert(1)</script>")
+        Book.objects.create(
+            owner=user, title="Book", publisher="Acme", published_date=date(2024, 1, 1),
+            category=category, stock_on_hand=5, reorder_threshold=1, distribution_expense=Decimal("1.00"),
+        )
+        Sale.objects.create(
+            owner=user, book=Book.objects.filter(owner=user).first(), quantity=1,
+            unit_price=Decimal("10.00"), sale_date=date.today(),
+        )
+
+        response = self.client.get(reverse("dashboard"))
+        content = response.content.decode()
+        self.assertNotIn("</script><script>alert(1)</script>", content)
 
 
 class AdjustStockTests(TestCase):

@@ -913,6 +913,15 @@ def _suggested_reorder_quantity(book, velocity=None):
     return max(book.reorder_threshold * 2 - book.stock_on_hand, book.reorder_threshold, 1)
 
 
+def _safe_json(value):
+    """json.dumps for embedding in a <script> block via the |safe filter.
+
+    Escapes "</" so user-entered strings (category names, etc.) can't contain
+    a literal "</script>" that would terminate the tag early and inject HTML.
+    """
+    return json.dumps(value).replace("</", "<\\/")
+
+
 @login_required
 @permission_required("books.view_book", raise_exception=True)
 def report(request):
@@ -1016,16 +1025,16 @@ def report(request):
     context = _filter_context(request)
     context.update(
         {
-            "values": json.dumps(values),
-            "counts": json.dumps(counts),
-            "labels": json.dumps(labels),
-            "revenues": json.dumps(revenues),
-            "profits": json.dumps(profits),
-            "purchase_costs": json.dumps(purchase_costs),
-            "trend_labels": json.dumps(trend_labels),
-            "trend_units": json.dumps(trend_units),
-            "trend_revenues": json.dumps(trend_revenues),
-            "trend_purchase_costs": json.dumps(trend_purchase_costs),
+            "values": _safe_json(values),
+            "counts": _safe_json(counts),
+            "labels": _safe_json(labels),
+            "revenues": _safe_json(revenues),
+            "profits": _safe_json(profits),
+            "purchase_costs": _safe_json(purchase_costs),
+            "trend_labels": _safe_json(trend_labels),
+            "trend_units": _safe_json(trend_units),
+            "trend_revenues": _safe_json(trend_revenues),
+            "trend_purchase_costs": _safe_json(trend_purchase_costs),
             "total_expense": total_expense,
             "total_books": totals["count"],
             "total_revenue": total_revenue,
@@ -1207,16 +1216,16 @@ def dashboard(request):
         "total_units_sold": total_units_sold,
         "total_purchase_cost": total_purchase_cost,
         "total_inventory_value": total_inventory_value,
-        "labels": json.dumps(labels),
-        "revenues": json.dumps(revenues),
-        "profits": json.dumps(profits),
-        "purchase_costs": json.dumps(purchase_costs),
-        "trend_labels": json.dumps(trend_labels),
-        "trend_units": json.dumps(trend_units),
-        "trend_revenues": json.dumps(trend_revenues),
-        "trend_purchase_costs": json.dumps(trend_purchase_costs),
-        "channel_labels": json.dumps(channel_labels),
-        "channel_revenues": json.dumps(channel_revenues),
+        "labels": _safe_json(labels),
+        "revenues": _safe_json(revenues),
+        "profits": _safe_json(profits),
+        "purchase_costs": _safe_json(purchase_costs),
+        "trend_labels": _safe_json(trend_labels),
+        "trend_units": _safe_json(trend_units),
+        "trend_revenues": _safe_json(trend_revenues),
+        "trend_purchase_costs": _safe_json(trend_purchase_costs),
+        "channel_labels": _safe_json(channel_labels),
+        "channel_revenues": _safe_json(channel_revenues),
         "channel_rows": channel_rows,
         "top_books": top_books,
         "recent_sales": recent_sales,
@@ -2487,9 +2496,8 @@ def invoice_list(request):
 @login_required
 @permission_required("books.add_invoice", raise_exception=True)
 def invoice_create(request):
-    import json as _json
     customers = Customer.objects.filter(owner=request.user).values("id", "name", "email", "address")
-    customers_json = _json.dumps(list(customers))
+    customers_json = _safe_json(list(customers))
 
     form = InvoiceForm(user=request.user)
 
