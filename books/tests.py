@@ -1,11 +1,13 @@
 import json
 from datetime import date, timedelta
 from decimal import Decimal
+from types import SimpleNamespace
 from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Permission
 from django.core import mail
+from django.core.exceptions import ValidationError
 from django.core.management import call_command
 from django.test import TestCase
 from django.urls import reverse
@@ -13,8 +15,8 @@ from django.utils import timezone, translation
 
 from . import ai_chat
 from .models import (
-    AccessCode, Author, Book, Category, Customer, Invoice, InvoiceItem, Location, PrintRun,
-    Profile, Reorder, Sale, StockAdjustment, Supplier,
+    AccessCode, AVATAR_MAX_SIZE_BYTES, Author, Book, Category, Customer, Invoice, InvoiceItem,
+    Location, PrintRun, Profile, Reorder, Sale, StockAdjustment, Supplier, validate_avatar_size,
 )
 from .views import _adjust_stock, _invoice_aging_data, _pl_data, _safe_json
 
@@ -1268,6 +1270,19 @@ class InvoiceBulkUpdateTests(TestCase):
         self.draft.refresh_from_db()
         self.assertEqual(self.draft.status, Invoice.STATUS_DRAFT)
         self.assertRedirects(response, reverse("invoice_list"))
+
+
+class AvatarSizeValidationTests(TestCase):
+
+    def test_file_under_limit_passes(self):
+        validate_avatar_size(SimpleNamespace(size=1024 * 1024))
+
+    def test_file_over_limit_raises(self):
+        with self.assertRaises(ValidationError):
+            validate_avatar_size(SimpleNamespace(size=3 * 1024 * 1024))
+
+    def test_file_at_exact_limit_passes(self):
+        validate_avatar_size(SimpleNamespace(size=AVATAR_MAX_SIZE_BYTES))
 
 
 class ProfileUpdateTests(TestCase):

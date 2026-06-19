@@ -1,9 +1,20 @@
 from decimal import Decimal
 
 from django.conf import settings
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
+
+
+AVATAR_MAX_SIZE_BYTES = 2 * 1024 * 1024
+
+
+def validate_avatar_size(file):
+    if file.size > AVATAR_MAX_SIZE_BYTES:
+        raise ValidationError(
+            _("Image must be smaller than %(max_mb)s MB.") % {"max_mb": AVATAR_MAX_SIZE_BYTES // (1024 * 1024)}
+        )
 
 
 CURRENCY_CHOICES = [
@@ -813,6 +824,7 @@ class Profile(models.Model):
         upload_to="avatars/",
         blank=True,
         null=True,
+        validators=[validate_avatar_size],
         verbose_name=_("Avatar")
     )
 
