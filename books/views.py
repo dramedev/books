@@ -879,9 +879,31 @@ def author_delete(request, id):
 @permission_required("books.view_supplier", raise_exception=True)
 def supplier_list(request):
     suppliers = Supplier.objects.filter(owner=request.user).annotate(reorder_count=Count("reorders")).order_by("name")
+    q = request.GET.get("q", "").strip()
+    if q:
+        suppliers = suppliers.filter(
+            Q(name__icontains=q) | Q(contact_name__icontains=q) | Q(email__icontains=q) | Q(phone__icontains=q)
+        )
+
+    query_params = request.GET.copy()
+    query_params.pop("page", None)
+    query_string = query_params.urlencode()
+
     paginator = Paginator(suppliers, 25)
     page_obj = paginator.get_page(request.GET.get("page"))
-    return render(request, "books/supplier_list.html", {"suppliers": page_obj.object_list, "page_obj": page_obj})
+
+    return render(
+        request,
+        "books/supplier_list.html",
+        {
+            "suppliers": page_obj.object_list,
+            "page_obj": page_obj,
+            "q": q,
+            "query_string": query_string,
+            "result_count_text": gettext("%(count)s supplier(s) found") % {"count": paginator.count},
+            "has_any_suppliers": Supplier.objects.filter(owner=request.user).exists(),
+        },
+    )
 
 
 @login_required

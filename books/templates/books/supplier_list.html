@@ -20,9 +20,29 @@
 {% endif %}
 </div>
 
+<form class="filter-panel mb-3" method="get">
+<div class="row g-3 align-items-end">
+<div class="col-md-4">
+<label class="form-label" for="q">{% translate "Search" %}</label>
+<div class="input-group">
+<span class="input-group-text"><i class="bi bi-search"></i></span>
+<input id="q" type="text" name="q" class="form-control" value="{{ q }}" placeholder="{% translate 'Name, contact, email, phone' %}">
+</div>
+</div>
+<div class="col-md-3 d-flex gap-2 align-items-end">
+<button class="btn btn-success" type="submit">{% translate "Apply" %}</button>
+<a class="btn btn-outline-light" href="{% url 'supplier_list' %}">{% translate "Reset" %}</a>
+</div>
+</div>
+</form>
+
+<div class="mb-3">
+<span class="muted-text small">{{ result_count_text }}</span>
+</div>
 
 <div class="table-responsive">
 <table class="table table-striped align-middle">
+<thead>
 <tr>
 <th>{% translate "Name" %}</th>
 <th>{% translate "Contact name" %}</th>
@@ -31,40 +51,58 @@
 <th>{% translate "Reorders" %}</th>
 <th>{% translate "Actions" %}</th>
 </tr>
-
+</thead>
+<tbody>
 {% for supplier in suppliers %}
 <tr>
 <td>{{ supplier.name }}</td>
 <td>{{ supplier.contact_name|default:"-" }}</td>
 <td>{{ supplier.email|default:"-" }}</td>
 <td>{{ supplier.phone|default:"-" }}</td>
-<td>{{ supplier.reorder_count }}</td>
 <td>
+{% if supplier.reorder_count %}
+<a href="{% url 'reorder_list' %}?supplier={{ supplier.id }}">{{ supplier.reorder_count }}</a>
+{% else %}
+{{ supplier.reorder_count }}
+{% endif %}
+</td>
+<td class="d-flex gap-2">
 {% if perms.books.change_supplier %}
-<a class="btn btn-warning btn-sm" href="{% url 'supplier_update' supplier.id %}">
-{% translate "Edit" %}
+<a class="btn btn-warning btn-sm" href="{% url 'supplier_update' supplier.id %}" title="{% translate 'Edit' %}" aria-label="{% translate 'Edit' %}">
+<i class="bi bi-pencil"></i>
 </a>
 {% endif %}
 
 {% if perms.books.delete_supplier %}
-<a class="btn btn-danger btn-sm" href="{% url 'supplier_delete' supplier.id %}">
-{% translate "Delete" %}
+{% if supplier.reorder_count %}
+<button type="button" class="btn btn-danger btn-sm" disabled title="{% translate 'Contains' %} {{ supplier.reorder_count }} {% translate 'reorder(s)' %}" aria-label="{% translate 'Delete' %}">
+<i class="bi bi-trash"></i>
+</button>
+{% else %}
+<a class="btn btn-danger btn-sm" href="{% url 'supplier_delete' supplier.id %}" title="{% translate 'Delete' %}" aria-label="{% translate 'Delete' %}">
+<i class="bi bi-trash"></i>
 </a>
+{% endif %}
 {% endif %}
 </td>
 </tr>
 {% empty %}
 <tr>
 <td colspan="6" class="text-center muted-text py-4">
+{% if has_any_suppliers %}
+{% translate "No suppliers match the current search." %}
+{% else %}
 {% translate "No suppliers yet." %}
+{% endif %}
 </td>
 </tr>
 {% endfor %}
+</tbody>
 </table>
 </div>
 
 
-{% include "books/_pagination.html" %}
+{% include "books/_pagination.html" with extra_qs=query_string %}
 
 
 {% endblock %}

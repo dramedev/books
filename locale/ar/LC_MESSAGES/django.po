@@ -727,6 +727,18 @@ msgstr "إدارة الموردين المستخدمين لإعادة تزويد
 msgid "No suppliers yet."
 msgstr "لا يوجد موردون حتى الآن."
 
+msgid "No suppliers match the current search."
+msgstr "لا يوجد موردون يطابقون البحث الحالي."
+
+msgid "Name, contact, email, phone"
+msgstr "الاسم، جهة الاتصال، البريد الإلكتروني، الهاتف"
+
+msgid "%(count)s supplier(s) found"
+msgstr "تم العثور على %(count)s مورّد"
+
+msgid "reorder(s)"
+msgstr "طلب(ات) إعادة تزويد"
+
 msgid "Contact name"
 msgstr "اسم جهة الاتصال"
 

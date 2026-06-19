@@ -727,6 +727,18 @@ msgstr "Gérez les fournisseurs utilisés pour les réapprovisionnements de stoc
 msgid "No suppliers yet."
 msgstr "Aucun fournisseur pour le moment."
 
+msgid "No suppliers match the current search."
+msgstr "Aucun fournisseur ne correspond à la recherche actuelle."
+
+msgid "Name, contact, email, phone"
+msgstr "Nom, contact, e-mail, téléphone"
+
+msgid "%(count)s supplier(s) found"
+msgstr "%(count)s fournisseur(s) trouvé(s)"
+
+msgid "reorder(s)"
+msgstr "réapprovisionnement(s)"
+
 msgid "Contact name"
 msgstr "Nom du contact"
 
