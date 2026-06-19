@@ -2730,6 +2730,8 @@ def invoice_pdf(request, id):
     buffer = BytesIO()
     doc = SimpleDocTemplate(buffer, pagesize=letter, leftMargin=48, rightMargin=48, topMargin=48, bottomMargin=48)
     styles = getSampleStyleSheet()
+    styles["Title"].fontName = bold_font
+    styles["Normal"].fontName = body_font
 
     elements = [
         Paragraph(_pdf_text(f"INVOICE – {invoice.invoice_number}"), styles["Title"]),

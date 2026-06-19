@@ -11,7 +11,7 @@ from django.core.exceptions import ValidationError
 from django.core.management import call_command
 from django.test import TestCase
 from django.urls import reverse
-from django.utils import timezone, translation
+from django.utils import timezone
 
 from . import ai_chat
 from .models import (
@@ -1457,12 +1457,22 @@ class ArabicPdfFontTests(TestCase):
             owner=self.user, customer_name="عميل", invoice_date=date.today(), currency="USD",
         )
 
+    def _get_invoice_pdf_in_arabic(self):
+        # LocaleMiddleware picks the active language per-request from
+        # Accept-Language (no session/cookie override here), so
+        # translation.override() alone wouldn't reach the view - it gets
+        # overwritten by the middleware before the view runs.
+        return self.client.get(reverse("invoice_pdf", args=[self.invoice.id]), HTTP_ACCEPT_LANGUAGE="ar")
+
     def test_arabic_invoice_pdf_renders_without_error(self):
-        with translation.override("ar"):
-            response = self.client.get(reverse("invoice_pdf", args=[self.invoice.id]))
+        response = self._get_invoice_pdf_in_arabic()
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response["Content-Type"], "application/pdf")
         self.assertTrue(response.content.startswith(b"%PDF"))
+
+    def test_arabic_invoice_pdf_title_uses_arabic_font(self):
+        response = self._get_invoice_pdf_in_arabic()
+        self.assertIn(b"NotoSansArabic", response.content)
 
 
 class SafeJsonTests(TestCase):
