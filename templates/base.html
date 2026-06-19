@@ -345,6 +345,15 @@ textarea{
         background:rgba(0,0,0,0.5);
         z-index:999;
     }
+    .topbar-search{
+        display:none;
+    }
+    .chat-panel{
+        left:12px;
+        right:12px;
+        width:auto;
+        bottom:84px;
+    }
 }
 
 .chat-toggle{
@@ -497,6 +506,11 @@ html[dir="rtl"] .chat-panel{
     }
     html[dir="rtl"] .app-main{
         margin-right:0;
+    }
+    html[dir="rtl"] .chat-panel{
+        left:12px;
+        right:12px;
+        width:auto;
     }
 }
 </style>
@@ -691,9 +705,12 @@ html[dir="rtl"] .chat-panel{
 </a>
 
 {% if user.is_authenticated %}
-<form method="get" action="{% url 'global_search' %}" class="ms-auto" style="max-width:320px;width:100%;">
+<form method="get" action="{% url 'global_search' %}" class="topbar-search ms-auto" style="max-width:320px;width:100%;">
 <input type="search" name="q" class="form-control form-control-sm" placeholder="{% translate 'Search books, customers, invoices…' %}" value="{{ request.GET.q }}">
 </form>
+<a class="d-lg-none ms-auto" style="color:var(--text);font-size:1.3rem;" href="{% url 'global_search' %}" aria-label="{% translate 'Search' %}">
+<i class="bi bi-search"></i>
+</a>
 {% endif %}
 </header>
 
