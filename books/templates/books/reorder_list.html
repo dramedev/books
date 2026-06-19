@@ -13,24 +13,36 @@
 </p>
 </div>
 
-<div class="d-flex gap-2">
+<div class="d-flex gap-2 flex-wrap">
 <a class="btn btn-outline-light" href="{% url 'reorder_suggestions' %}">
 {% translate "Suggestions" %}
 </a>
 
-<a class="btn btn-outline-light" href="{% url 'export_reorders_csv' %}">
+<a class="btn btn-outline-light" href="{% url 'export_reorders_csv' %}?{{ query_string }}">
 {% translate "CSV" %}
 </a>
 
-<a class="btn btn-outline-light" href="{% url 'export_reorders_excel' %}">
+<a class="btn btn-outline-light" href="{% url 'export_reorders_excel' %}?{{ query_string }}">
 {% translate "Excel" %}
 </a>
 
-<a class="btn btn-outline-light" href="{% url 'export_reorders_pdf' %}">
+<a class="btn btn-outline-light" href="{% url 'export_reorders_pdf' %}?{{ query_string }}">
 {% translate "PDF" %}
 </a>
 </div>
 </div>
+
+{% if perms.books.add_reorder %}
+<div class="d-flex gap-2 mb-3 align-items-end flex-wrap">
+<select id="quickReorderBook" class="form-select form-select-sm" style="max-width:280px;">
+<option value="">{% translate "Add reorder for…" %}</option>
+{% for book in books %}
+<option value="{{ book.id }}">{{ book.title }}</option>
+{% endfor %}
+</select>
+<button type="button" class="btn btn-primary btn-sm" id="quickReorderBtn">{% translate "Add Reorder" %}</button>
+</div>
+{% endif %}
 
 
 <form class="filter-panel mb-3" method="get">
@@ -66,6 +78,16 @@
 </select>
 </div>
 
+<div class="col-md-3">
+<label class="form-label">{% translate "Book" %}</label>
+<select name="book" class="form-select">
+<option value="">{% translate "All books" %}</option>
+{% for book in books %}
+<option value="{{ book.id }}" {% if filters.book == book.id|stringformat:"s" %}selected{% endif %}>{{ book.title }}</option>
+{% endfor %}
+</select>
+</div>
+
 <div class="col-md-auto d-flex gap-2 align-items-end">
 <button class="btn btn-success" type="submit">{% translate "Apply" %}</button>
 <a class="btn btn-outline-light" href="{% url 'reorder_list' %}">{% translate "Reset" %}</a>
@@ -75,8 +97,22 @@
 </form>
 
 
+<div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+<span class="muted-text small">{{ result_count_text }}</span>
+{% if active_filters %}
+<div class="d-flex flex-wrap gap-2">
+{% for active_filter in active_filters %}
+<a class="badge text-decoration-none" style="background:var(--surface-alt); color:var(--text); border:1px solid var(--border);" href="?{{ active_filter.url }}">
+{{ active_filter.label }} <i class="bi bi-x"></i>
+</a>
+{% endfor %}
+</div>
+{% endif %}
+</div>
+
 <div class="table-responsive">
 <table class="table table-striped align-middle">
+<thead>
 <tr>
 <th>{% translate "Date" %}</th>
 <th>{% translate "Book" %}</th>
@@ -88,7 +124,8 @@
 <th>{% translate "Note" %}</th>
 <th>{% translate "Actions" %}</th>
 </tr>
-
+</thead>
+<tbody>
 {% for reorder in reorders %}
 <tr>
 <td>{{ reorder.created_at|date:"Y-m-d" }}</td>
@@ -124,8 +161,8 @@
 {% endif %}
 
 {% if reorder.status == "cancelled" and perms.books.delete_reorder %}
-<a class="btn btn-outline-danger btn-sm" href="{% url 'reorder_delete' reorder.id %}">
-{% translate "Delete" %}
+<a class="btn btn-outline-danger btn-sm" href="{% url 'reorder_delete' reorder.id %}" title="{% translate 'Delete' %}" aria-label="{% translate 'Delete' %}">
+<i class="bi bi-trash"></i>
 </a>
 {% endif %}
 </td>
@@ -134,15 +171,30 @@
 {% empty %}
 <tr>
 <td colspan="9" class="text-center muted-text py-4">
+{% if has_any_reorders %}
+{% translate "No reorders match the current filters." %}
+{% else %}
 {% translate "No reorders yet." %}
+{% endif %}
 </td>
 </tr>
 {% endfor %}
+</tbody>
 </table>
 </div>
 
 
 {% include "books/_pagination.html" with extra_qs=query_string %}
+
+{% if perms.books.add_reorder %}
+<script>
+document.getElementById("quickReorderBtn").addEventListener("click", function(){
+    var select = document.getElementById("quickReorderBook");
+    if (!select.value) return;
+    window.location = "{% url 'reorder_create' 1 %}".replace(/\/1\/$/, "/" + select.value + "/");
+});
+</script>
+{% endif %}
 
 
 {% endblock %}

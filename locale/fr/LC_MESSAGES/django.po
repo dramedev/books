@@ -622,6 +622,21 @@ msgstr "Note"
 msgid "No reorders yet."
 msgstr "Aucun réapprovisionnement pour le moment."
 
+msgid "No reorders match the current filters."
+msgstr "Aucun réapprovisionnement ne correspond aux filtres actuels."
+
+msgid "Add reorder for…"
+msgstr "Ajouter un réapprovisionnement pour…"
+
+msgid "Add Reorder"
+msgstr "Ajouter un réapprovisionnement"
+
+msgid "%(count)s reorder(s) found"
+msgstr "%(count)s réapprovisionnement(s) trouvé(s)"
+
+msgid "Supplier: %(name)s"
+msgstr "Fournisseur : %(name)s"
+
 msgid "Mark as ordered"
 msgstr "Marquer comme commandé"
 

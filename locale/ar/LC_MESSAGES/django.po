@@ -622,6 +622,21 @@ msgstr "ملاحظة"
 msgid "No reorders yet."
 msgstr "لا توجد طلبات إعادة تزويد حتى الآن."
 
+msgid "No reorders match the current filters."
+msgstr "لا توجد طلبات إعادة تزويد مطابقة للفلاتر الحالية."
+
+msgid "Add reorder for…"
+msgstr "إضافة طلب إعادة تزويد لـ…"
+
+msgid "Add Reorder"
+msgstr "إضافة طلب إعادة تزويد"
+
+msgid "%(count)s reorder(s) found"
+msgstr "تم العثور على %(count)s طلب إعادة تزويد"
+
+msgid "Supplier: %(name)s"
+msgstr "المورّد: %(name)s"
+
 msgid "Mark as ordered"
 msgstr "وضع علامة كمطلوب"
 

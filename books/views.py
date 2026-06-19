@@ -1816,6 +1816,7 @@ def _reorder_filters(request):
     start_date = request.GET.get("start_date", "").strip()
     end_date = request.GET.get("end_date", "").strip()
     supplier_id = request.GET.get("supplier", "").strip()
+    book_id = request.GET.get("book", "").strip()
 
     if status in dict(Reorder.STATUS_CHOICES):
         reorders = reorders.filter(status=status)
@@ -1825,8 +1826,52 @@ def _reorder_filters(request):
         reorders = reorders.filter(created_at__date__lte=end_date)
     if supplier_id.isdigit():
         reorders = reorders.filter(supplier_id=supplier_id)
+    if book_id.isdigit():
+        reorders = reorders.filter(book_id=book_id)
 
     return reorders
+
+
+def _active_reorder_filters(request, books_qs, suppliers_qs):
+    query_params = request.GET.copy()
+    query_params.pop("page", None)
+
+    def remove(*keys):
+        params = query_params.copy()
+        for key in keys:
+            params.pop(key, None)
+        return params.urlencode()
+
+    filters = []
+
+    status = request.GET.get("status", "").strip()
+    if status in dict(Reorder.STATUS_CHOICES):
+        filters.append({"label": dict(Reorder.STATUS_CHOICES)[status], "url": remove("status")})
+
+    start_date = request.GET.get("start_date", "").strip()
+    end_date = request.GET.get("end_date", "").strip()
+    if start_date or end_date:
+        filters.append({
+            "label": gettext("Date: %(start)s – %(end)s") % {
+                "start": start_date or gettext("any"),
+                "end": end_date or gettext("any"),
+            },
+            "url": remove("start_date", "end_date"),
+        })
+
+    supplier_id = request.GET.get("supplier", "").strip()
+    if supplier_id.isdigit():
+        supplier = suppliers_qs.filter(id=supplier_id).first()
+        if supplier:
+            filters.append({"label": gettext("Supplier: %(name)s") % {"name": supplier.name}, "url": remove("supplier")})
+
+    book_id = request.GET.get("book", "").strip()
+    if book_id.isdigit():
+        book = books_qs.filter(id=book_id).first()
+        if book:
+            filters.append({"label": gettext("Book: %(title)s") % {"title": book.title}, "url": remove("book")})
+
+    return filters
 
 
 @login_required
@@ -1839,6 +1884,7 @@ def reorder_list(request):
     query_string = query_params.urlencode()
 
     suppliers = Supplier.objects.filter(owner=request.user).order_by("name")
+    books_qs = Book.objects.filter(owner=request.user).order_by("title")
 
     paginator = Paginator(reorders, 10)
     page_obj = paginator.get_page(request.GET.get("page"))
@@ -1852,8 +1898,12 @@ def reorder_list(request):
             "status_choices": Reorder.STATUS_CHOICES,
             "selected_status": request.GET.get("status", "").strip(),
             "suppliers": suppliers,
+            "books": books_qs,
             "filters": request.GET,
             "query_string": query_string,
+            "active_filters": _active_reorder_filters(request, books_qs, suppliers),
+            "result_count_text": gettext("%(count)s reorder(s) found") % {"count": paginator.count},
+            "has_any_reorders": Reorder.objects.filter(owner=request.user).exists(),
         },
     )
 
@@ -2308,9 +2358,7 @@ def export_reorders_csv(request):
     writer = csv.writer(response)
     writer.writerow(_reorder_export_headers())
 
-    reorders = Reorder.objects.filter(owner=request.user).select_related("book", "supplier")
-
-    for row in _reorder_export_rows(reorders):
+    for row in _reorder_export_rows(_reorder_filters(request)):
         writer.writerow(row)
 
     return response
@@ -2326,9 +2374,7 @@ def export_reorders_excel(request):
     worksheet.title = "Reorders"
     worksheet.append(_reorder_export_headers())
 
-    reorders = Reorder.objects.filter(owner=request.user).select_related("book", "supplier")
-
-    for row in _reorder_export_rows(reorders):
+    for row in _reorder_export_rows(_reorder_filters(request)):
         worksheet.append(row)
 
     for column in worksheet.columns:
@@ -2381,11 +2427,9 @@ def export_reorders_pdf(request):
         Spacer(1, 12),
     ]
 
-    reorders = Reorder.objects.filter(owner=request.user).select_related("book", "supplier")
-
     rows = [[_pdf_text(value) for value in _reorder_export_headers()]]
 
-    for row in _reorder_export_rows(reorders):
+    for row in _reorder_export_rows(_reorder_filters(request)):
         rows.append([_pdf_text(value) for value in row])
 
     table = Table(
