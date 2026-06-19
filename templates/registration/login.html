@@ -1,14 +1,276 @@
-{% extends "base.html" %}
-{% load i18n %}
+{% load i18n static %}
+<!DOCTYPE html>
+<html lang="{{ LANGUAGE_CODE }}" dir="{% if LANGUAGE_BIDI %}rtl{% else %}ltr{% endif %}">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% translate "Login" %} · Rumi Press</title>
+<meta name="theme-color" content="#0d6efd">
+<link rel="manifest" href="/manifest.json">
+<link rel="icon" type="image/png" sizes="192x192" href="{% static 'books/img/icon-192.png' %}">
 
+{% if LANGUAGE_BIDI %}
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
+{% else %}
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+{% endif %}
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
 
-{% block content %}
+<style>
+:root{
+    --bg:#0d0f14;
+    --surface:#1e2128;
+    --border:#2c2f36;
+    --text:#e8e9ec;
+    --text-muted:#9aa0aa;
+    --accent:#d39c4f;
+    --accent-text:#1a1208;
+}
 
+*{
+    box-sizing:border-box;
+}
 
-<div class="row justify-content-center">
-<div class="col-md-5">
-<div class="page-panel">
-<h1 class="mb-3">{% translate "Login" %}</h1>
+html, body{
+    height:100%;
+    margin:0;
+}
+
+body{
+    position:relative;
+    min-height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    overflow-x:hidden;
+    background:var(--bg);
+    color:var(--text);
+    font-family:-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+/* Full-page animated "bookshelf" of spines */
+.login-bg{
+    position:fixed;
+    inset:-10% -10%;
+    background-image:
+        repeating-linear-gradient(90deg,
+            #d39c4f 0 22px,
+            #b9542e 22px 40px,
+            #2c5f63 40px 70px,
+            #7a3b3b 70px 86px,
+            #5c6b3f 86px 118px,
+            #3a4a7a 118px 142px,
+            #9a7b2f 142px 160px
+        ),
+        repeating-linear-gradient(0deg,
+            rgba(0,0,0,0.45) 0 3px,
+            transparent 3px 210px
+        );
+    background-size:160px 100%, 100% 210px;
+    opacity:0.22;
+    animation:shelfDrift 50s linear infinite;
+    z-index:0;
+}
+
+@keyframes shelfDrift{
+    0%{ background-position:0 0, 0 0; }
+    100%{ background-position:-1600px 0, 0 -210px; }
+}
+
+.login-vignette{
+    position:fixed;
+    inset:0;
+    background:radial-gradient(circle at 50% 45%, transparent 0%, rgba(13,15,20,0.55) 55%, rgba(13,15,20,0.95) 100%);
+    z-index:1;
+}
+
+/* Floating book icons drifting over the shelf */
+.floater{
+    position:fixed;
+    color:var(--accent);
+    opacity:0.16;
+    z-index:1;
+    pointer-events:none;
+    animation:floatBook 9s ease-in-out infinite;
+}
+
+.floater.f1{ top:8%;  left:10%; font-size:3.5rem; animation-duration:11s; }
+.floater.f2{ top:65%; left:6%;  font-size:2.5rem; animation-duration:8s;  animation-delay:1s; color:#fff; }
+.floater.f3{ top:14%; left:85%; font-size:4rem;   animation-duration:13s; animation-delay:2s; }
+.floater.f4{ top:72%; left:88%; font-size:2.8rem; animation-duration:9s;  animation-delay:0.5s; color:#fff; }
+.floater.f5{ top:42%; left:3%;  font-size:2.2rem; animation-duration:10s; animation-delay:1.5s; }
+.floater.f6{ top:38%; left:93%; font-size:2.4rem; animation-duration:12s; animation-delay:2.5s; color:#fff; }
+
+@keyframes floatBook{
+    0%, 100%{ transform:translateY(0) rotate(-4deg); }
+    50%{ transform:translateY(-26px) rotate(4deg); }
+}
+
+@media (max-width:767.98px){
+    .floater.f3, .floater.f4, .floater.f6{ display:none; }
+}
+
+.login-wrap{
+    position:relative;
+    z-index:2;
+    width:100%;
+    max-width:420px;
+    padding:24px;
+}
+
+.login-card{
+    background:rgba(30,33,40,0.78);
+    backdrop-filter:blur(18px);
+    -webkit-backdrop-filter:blur(18px);
+    border:1px solid rgba(255,255,255,0.08);
+    border-radius:20px;
+    padding:40px 36px;
+    box-shadow:0 20px 60px rgba(0,0,0,0.5), 0 0 0 1px rgba(211,156,79,0.08);
+    animation:cardIn 0.7s cubic-bezier(.21,1.02,.73,1) both;
+}
+
+@keyframes cardIn{
+    0%{ opacity:0; transform:translateY(28px) scale(0.97); }
+    100%{ opacity:1; transform:translateY(0) scale(1); }
+}
+
+.login-brand{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:10px;
+    margin-bottom:8px;
+    font-size:1.4rem;
+    font-weight:600;
+    color:var(--text);
+}
+
+.login-brand i{
+    color:var(--accent);
+    font-size:1.7rem;
+    animation:brandGlow 2.4s ease-in-out infinite;
+}
+
+@keyframes brandGlow{
+    0%, 100%{ filter:drop-shadow(0 0 0 rgba(211,156,79,0)); }
+    50%{ filter:drop-shadow(0 0 10px rgba(211,156,79,0.7)); }
+}
+
+.login-card h1{
+    font-size:1.4rem;
+    font-weight:600;
+    text-align:center;
+    margin:0 0 24px;
+    color:var(--text-muted);
+}
+
+.login-card .alert{
+    animation:shake 0.4s ease-in-out;
+}
+
+@keyframes shake{
+    0%, 100%{ transform:translateX(0); }
+    20%{ transform:translateX(-8px); }
+    40%{ transform:translateX(8px); }
+    60%{ transform:translateX(-5px); }
+    80%{ transform:translateX(5px); }
+}
+
+.login-card label{
+    display:block;
+    font-size:0.85rem;
+    color:var(--text-muted);
+    margin-bottom:6px;
+}
+
+.login-card .mb-3{
+    margin-bottom:18px;
+}
+
+.login-card input{
+    width:100%;
+    background:rgba(20,22,27,0.85);
+    color:var(--text);
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:10px 14px;
+    font-size:0.95rem;
+    transition:border-color 0.2s, box-shadow 0.2s;
+}
+
+.login-card input:focus{
+    outline:none;
+    border-color:var(--accent);
+    box-shadow:0 0 0 3px rgba(211,156,79,0.22);
+}
+
+.login-btn{
+    width:100%;
+    border:none;
+    border-radius:10px;
+    padding:11px 0;
+    font-weight:600;
+    font-size:1rem;
+    color:var(--accent-text);
+    background:linear-gradient(135deg, #e6b066, var(--accent));
+    transition:transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.login-btn:hover{
+    transform:translateY(-2px);
+    box-shadow:0 10px 24px rgba(211,156,79,0.35);
+}
+
+.login-btn:active{
+    transform:translateY(0);
+}
+
+.login-card a{
+    color:var(--accent);
+    text-decoration:none;
+}
+
+.login-card a:hover{
+    text-decoration:underline;
+}
+
+.login-foot{
+    text-align:center;
+    font-size:0.9rem;
+    color:var(--text-muted);
+    margin-top:18px;
+}
+
+.login-forgot{
+    text-align:end;
+    font-size:0.85rem;
+    margin-top:8px;
+    margin-bottom:0;
+}
+</style>
+</head>
+
+<body>
+
+<div class="login-bg"></div>
+<div class="login-vignette"></div>
+
+<i class="bi bi-journal-bookmark-fill floater f1"></i>
+<i class="bi bi-book-fill floater f2"></i>
+<i class="bi bi-journal-richtext floater f3"></i>
+<i class="bi bi-bookmark-star-fill floater f4"></i>
+<i class="bi bi-book floater f5"></i>
+<i class="bi bi-journal-text floater f6"></i>
+
+<div class="login-wrap">
+<div class="login-card">
+
+<div class="login-brand">
+<i class="bi bi-feather"></i>
+<span>Rumi Press</span>
+</div>
+
+<h1>{% translate "Welcome back" %}</h1>
 
 {% if form.errors %}
 <div class="alert alert-danger">
@@ -20,24 +282,24 @@
 {% csrf_token %}
 
 <div class="mb-3">
-<label class="form-label" for="{{ form.username.id_for_label }}">
+<label for="{{ form.username.id_for_label }}">
 {% translate "Username" %}
 </label>
 {{ form.username }}
 </div>
 
 <div class="mb-3">
-<label class="form-label" for="{{ form.password.id_for_label }}">
+<label for="{{ form.password.id_for_label }}">
 {% translate "Password" %}
 </label>
 {{ form.password }}
 </div>
 
-<button class="btn btn-primary w-100">
+<button class="login-btn">
 {% translate "Login" %}
 </button>
 
-<p class="mt-2 mb-0 text-end small">
+<p class="login-forgot">
 <a href="{% url 'password_reset' %}">{% translate "Forgot your password?" %}</a>
 </p>
 
@@ -46,12 +308,12 @@
 {% endif %}
 </form>
 
-<p class="mt-3 mb-0">
+<p class="login-foot">
 {% translate "Don't have an account?" %} <a href="{% url 'signup' %}">{% translate "Create one" %}</a>
 </p>
-</div>
+
 </div>
 </div>
 
-
-{% endblock %}
+</body>
+</html>
