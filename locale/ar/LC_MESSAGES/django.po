@@ -142,6 +142,18 @@ msgstr "لا يوجد مؤلفون حتى الآن."
 msgid "No categories yet."
 msgstr "لا توجد تصنيفات حتى الآن."
 
+msgid "No categories match the current search."
+msgstr "لا توجد تصنيفات مطابقة للبحث الحالي."
+
+msgid "%(count)s category(ies) found"
+msgstr "تم العثور على %(count)s تصنيف"
+
+msgid "Contains"
+msgstr "يحتوي على"
+
+msgid "book(s)"
+msgstr "كتاب"
+
 msgid "Manage the authors linked to your books."
 msgstr "إدارة المؤلفين المرتبطين بكتبك."
 

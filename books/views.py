@@ -667,9 +667,29 @@ def stock_adjustment_create(request, book_id):
 @permission_required("books.view_category", raise_exception=True)
 def category_list(request):
     categories = Category.objects.filter(owner=request.user).annotate(book_count=Count("book")).order_by("name")
+    q = request.GET.get("q", "").strip()
+    if q:
+        categories = categories.filter(name__icontains=q)
+
+    query_params = request.GET.copy()
+    query_params.pop("page", None)
+    query_string = query_params.urlencode()
+
     paginator = Paginator(categories, 25)
     page_obj = paginator.get_page(request.GET.get("page"))
-    return render(request, "books/category_list.html", {"categories": page_obj.object_list, "page_obj": page_obj})
+
+    return render(
+        request,
+        "books/category_list.html",
+        {
+            "categories": page_obj.object_list,
+            "page_obj": page_obj,
+            "q": q,
+            "query_string": query_string,
+            "result_count_text": gettext("%(count)s category(ies) found") % {"count": paginator.count},
+            "has_any_categories": Category.objects.filter(owner=request.user).exists(),
+        },
+    )
 
 
 @login_required

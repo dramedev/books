@@ -142,6 +142,18 @@ msgstr "Aucun auteur pour le moment."
 msgid "No categories yet."
 msgstr "Aucune catégorie pour le moment."
 
+msgid "No categories match the current search."
+msgstr "Aucune catégorie ne correspond à la recherche actuelle."
+
+msgid "%(count)s category(ies) found"
+msgstr "%(count)s catégorie(s) trouvée(s)"
+
+msgid "Contains"
+msgstr "Contient"
+
+msgid "book(s)"
+msgstr "livre(s)"
+
 msgid "Manage the authors linked to your books."
 msgstr "Gérez les auteurs liés à vos livres."
 
