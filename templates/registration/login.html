@@ -142,7 +142,6 @@ body{
     margin-bottom:8px;
     font-size:1.4rem;
     font-weight:600;
-    color:var(--text);
 }
 
 .login-brand i{
@@ -151,9 +150,54 @@ body{
     animation:brandGlow 2.4s ease-in-out infinite;
 }
 
+.login-brand span{
+    background:linear-gradient(90deg, var(--text) 0%, var(--accent) 50%, var(--text) 100%);
+    background-size:200% auto;
+    -webkit-background-clip:text;
+    background-clip:text;
+    color:transparent;
+    animation:brandShimmer 4s linear infinite;
+}
+
+@keyframes brandShimmer{
+    0%{ background-position:200% center; }
+    100%{ background-position:-200% center; }
+}
+
 @keyframes brandGlow{
     0%, 100%{ filter:drop-shadow(0 0 0 rgba(211,156,79,0)); }
     50%{ filter:drop-shadow(0 0 10px rgba(211,156,79,0.7)); }
+}
+
+/* Staggered entrance for each card element */
+.login-card > *{
+    opacity:0;
+    animation:fieldIn 0.5s ease both;
+}
+
+.login-card .login-brand{ animation-delay:0.15s; }
+.login-card h1{ animation-delay:0.25s; }
+.login-card .alert{ animation-delay:0.3s; }
+.login-card .login-foot{ animation-delay:0.75s; }
+
+.login-card form{
+    opacity:1;
+    animation:none;
+}
+
+.login-card form > *{
+    opacity:0;
+    animation:fieldIn 0.5s ease both;
+}
+
+.login-card form .mb-3:nth-of-type(1){ animation-delay:0.35s; }
+.login-card form .mb-3:nth-of-type(2){ animation-delay:0.43s; }
+.login-card form .login-btn{ animation-delay:0.51s; }
+.login-card form .login-forgot{ animation-delay:0.59s; }
+
+@keyframes fieldIn{
+    0%{ opacity:0; transform:translateY(10px); }
+    100%{ opacity:1; transform:translateY(0); }
 }
 
 .login-card h1{
@@ -205,6 +249,8 @@ body{
 }
 
 .login-btn{
+    position:relative;
+    overflow:hidden;
     width:100%;
     border:none;
     border-radius:10px;
@@ -213,7 +259,23 @@ body{
     font-size:1rem;
     color:var(--accent-text);
     background:linear-gradient(135deg, #e6b066, var(--accent));
-    transition:transform 0.15s ease, box-shadow 0.15s ease;
+    transition:transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
+}
+
+.login-btn::after{
+    content:"";
+    position:absolute;
+    top:0;
+    left:-75%;
+    width:50%;
+    height:100%;
+    background:linear-gradient(120deg, transparent, rgba(255,255,255,0.45), transparent);
+    transform:skewX(-20deg);
+    transition:left 0.6s ease;
+}
+
+.login-btn:hover::after{
+    left:125%;
 }
 
 .login-btn:hover{
@@ -223,6 +285,18 @@ body{
 
 .login-btn:active{
     transform:translateY(0);
+}
+
+.login-btn:disabled{
+    opacity:0.85;
+    cursor:wait;
+}
+
+.login-btn .spinner-border{
+    width:1rem;
+    height:1rem;
+    border-width:2px;
+    vertical-align:-2px;
 }
 
 .login-card a{
@@ -278,7 +352,7 @@ body{
 </div>
 {% endif %}
 
-<form method="post">
+<form method="post" id="loginForm">
 {% csrf_token %}
 
 <div class="mb-3">
@@ -295,8 +369,8 @@ body{
 {{ form.password }}
 </div>
 
-<button class="login-btn">
-{% translate "Login" %}
+<button class="login-btn" id="loginBtn" type="submit">
+<span class="login-btn-label">{% translate "Login" %}</span>
 </button>
 
 <p class="login-forgot">
@@ -307,6 +381,15 @@ body{
 <input type="hidden" name="next" value="{{ next }}">
 {% endif %}
 </form>
+
+<script>
+document.getElementById("loginForm").addEventListener("submit", function(){
+    const btn = document.getElementById("loginBtn");
+    if (btn.disabled) return;
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border" role="status" aria-hidden="true"></span> {% translate "Signing in…" %}';
+});
+</script>
 
 <p class="login-foot">
 {% translate "Don't have an account?" %} <a href="{% url 'signup' %}">{% translate "Create one" %}</a>

@@ -46,6 +46,9 @@ msgstr "المظهر"
 msgid "Login"
 msgstr "تسجيل الدخول"
 
+msgid "Signing in…"
+msgstr "جاري تسجيل الدخول…"
+
 msgid "Language"
 msgstr "اللغة"
 
@@ -1563,6 +1566,24 @@ msgstr "العميل"
 
 msgid "Back to Customers"
 msgstr "العودة إلى العملاء"
+
+msgid "Contact"
+msgstr "التواصل"
+
+msgid "Billing Summary"
+msgstr "ملخص الفوترة"
+
+msgid "Total billed"
+msgstr "إجمالي المفوتر"
+
+msgid "Outstanding balance"
+msgstr "الرصيد المستحق"
+
+msgid "No invoices for this customer yet."
+msgstr "لا توجد فواتير لهذا العميل حتى الآن."
+
+msgid "%(count)s overdue"
+msgstr "%(count)s متأخرة"
 
 msgid "Mark Sent"
 msgstr "تحديد كمُرسَل"

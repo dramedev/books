@@ -46,6 +46,9 @@ msgstr "Thème"
 msgid "Login"
 msgstr "Connexion"
 
+msgid "Signing in…"
+msgstr "Connexion en cours…"
+
 msgid "Language"
 msgstr "Langue"
 
@@ -1563,6 +1566,24 @@ msgstr "le client"
 
 msgid "Back to Customers"
 msgstr "Retour aux clients"
+
+msgid "Contact"
+msgstr "Contact"
+
+msgid "Billing Summary"
+msgstr "Résumé de facturation"
+
+msgid "Total billed"
+msgstr "Total facturé"
+
+msgid "Outstanding balance"
+msgstr "Solde impayé"
+
+msgid "No invoices for this customer yet."
+msgstr "Aucune facture pour ce client pour l'instant."
+
+msgid "%(count)s overdue"
+msgstr "%(count)s en retard"
 
 msgid "Mark Sent"
 msgstr "Marquer comme envoyé"
