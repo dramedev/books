@@ -2518,6 +2518,10 @@ def _invoice_filters(request):
     if end_date:
         invoices = invoices.filter(invoice_date__lte=end_date)
 
+    customer_id = request.GET.get("customer", "")
+    if customer_id.isdigit():
+        invoices = invoices.filter(customer_id=customer_id)
+
     return invoices
 
 
@@ -2606,7 +2610,19 @@ def invoice_create(request):
     customers = Customer.objects.filter(owner=request.user).values("id", "name", "email", "address")
     customers_json = _safe_json(list(customers))
 
-    form = InvoiceForm(user=request.user)
+    initial = {}
+    customer_id = request.GET.get("customer", "")
+    if customer_id.isdigit():
+        customer = Customer.objects.filter(id=customer_id, owner=request.user).first()
+        if customer:
+            initial = {
+                "customer": customer.id,
+                "customer_name": customer.name,
+                "customer_email": customer.email,
+                "customer_address": customer.address,
+            }
+
+    form = InvoiceForm(user=request.user, initial=initial)
 
     if request.method == "POST":
         form = InvoiceForm(request.POST, user=request.user)
@@ -3569,17 +3585,29 @@ def customer_detail(request, id):
     customer = get_object_or_404(Customer, id=id, owner=request.user)
     invoices = customer.invoices.filter(owner=request.user).prefetch_related("items").order_by("-invoice_date")
 
-    total_billed = sum((invoice.grand_total for invoice in invoices), Decimal(0))
-    outstanding_balance = sum(
-        (invoice.grand_total for invoice in invoices if invoice.status != Invoice.STATUS_PAID),
-        Decimal(0),
-    )
+    billed_by_currency = {}
+    outstanding_by_currency = {}
+    overdue_count = 0
+    for invoice in invoices:
+        billed_by_currency[invoice.currency] = billed_by_currency.get(invoice.currency, Decimal(0)) + invoice.grand_total
+        if invoice.status != Invoice.STATUS_PAID:
+            outstanding_by_currency[invoice.currency] = (
+                outstanding_by_currency.get(invoice.currency, Decimal(0)) + invoice.grand_total
+            )
+        if invoice.is_overdue:
+            overdue_count += 1
+
+    paginator = Paginator(invoices, 10)
+    page_obj = paginator.get_page(request.GET.get("page"))
 
     return render(request, "books/customer_detail.html", {
         "customer": customer,
-        "invoices": invoices,
-        "total_billed": total_billed,
-        "outstanding_balance": outstanding_balance,
+        "invoices": page_obj.object_list,
+        "page_obj": page_obj,
+        "billed_by_currency": sorted(billed_by_currency.items()),
+        "outstanding_by_currency": sorted(outstanding_by_currency.items()),
+        "overdue_count": overdue_count,
+        "overdue_badge_text": gettext("%(count)s overdue") % {"count": overdue_count},
     })
 
 

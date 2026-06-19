@@ -13,7 +13,13 @@
 {% endif %}
 </div>
 
-<div class="d-flex gap-2">
+<div class="d-flex gap-2 flex-wrap">
+{% if perms.books.add_invoice %}
+<a class="btn btn-primary" href="{% url 'invoice_create' %}?customer={{ customer.id }}">
+{% translate "New Invoice" %}
+</a>
+{% endif %}
+
 {% if perms.books.change_customer %}
 <a class="btn btn-warning" href="{% url 'customer_update' customer.id %}">
 {% translate "Edit" %}
@@ -57,17 +63,27 @@
 
 <dl class="row mb-0">
 <dt class="col-sm-6">{% translate "Invoices" %}</dt>
-<dd class="col-sm-6">{{ invoices|length }}</dd>
+<dd class="col-sm-6">
+{{ page_obj.paginator.count }}
+{% if overdue_count %}<span class="badge bg-danger ms-1">{{ overdue_badge_text }}</span>{% endif %}
+</dd>
 
 <dt class="col-sm-6">{% translate "Total billed" %}</dt>
-<dd class="col-sm-6">{{ total_billed }}</dd>
+<dd class="col-sm-6">
+{% for currency, amount in billed_by_currency %}
+<div>{{ amount }} {{ currency }}</div>
+{% empty %}
+-
+{% endfor %}
+</dd>
 
 <dt class="col-sm-6">{% translate "Outstanding balance" %}</dt>
 <dd class="col-sm-6">
-{{ outstanding_balance }}
-{% if outstanding_balance > 0 %}
-<span class="badge bg-danger">{% translate "Due" %}</span>
-{% endif %}
+{% for currency, amount in outstanding_by_currency %}
+<div>{{ amount }} {{ currency }} <span class="badge bg-danger">{% translate "Due" %}</span></div>
+{% empty %}
+-
+{% endfor %}
 </dd>
 </dl>
 </div>
@@ -76,10 +92,20 @@
 
 
 <div class="page-panel">
-<h2 class="mb-3">{% translate "Invoices" %}</h2>
+<div class="d-flex justify-content-between align-items-center mb-3">
+<h2 class="mb-0">{% translate "Invoices" %}</h2>
+{% if invoices or page_obj.paginator.count %}
+<div class="d-flex gap-2">
+<a class="btn btn-outline-light btn-sm" href="{% url 'export_invoices_csv' %}?customer={{ customer.id }}">{% translate "CSV" %}</a>
+<a class="btn btn-outline-light btn-sm" href="{% url 'export_invoices_excel' %}?customer={{ customer.id }}">{% translate "Excel" %}</a>
+<a class="btn btn-outline-light btn-sm" href="{% url 'export_invoices_pdf' %}?customer={{ customer.id }}">{% translate "PDF" %}</a>
+</div>
+{% endif %}
+</div>
 
 <div class="table-responsive">
 <table class="table table-striped align-middle mb-0">
+<thead>
 <tr>
 <th>{% translate "Number" %}</th>
 <th>{% translate "Date" %}</th>
@@ -88,7 +114,8 @@
 <th>{% translate "Total" %}</th>
 <th>{% translate "Status" %}</th>
 </tr>
-
+</thead>
+<tbody>
 {% for invoice in invoices %}
 <tr {% if invoice.is_overdue %}class="table-danger"{% endif %}>
 <td><a href="{% url 'invoice_detail' invoice.id %}">{{ invoice.invoice_number }}</a></td>
@@ -105,8 +132,11 @@
 </td>
 </tr>
 {% endfor %}
+</tbody>
 </table>
 </div>
+
+{% include "books/_pagination.html" %}
 </div>
 
 
