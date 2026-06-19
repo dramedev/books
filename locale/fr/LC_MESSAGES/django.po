@@ -106,6 +106,9 @@ msgstr "Modifier"
 msgid "Delete"
 msgstr "Supprimer"
 
+msgid "View"
+msgstr "Voir"
+
 msgid "Save"
 msgstr "Enregistrer"
 
@@ -1183,6 +1186,24 @@ msgstr "Total"
 msgid "No invoices yet."
 msgstr "Aucune facture pour le moment."
 
+msgid "No invoices match the current filters."
+msgstr "Aucune facture ne correspond aux filtres actuels."
+
+msgid "Create your first invoice"
+msgstr "Créez votre première facture"
+
+msgid "Invoice number, customer, email"
+msgstr "Numéro de facture, client, e-mail"
+
+msgid "Date: %(start)s – %(end)s"
+msgstr "Date : %(start)s – %(end)s"
+
+msgid "any"
+msgstr "quelconque"
+
+msgid "%(count)s invoice(s) found"
+msgstr "%(count)s facture(s) trouvée(s)"
+
 msgid "Create Invoice"
 msgstr "Créer la facture"
 
@@ -1224,9 +1245,6 @@ msgstr "Ajouter une ligne"
 
 msgid "Add"
 msgstr "Ajouter"
-
-msgid "View"
-msgstr "Voir"
 
 msgid "Invoice %(number)s created."
 msgstr "Facture %(number)s créée."

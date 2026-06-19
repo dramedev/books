@@ -18,14 +18,51 @@
 </div>
 </div>
 
+<form class="filter-panel mb-3" method="get">
+{% if selected_status %}<input type="hidden" name="status" value="{{ selected_status }}">{% endif %}
+<div class="row g-3 align-items-end">
+<div class="col-md-4">
+<label class="form-label" for="q">{% translate "Search" %}</label>
+<div class="input-group">
+<span class="input-group-text"><i class="bi bi-search"></i></span>
+<input id="q" name="q" class="form-control" value="{{ filters.q }}" placeholder="{% translate 'Invoice number, customer, email' %}">
+</div>
+</div>
+<div class="col-md-3">
+<label class="form-label" for="start_date">{% translate "From" %}</label>
+<input id="start_date" type="date" name="start_date" class="form-control" value="{{ filters.start_date }}">
+</div>
+<div class="col-md-3">
+<label class="form-label" for="end_date">{% translate "To" %}</label>
+<input id="end_date" type="date" name="end_date" class="form-control" value="{{ filters.end_date }}">
+</div>
+<div class="col-md-auto d-flex gap-2 align-items-end">
+<button class="btn btn-success" type="submit">{% translate "Apply" %}</button>
+<a class="btn btn-outline-light" href="{% url 'invoice_list' %}">{% translate "Reset" %}</a>
+</div>
+</div>
+</form>
+
 <div class="mb-3 d-flex gap-2 flex-wrap align-items-center">
-<a class="btn btn-sm {% if not selected_status %}btn-primary{% else %}btn-outline-light{% endif %}" href="{% url 'invoice_list' %}">{% translate "All" %}</a>
-{% for value, label in status_choices %}
-<a class="btn btn-sm {% if selected_status == value %}btn-primary{% else %}btn-outline-light{% endif %}" href="?status={{ value }}">{{ label }}</a>
+{% for status_link in status_links %}
+<a class="btn btn-sm {% if status_link.active %}btn-primary{% else %}btn-outline-light{% endif %}" href="{{ status_link.url }}">{{ status_link.label }}</a>
 {% endfor %}
-<a class="btn btn-sm {% if selected_status == 'overdue' %}btn-danger{% else %}btn-outline-danger{% endif %}" href="?status=overdue">
+<a class="btn btn-sm {% if overdue_link.active %}btn-danger{% else %}btn-outline-danger{% endif %}" href="{{ overdue_link.url }}">
 {% translate "Overdue" %}{% if overdue_count %} <span class="badge bg-light text-danger ms-1">{{ overdue_count }}</span>{% endif %}
 </a>
+</div>
+
+<div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+<span class="muted-text small">{{ result_count_text }}</span>
+{% if active_filters %}
+<div class="d-flex flex-wrap gap-2">
+{% for active_filter in active_filters %}
+<a class="badge text-decoration-none" style="background:var(--surface-alt); color:var(--text); border:1px solid var(--border);" href="?{{ active_filter.url }}">
+{{ active_filter.label }} <i class="bi bi-x"></i>
+</a>
+{% endfor %}
+</div>
+{% endif %}
 </div>
 
 {% if perms.books.change_invoice %}
@@ -34,7 +71,7 @@
 <input type="hidden" name="next" value="{{ request.get_full_path }}">
 </form>
 
-<div id="invoiceBulkBar" style="display:none;" class="d-flex align-items-center gap-3 mb-2 p-2 rounded" style="background:var(--surface-alt); border:1px solid var(--border);">
+<div id="invoiceBulkBar" style="display:none; background:var(--surface-alt); border:1px solid var(--border);" class="d-flex align-items-center gap-3 mb-2 p-2 rounded">
 <span id="invoiceBulkCount" class="muted-text small"></span>
 <button type="submit" form="invoiceBulkForm" name="action" value="sent" class="btn btn-info btn-sm">{% translate "Mark Selected Sent" %}</button>
 <button type="submit" form="invoiceBulkForm" name="action" value="paid" class="btn btn-success btn-sm">{% translate "Mark Selected Paid" %}</button>
@@ -44,6 +81,7 @@
 
 <div class="table-responsive">
 <table class="table table-striped align-middle">
+<thead>
 <tr>
 {% if perms.books.change_invoice %}
 <th style="width:36px;">
@@ -59,7 +97,8 @@
 <th>{% translate "Status" %}</th>
 <th>{% translate "Actions" %}</th>
 </tr>
-
+</thead>
+<tbody>
 {% for invoice in invoices %}
 <tr {% if invoice.is_overdue %}class="table-danger"{% endif %}>
 {% if perms.books.change_invoice %}
@@ -81,8 +120,12 @@
 <td>{{ invoice.grand_total }}</td>
 <td><span class="badge {{ invoice.status_badge_class }}">{{ invoice.get_status_display }}</span></td>
 <td class="d-flex gap-2 flex-wrap">
-<a class="btn btn-outline-light btn-sm" href="{% url 'invoice_detail' invoice.id %}">{% translate "View" %}</a>
-<a class="btn btn-outline-light btn-sm" href="{% url 'invoice_pdf' invoice.id %}">{% translate "PDF" %}</a>
+<a class="btn btn-outline-light btn-sm" href="{% url 'invoice_detail' invoice.id %}" title="{% translate 'View' %}" aria-label="{% translate 'View' %}">
+<i class="bi bi-eye"></i>
+</a>
+<a class="btn btn-outline-light btn-sm" href="{% url 'invoice_pdf' invoice.id %}" title="{% translate 'PDF' %}" aria-label="{% translate 'PDF' %}">
+<i class="bi bi-file-earmark-pdf"></i>
+</a>
 {% if perms.books.change_invoice %}
 {% if invoice.status == "draft" %}
 <form method="post" action="{% url 'invoice_update_status' invoice.id 'sent' %}" class="d-inline">
@@ -97,21 +140,31 @@
 {% endif %}
 {% endif %}
 {% if perms.books.delete_invoice %}
-<a class="btn btn-danger btn-sm" href="{% url 'invoice_delete' invoice.id %}">{% translate "Delete" %}</a>
+<a class="btn btn-danger btn-sm" href="{% url 'invoice_delete' invoice.id %}" title="{% translate 'Delete' %}" aria-label="{% translate 'Delete' %}">
+<i class="bi bi-trash"></i>
+</a>
 {% endif %}
 </td>
 </tr>
 {% empty %}
-<tr><td colspan="{% if perms.books.change_invoice %}9{% else %}8{% endif %}" class="text-center muted-text py-4">{% translate "No invoices yet." %}</td></tr>
+<tr>
+<td colspan="{% if perms.books.change_invoice %}9{% else %}8{% endif %}" class="text-center muted-text py-4">
+{% if has_any_invoices %}
+{% translate "No invoices match the current filters." %}
+{% else %}
+{% translate "No invoices yet." %}
+{% if perms.books.add_invoice %}
+<a href="{% url 'invoice_create' %}">{% translate "Create your first invoice" %}</a>
+{% endif %}
+{% endif %}
+</td>
+</tr>
 {% endfor %}
+</tbody>
 </table>
 </div>
 
-{% if selected_status %}
-{% include "books/_pagination.html" with extra_qs="status="|add:selected_status %}
-{% else %}
-{% include "books/_pagination.html" %}
-{% endif %}
+{% include "books/_pagination.html" with extra_qs=query_string %}
 
 <script>
 (function(){

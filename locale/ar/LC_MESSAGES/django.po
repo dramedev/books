@@ -106,6 +106,9 @@ msgstr "تعديل"
 msgid "Delete"
 msgstr "حذف"
 
+msgid "View"
+msgstr "عرض"
+
 msgid "Save"
 msgstr "حفظ"
 
@@ -1174,6 +1177,24 @@ msgstr "الإجمالي"
 msgid "No invoices yet."
 msgstr "لا توجد فواتير حتى الآن."
 
+msgid "No invoices match the current filters."
+msgstr "لا توجد فواتير مطابقة للفلاتر الحالية."
+
+msgid "Create your first invoice"
+msgstr "أنشئ أول فاتورة لك"
+
+msgid "Invoice number, customer, email"
+msgstr "رقم الفاتورة، العميل، البريد الإلكتروني"
+
+msgid "Date: %(start)s – %(end)s"
+msgstr "التاريخ: %(start)s – %(end)s"
+
+msgid "any"
+msgstr "أي"
+
+msgid "%(count)s invoice(s) found"
+msgstr "تم العثور على %(count)s فاتورة"
+
 msgid "Create Invoice"
 msgstr "إنشاء فاتورة"
 
@@ -1215,9 +1236,6 @@ msgstr "إضافة بند"
 
 msgid "Add"
 msgstr "إضافة"
-
-msgid "View"
-msgstr "عرض"
 
 msgid "Invoice %(number)s created."
 msgstr "تم إنشاء الفاتورة %(number)s."

@@ -2502,7 +2502,50 @@ def _invoice_filters(request):
     elif status in dict(Invoice.STATUS_CHOICES):
         invoices = invoices.filter(status=status)
 
+    search = request.GET.get("q", "").strip()
+    if search:
+        invoices = invoices.filter(
+            Q(invoice_number__icontains=search)
+            | Q(customer_name__icontains=search)
+            | Q(customer_email__icontains=search)
+        )
+
+    start_date = request.GET.get("start_date", "").strip()
+    if start_date:
+        invoices = invoices.filter(invoice_date__gte=start_date)
+
+    end_date = request.GET.get("end_date", "").strip()
+    if end_date:
+        invoices = invoices.filter(invoice_date__lte=end_date)
+
     return invoices
+
+
+def _active_invoice_filters(request, query_params):
+    def remove(*keys):
+        params = query_params.copy()
+        for key in keys:
+            params.pop(key, None)
+        return params.urlencode()
+
+    filters = []
+
+    search = request.GET.get("q", "").strip()
+    if search:
+        filters.append({"label": gettext('Search: "%(q)s"') % {"q": search}, "url": remove("q")})
+
+    start_date = request.GET.get("start_date", "").strip()
+    end_date = request.GET.get("end_date", "").strip()
+    if start_date or end_date:
+        filters.append({
+            "label": gettext("Date: %(start)s – %(end)s") % {
+                "start": start_date or gettext("any"),
+                "end": end_date or gettext("any"),
+            },
+            "url": remove("start_date", "end_date"),
+        })
+
+    return filters
 
 
 @login_required
@@ -2525,13 +2568,35 @@ def invoice_list(request):
     paginator = Paginator(invoices, 10)
     page_obj = paginator.get_page(request.GET.get("page"))
 
+    status_base_params = query_params.copy()
+    status_base_params.pop("status", None)
+
+    def status_url(value):
+        params = status_base_params.copy()
+        if value:
+            params["status"] = value
+        return "?" + params.urlencode()
+
+    status_links = [
+        {"value": "", "label": gettext("All"), "url": status_url(""), "active": not status}
+    ] + [
+        {"value": value, "label": label, "url": status_url(value), "active": status == value}
+        for value, label in Invoice.STATUS_CHOICES
+    ]
+    overdue_link = {"url": status_url("overdue"), "active": status == "overdue"}
+
     return render(request, "books/invoice_list.html", {
         "invoices": page_obj.object_list,
         "page_obj": page_obj,
-        "status_choices": Invoice.STATUS_CHOICES,
         "selected_status": status,
+        "status_links": status_links,
+        "overdue_link": overdue_link,
         "overdue_count": overdue_count,
         "query_string": query_string,
+        "filters": request.GET,
+        "active_filters": _active_invoice_filters(request, query_params),
+        "result_count_text": gettext("%(count)s invoice(s) found") % {"count": paginator.count},
+        "has_any_invoices": Invoice.objects.filter(owner=request.user).exists(),
     })
 
 
