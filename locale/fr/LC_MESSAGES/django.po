@@ -139,6 +139,12 @@ msgstr "Ajouter une vente"
 msgid "No authors yet."
 msgstr "Aucun auteur pour le moment."
 
+msgid "No authors match the current search."
+msgstr "Aucun auteur ne correspond à la recherche actuelle."
+
+msgid "%(count)s author(s) found"
+msgstr "%(count)s auteur(s) trouvé(s)"
+
 msgid "No categories yet."
 msgstr "Aucune catégorie pour le moment."
 

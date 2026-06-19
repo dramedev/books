@@ -773,9 +773,29 @@ def category_delete(request, id):
 @permission_required("books.view_author", raise_exception=True)
 def author_list(request):
     authors = Author.objects.filter(owner=request.user).annotate(book_count=Count("books")).order_by("name")
+    q = request.GET.get("q", "").strip()
+    if q:
+        authors = authors.filter(name__icontains=q)
+
+    query_params = request.GET.copy()
+    query_params.pop("page", None)
+    query_string = query_params.urlencode()
+
     paginator = Paginator(authors, 25)
     page_obj = paginator.get_page(request.GET.get("page"))
-    return render(request, "books/author_list.html", {"authors": page_obj.object_list, "page_obj": page_obj})
+
+    return render(
+        request,
+        "books/author_list.html",
+        {
+            "authors": page_obj.object_list,
+            "page_obj": page_obj,
+            "q": q,
+            "query_string": query_string,
+            "result_count_text": gettext("%(count)s author(s) found") % {"count": paginator.count},
+            "has_any_authors": Author.objects.filter(owner=request.user).exists(),
+        },
+    )
 
 
 @login_required

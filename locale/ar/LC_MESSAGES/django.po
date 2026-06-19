@@ -139,6 +139,12 @@ msgstr "إضافة عملية بيع"
 msgid "No authors yet."
 msgstr "لا يوجد مؤلفون حتى الآن."
 
+msgid "No authors match the current search."
+msgstr "لا يوجد مؤلفون يطابقون البحث الحالي."
+
+msgid "%(count)s author(s) found"
+msgstr "تم العثور على %(count)s مؤلف"
+
 msgid "No categories yet."
 msgstr "لا توجد تصنيفات حتى الآن."
 
