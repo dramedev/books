@@ -45,7 +45,10 @@
 
 <div class="col-md-3">
 <label class="form-label" for="q">{% translate "Search" %}</label>
+<div class="input-group">
+<span class="input-group-text"><i class="bi bi-search"></i></span>
 <input id="q" name="q" class="form-control" value="{{ filters.q }}" placeholder="{% translate 'Title, author, publisher, ISBN' %}">
+</div>
 </div>
 
 <div class="col-md-2">
@@ -80,7 +83,7 @@
 
 <div class="col-md-2">
 <label class="form-label" for="sort">{% translate "Sort" %}</label>
-<select id="sort" name="sort" class="form-select">
+<select id="sort" name="sort" class="form-select" onchange="this.form.submit()">
 <option value="title" {% if sort == "title" %}selected{% endif %}>{% translate "Title A-Z" %}</option>
 <option value="-title" {% if sort == "-title" %}selected{% endif %}>{% translate "Title Z-A" %}</option>
 <option value="date" {% if sort == "date" %}selected{% endif %}>{% translate "Oldest first" %}</option>
@@ -105,13 +108,26 @@
 </div>
 </form>
 
+<div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+<span class="muted-text small">{{ result_count_text }}</span>
+{% if active_filters %}
+<div class="d-flex flex-wrap gap-2">
+{% for active_filter in active_filters %}
+<a class="badge text-decoration-none" style="background:var(--surface-alt); color:var(--text); border:1px solid var(--border);" href="?{{ active_filter.url }}">
+{{ active_filter.label }} <i class="bi bi-x"></i>
+</a>
+{% endfor %}
+</div>
+{% endif %}
+</div>
+
 
 {% if perms.books.delete_book %}
 <form method="post" action="{% url 'book_bulk_delete' %}" id="bulkForm">
 {% csrf_token %}
 {% endif %}
 
-<div id="bulkBar" style="display:none;" class="d-flex align-items-center gap-3 mb-2 p-2 rounded" style="background:var(--surface-alt); border:1px solid var(--border);">
+<div id="bulkBar" style="display:none; background:var(--surface-alt); border:1px solid var(--border);" class="d-flex align-items-center gap-3 mb-2 p-2 rounded">
 <span id="bulkCount" class="muted-text small"></span>
 {% if perms.books.delete_book %}
 <button type="submit" form="bulkForm" class="btn btn-danger btn-sm"
@@ -124,6 +140,7 @@
 
 <div class="table-responsive">
 <table class="table table-striped align-middle">
+<thead>
 <tr>
 {% if perms.books.delete_book %}
 <th style="width:36px;">
@@ -139,7 +156,8 @@
 <th>{% translate "Stock" %}</th>
 <th>{% translate "Actions" %}</th>
 </tr>
-
+</thead>
+<tbody>
 {% for book in books %}
 <tr>
 {% if perms.books.delete_book %}
@@ -167,14 +185,14 @@
 </td>
 <td>
 {% if perms.books.change_book %}
-<a class="btn btn-warning btn-sm" href="{% url 'book_update' book.id %}">
-{% translate "Edit" %}
+<a class="btn btn-warning btn-sm" href="{% url 'book_update' book.id %}" title="{% translate 'Edit' %}" aria-label="{% translate 'Edit' %}">
+<i class="bi bi-pencil"></i>
 </a>
 {% endif %}
 
 {% if perms.books.delete_book %}
-<a class="btn btn-danger btn-sm" href="{% url 'book_delete' book.id %}">
-{% translate "Delete" %}
+<a class="btn btn-danger btn-sm" href="{% url 'book_delete' book.id %}" title="{% translate 'Delete' %}" aria-label="{% translate 'Delete' %}">
+<i class="bi bi-trash"></i>
 </a>
 {% endif %}
 </td>
@@ -183,10 +201,18 @@
 {% empty %}
 <tr>
 <td colspan="9" class="text-center muted-text py-4">
+{% if has_any_books %}
 {% translate "No books match the current filters." %}
+{% else %}
+{% translate "No books in your catalog yet." %}
+{% if perms.books.add_book %}
+<a href="{% url 'book_create' %}">{% translate "Add your first book" %}</a>
+{% endif %}
+{% endif %}
 </td>
 </tr>
 {% endfor %}
+</tbody>
 </table>
 </div>
 

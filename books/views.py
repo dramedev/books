@@ -325,6 +325,44 @@ def _filtered_books_for_export(request):
     return _book_filters(request).order_by("title")
 
 
+def _active_book_filters(request, context):
+    query_params = request.GET.copy()
+    query_params.pop("page", None)
+
+    def remove(*keys):
+        params = query_params.copy()
+        for key in keys:
+            params.pop(key, None)
+        return params.urlencode()
+
+    filters = []
+
+    search = request.GET.get("q", "").strip()
+    if search:
+        filters.append({"label": gettext('Search: "%(q)s"') % {"q": search}, "url": remove("q")})
+
+    category_id = request.GET.get("category", "")
+    if category_id.isdigit():
+        category = context["categories"].filter(id=category_id).first()
+        if category:
+            filters.append({"label": gettext("Category: %(name)s") % {"name": category.name}, "url": remove("category")})
+
+    author_id = request.GET.get("author", "")
+    if author_id.isdigit():
+        author = context["authors"].filter(id=author_id).first()
+        if author:
+            filters.append({"label": gettext("Author: %(name)s") % {"name": author.name}, "url": remove("author")})
+
+    publisher = request.GET.get("publisher", "").strip()
+    if publisher:
+        filters.append({"label": gettext("Publisher: %(name)s") % {"name": publisher}, "url": remove("publisher")})
+
+    if request.GET.get("low_stock") == "1":
+        filters.append({"label": gettext("Low stock only"), "url": remove("low_stock")})
+
+    return filters
+
+
 def _filter_context(request):
     query_params = request.GET.copy()
 
@@ -387,8 +425,11 @@ def book_list(request):
             "books": page_obj.object_list,
             "page_obj": page_obj,
             "sort": sort,
+            "result_count_text": gettext("%(count)s book(s) found") % {"count": paginator.count},
+            "has_any_books": Book.objects.filter(owner=request.user).exists(),
         }
     )
+    context["active_filters"] = _active_book_filters(request, context)
 
     return render(request, "books/list.html", context)
 
