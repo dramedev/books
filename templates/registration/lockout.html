@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+
+{% block content %}
+
+
+<div class="row justify-content-center">
+<div class="col-md-5">
+<div class="page-panel">
+<h1 class="mb-3">{% translate "Too Many Login Attempts" %}</h1>
+
+<div class="alert alert-danger">
+{% translate "Your account has been temporarily locked due to too many failed login attempts. Please try again later." %}
+</div>
+
+<a class="btn btn-outline-light w-100" href="{% url 'login' %}">
+{% translate "Back to Login" %}
+</a>
+</div>
+</div>
+</div>
+
+
+{% endblock %}

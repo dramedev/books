@@ -3430,7 +3430,7 @@ def redeem_access_code(request):
 
                 del request.session["pending_user_id"]
 
-                login(request, user)
+                login(request, user, backend="django.contrib.auth.backends.ModelBackend")
                 messages.success(request, gettext("Your account is active. Welcome to RumiPress!"))
                 return redirect("dashboard")
 

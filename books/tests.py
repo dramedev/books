@@ -1272,6 +1272,45 @@ class InvoiceBulkUpdateTests(TestCase):
         self.assertRedirects(response, reverse("invoice_list"))
 
 
+class LoginThrottlingTests(TestCase):
+
+    def setUp(self):
+        User = get_user_model()
+        self.user = User.objects.create_user(username="throttled", password="correctpass123")
+
+    def _bad_login(self):
+        return self.client.post(reverse("login"), {"username": "throttled", "password": "wrongpass"})
+
+    def _good_login(self):
+        return self.client.post(reverse("login"), {
+            "username": "throttled", "password": "correctpass123",
+        })
+
+    def test_correct_password_works_before_lockout(self):
+        response = self._good_login()
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(self.client.session.get("_auth_user_id"))
+
+    def test_locked_out_after_failure_limit(self):
+        for _ in range(5):
+            self._bad_login()
+
+        response = self._good_login()
+        self.assertEqual(response.status_code, 429)
+
+    def test_successful_login_resets_failure_count(self):
+        for _ in range(4):
+            self._bad_login()
+
+        self._good_login()
+        self.client.logout()
+
+        self._bad_login()
+        response = self._good_login()
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(self.client.session.get("_auth_user_id"))
+
+
 class AvatarSizeValidationTests(TestCase):
 
     def test_file_under_limit_passes(self):
