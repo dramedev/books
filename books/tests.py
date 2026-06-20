@@ -2049,6 +2049,19 @@ class CustomerPortalTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Acme Shop")
 
+    def test_login_flushes_pre_existing_session(self):
+        session = self.client.session
+        session["pre_existing"] = "fixation-attempt"
+        session.save()
+        old_session_key = session.session_key
+
+        self._request_login_link("acme@example.com")
+        token = CustomerLoginToken.objects.get(customer=self.customer)
+        self.client.get(reverse("customer_portal_verify", args=[token.token]))
+
+        self.assertNotEqual(self.client.session.session_key, old_session_key)
+        self.assertNotIn("pre_existing", self.client.session)
+
     def test_token_is_single_use(self):
         self._request_login_link("acme@example.com")
         token = CustomerLoginToken.objects.get(customer=self.customer)
@@ -2106,7 +2119,10 @@ class CustomerPortalTests(TestCase):
         self._request_login_link("acme@example.com")
         token = CustomerLoginToken.objects.get(customer=self.customer)
         self.client.get(reverse("customer_portal_verify", args=[token.token]))
+        logged_in_session_key = self.client.session.session_key
 
         self.client.post(reverse("customer_portal_logout"))
+
+        self.assertNotEqual(self.client.session.session_key, logged_in_session_key)
         response = self.client.get(reverse("customer_portal_dashboard"))
         self.assertEqual(response.status_code, 302)

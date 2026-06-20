@@ -4313,13 +4313,14 @@ def customer_portal_verify(request, token):
     login_token.used_at = timezone.now()
     login_token.save(update_fields=["used_at"])
 
+    request.session.flush()
     request.session[CUSTOMER_PORTAL_SESSION_KEY] = login_token.customer_id
     return redirect("customer_portal_dashboard")
 
 
 @require_POST
 def customer_portal_logout(request):
-    request.session.pop(CUSTOMER_PORTAL_SESSION_KEY, None)
+    request.session.flush()
     return redirect("customer_portal_login")
 
 
