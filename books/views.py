@@ -2985,7 +2985,7 @@ def _invoice_status_transitions():
     }
 
 
-def _advance_invoice_status(invoice, action):
+def _advance_invoice_status(invoice, action, request):
     transitions = _invoice_status_transitions()
     if action not in transitions:
         return False
@@ -2998,6 +2998,13 @@ def _advance_invoice_status(invoice, action):
     invoice.save(update_fields=["status"])
 
     if new_status == Invoice.STATUS_SENT and invoice.customer_email:
+        portal_note = ""
+        if invoice.customer_id:
+            portal_link = request.build_absolute_uri(reverse("customer_portal_login"))
+            portal_note = (
+                f"\nYou can view this invoice and your billing history anytime at:\n{portal_link}\n"
+            )
+
         send_mail(
             subject=f"Invoice {invoice.invoice_number} from Rumi Press",
             message=(
@@ -3005,7 +3012,8 @@ def _advance_invoice_status(invoice, action):
                 f"Please find invoice {invoice.invoice_number} attached.\n"
                 f"Amount due: {invoice.grand_total} {invoice.currency}\n"
                 + (f"Due date: {invoice.due_date}\n" if invoice.due_date else "")
-                + f"\n{invoice.note}" if invoice.note else ""
+                + portal_note
+                + (f"\n{invoice.note}" if invoice.note else "")
             ),
             from_email=settings.DEFAULT_FROM_EMAIL,
             recipient_list=[invoice.customer_email],
@@ -3024,7 +3032,7 @@ def invoice_update_status(request, id, action):
     if action not in _invoice_status_transitions():
         return redirect("invoice_list")
 
-    if not _advance_invoice_status(invoice, action):
+    if not _advance_invoice_status(invoice, action, request):
         messages.error(request, gettext("Cannot update invoice from its current status."))
         return redirect("invoice_detail", id=invoice.id)
 
@@ -3048,7 +3056,7 @@ def invoice_bulk_update(request):
     else:
         updated = 0
         for invoice in Invoice.objects.filter(owner=request.user, id__in=ids):
-            if _advance_invoice_status(invoice, action):
+            if _advance_invoice_status(invoice, action, request):
                 updated += 1
         skipped = len(ids) - updated
 

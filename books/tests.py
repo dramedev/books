@@ -1222,6 +1222,53 @@ class InvoiceModelTests(TestCase):
         self.assertEqual(self.invoice.grand_total, Decimal("0"))
 
 
+class InvoiceSentNotificationTests(TestCase):
+
+    def setUp(self):
+        User = get_user_model()
+        self.user = User.objects.create_user(username="owner", password="pass1234")
+        self.client.force_login(self.user)
+        grant(self.user, "view_invoice", "change_invoice")
+
+    def test_mark_sent_includes_portal_link_when_customer_linked(self):
+        customer = Customer.objects.create(owner=self.user, name="Acme Shop", email="acme@example.com")
+        invoice = Invoice.objects.create(
+            owner=self.user, customer=customer, customer_name=customer.name,
+            customer_email="acme@example.com", invoice_date=date.today(),
+            currency="USD", status=Invoice.STATUS_DRAFT,
+        )
+
+        self.client.post(reverse("invoice_update_status", args=[invoice.id, "sent"]))
+
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertIn(reverse("customer_portal_login"), mail.outbox[0].body)
+
+    def test_mark_sent_omits_portal_link_without_linked_customer(self):
+        invoice = Invoice.objects.create(
+            owner=self.user, customer_name="Walk-in", customer_email="walkin@example.com",
+            invoice_date=date.today(), currency="USD", status=Invoice.STATUS_DRAFT,
+        )
+
+        self.client.post(reverse("invoice_update_status", args=[invoice.id, "sent"]))
+
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertNotIn("portal", mail.outbox[0].body.lower())
+
+    def test_mark_sent_email_body_intact_without_note(self):
+        invoice = Invoice.objects.create(
+            owner=self.user, customer_name="No Note Co", customer_email="nonote@example.com",
+            invoice_date=date.today(), due_date=date.today(), currency="USD",
+            status=Invoice.STATUS_DRAFT, note="",
+        )
+
+        self.client.post(reverse("invoice_update_status", args=[invoice.id, "sent"]))
+
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertIn("Dear No Note Co", mail.outbox[0].body)
+        self.assertIn("Amount due", mail.outbox[0].body)
+        self.assertIn("Due date", mail.outbox[0].body)
+
+
 class InvoiceBulkUpdateTests(TestCase):
 
     def setUp(self):
