@@ -10,6 +10,7 @@
 </div>
 <div class="d-flex gap-2">
 <a class="btn btn-outline-light" href="{% url 'royalty_report' %}">{% translate "Royalty Report" %}</a>
+<a class="btn btn-outline-light" href="{% url 'royalty_payment_list' %}">{% translate "Payments" %}</a>
 {% if perms.books.add_royaltyrate %}
 <a class="btn btn-primary" href="{% url 'royalty_create' %}">{% translate "Add Rate" %}</a>
 {% endif %}

@@ -44,6 +44,7 @@ from .forms import (
     RedeemAccessCodeForm,
     ReorderForm,
     ReturnForm,
+    RoyaltyPaymentForm,
     RoyaltyRateForm,
     SaleForm,
     SignupForm,
@@ -57,7 +58,7 @@ from .models import (
     AccessCode, Author, Book, Category, Customer,
     Integration, Invoice, InvoiceItem,
     Location, PrintRun, Profile,
-    Reorder, Return, RoyaltyRate,
+    Reorder, Return, RoyaltyPayment, RoyaltyRate,
     Sale, StockAdjustment, StockLevel, Supplier,
 )
 from .permissions import ensure_roles
@@ -3367,10 +3368,65 @@ def royalty_report(request):
             "royalty_amount": royalty_amount,
         })
 
+    payment_totals = {}
+    for item in (
+        RoyaltyPayment.objects.filter(owner=request.user)
+        .values("author__name", "currency")
+        .annotate(total_paid=Sum("amount"))
+        .order_by("author__name")
+    ):
+        payment_totals.setdefault(item["author__name"], []).append({
+            "currency": item["currency"],
+            "total_paid": item["total_paid"],
+        })
+    payment_rows = [{"author": name, "totals": totals} for name, totals in payment_totals.items()]
+
     return render(request, "books/royalty_report.html", {
         "rows": rows,
         "start_date": start_date,
         "end_date": end_date,
+        "payment_rows": payment_rows,
+    })
+
+
+@login_required
+@permission_required("books.view_royaltypayment", raise_exception=True)
+def royalty_payment_list(request):
+    payments = RoyaltyPayment.objects.filter(owner=request.user).select_related("author")
+    return render(request, "books/royalty_payment_list.html", {"payments": payments})
+
+
+@login_required
+@permission_required("books.add_royaltypayment", raise_exception=True)
+def royalty_payment_create(request):
+    form = RoyaltyPaymentForm(user=request.user)
+
+    if request.method == "POST":
+        form = RoyaltyPaymentForm(request.POST, user=request.user)
+        if form.is_valid():
+            payment = form.save(commit=False)
+            payment.owner = request.user
+            payment.save()
+            messages.success(request, gettext("Royalty payment recorded."))
+            return redirect("royalty_payment_list")
+
+    return render(request, "books/royalty_payment_form.html", {"form": form})
+
+
+@login_required
+@permission_required("books.delete_royaltypayment", raise_exception=True)
+def royalty_payment_delete(request, id):
+    payment = get_object_or_404(RoyaltyPayment, id=id, owner=request.user)
+
+    if request.method == "POST":
+        payment.delete()
+        messages.success(request, gettext("Royalty payment deleted."))
+        return redirect("royalty_payment_list")
+
+    return render(request, "books/confirm_delete.html", {
+        "object_type": gettext("royalty payment"),
+        "object_name": str(payment),
+        "cancel_url": reverse("royalty_payment_list"),
     })
 
 

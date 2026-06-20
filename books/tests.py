@@ -16,7 +16,8 @@ from django.utils import timezone
 from . import ai_chat
 from .models import (
     AccessCode, AVATAR_MAX_SIZE_BYTES, Author, Book, Category, Customer, Invoice, InvoiceItem,
-    Location, PrintRun, Profile, Reorder, Sale, StockAdjustment, Supplier, validate_avatar_size,
+    Location, PrintRun, Profile, Reorder, RoyaltyPayment, Sale, StockAdjustment, Supplier,
+    validate_avatar_size,
 )
 from .views import _adjust_stock, _invoice_aging_data, _pl_data, _safe_json
 
@@ -1838,3 +1839,91 @@ class LowStockDigestTests(TestCase):
         self.low_book.save()
         call_command("send_low_stock_digest")
         self.assertEqual(len(mail.outbox), 0)
+
+
+class RoyaltyPaymentViewTests(TestCase):
+
+    def setUp(self):
+        User = get_user_model()
+        self.user = User.objects.create_user(username="owner", password="pass1234")
+        self.other = User.objects.create_user(username="other", password="pass1234")
+        self.client.force_login(self.user)
+        grant(
+            self.user,
+            "view_royaltypayment", "add_royaltypayment",
+            "change_royaltypayment", "delete_royaltypayment",
+            "view_royaltyrate",
+        )
+        self.author = Author.objects.create(owner=self.user, name="Jane Doe")
+        self.other_author = Author.objects.create(owner=self.other, name="John Roe")
+        self.payment = RoyaltyPayment.objects.create(
+            owner=self.user,
+            author=self.author,
+            amount=Decimal("100.00"),
+            currency="USD",
+            payment_date=date(2024, 1, 1),
+        )
+
+    def test_list_shows_own_payments_only(self):
+        RoyaltyPayment.objects.create(
+            owner=self.other,
+            author=self.other_author,
+            amount=Decimal("50.00"),
+            currency="USD",
+            payment_date=date(2024, 1, 1),
+        )
+        response = self.client.get(reverse("royalty_payment_list"))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Jane Doe")
+        self.assertNotContains(response, "John Roe")
+
+    def test_create_payment(self):
+        response = self.client.post(reverse("royalty_payment_create"), {
+            "author": self.author.id,
+            "amount": "75.50",
+            "currency": "USD",
+            "payment_date": "2024-02-01",
+            "note": "",
+        })
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(
+            RoyaltyPayment.objects.filter(owner=self.user, amount=Decimal("75.50")).exists()
+        )
+
+    def test_create_payment_author_choices_scoped_to_owner(self):
+        response = self.client.post(reverse("royalty_payment_create"), {
+            "author": self.other_author.id,
+            "amount": "10.00",
+            "currency": "USD",
+            "payment_date": "2024-02-01",
+            "note": "",
+        })
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(RoyaltyPayment.objects.filter(amount=Decimal("10.00")).exists())
+
+    def test_delete_payment(self):
+        response = self.client.post(reverse("royalty_payment_delete", args=[self.payment.id]))
+        self.assertEqual(response.status_code, 302)
+        self.assertFalse(RoyaltyPayment.objects.filter(id=self.payment.id).exists())
+
+    def test_cannot_delete_other_owners_payment(self):
+        other_payment = RoyaltyPayment.objects.create(
+            owner=self.other,
+            author=self.other_author,
+            amount=Decimal("50.00"),
+            currency="USD",
+            payment_date=date(2024, 1, 1),
+        )
+        response = self.client.post(reverse("royalty_payment_delete", args=[other_payment.id]))
+        self.assertEqual(response.status_code, 404)
+
+    def test_list_requires_permission(self):
+        self.client.force_login(self.other)
+        response = self.client.get(reverse("royalty_payment_list"))
+        self.assertEqual(response.status_code, 403)
+
+    def test_report_includes_payment_totals(self):
+        response = self.client.get(reverse("royalty_report"))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Jane Doe")
+        self.assertContains(response, "100 USD")

@@ -3,7 +3,7 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.password_validation import validate_password
 from django.utils.translation import gettext_lazy as _
 
-from .models import Author, Book, Category, Customer, Integration, Invoice, InvoiceItem, Location, PrintRun, Profile, Reorder, Return, RoyaltyRate, Sale, StockAdjustment, Supplier
+from .models import Author, Book, Category, Customer, Integration, Invoice, InvoiceItem, Location, PrintRun, Profile, Reorder, Return, RoyaltyPayment, RoyaltyRate, Sale, StockAdjustment, Supplier
 
 
 class BookForm(forms.ModelForm):
@@ -542,6 +542,28 @@ class RoyaltyRateForm(forms.ModelForm):
             "author": forms.Select(attrs={"class": "form-select"}),
             "rate": forms.NumberInput(attrs={"class": "form-control", "min": "0", "max": "100", "step": "0.01"}),
             "effective_from": forms.DateInput(format="%Y-%m-%d", attrs={"class": "form-control", "type": "date"}),
+            "note": forms.TextInput(attrs={"class": "form-control", "placeholder": _("Note (optional)")}),
+        }
+
+
+
+class RoyaltyPaymentForm(forms.ModelForm):
+
+    def __init__(self, *args, user=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        if user is not None:
+            self.fields["author"].queryset = Author.objects.filter(owner=user)
+
+    class Meta:
+        model = RoyaltyPayment
+
+        fields = ["author", "amount", "currency", "payment_date", "note"]
+
+        widgets = {
+            "author": forms.Select(attrs={"class": "form-select"}),
+            "amount": forms.NumberInput(attrs={"class": "form-control", "min": "0", "step": "0.01"}),
+            "currency": forms.Select(attrs={"class": "form-select"}),
+            "payment_date": forms.DateInput(format="%Y-%m-%d", attrs={"class": "form-control", "type": "date"}),
             "note": forms.TextInput(attrs={"class": "form-control", "placeholder": _("Note (optional)")}),
         }
 

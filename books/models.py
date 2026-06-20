@@ -650,6 +650,44 @@ class RoyaltyRate(models.Model):
 
 
 
+class RoyaltyPayment(models.Model):
+
+    owner = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="owned_royalty_payments",
+    )
+
+    author = models.ForeignKey(
+        Author,
+        on_delete=models.CASCADE,
+        related_name="royalty_payments",
+        verbose_name=_("Author"),
+    )
+
+    amount = models.DecimalField(max_digits=10, decimal_places=2, verbose_name=_("Amount"))
+
+    currency = models.CharField(
+        max_length=3,
+        choices=CURRENCY_CHOICES,
+        default="USD",
+        verbose_name=_("Currency"),
+    )
+
+    payment_date = models.DateField(verbose_name=_("Payment date"))
+
+    note = models.CharField(max_length=200, blank=True, verbose_name=_("Note"))
+
+
+    class Meta:
+        ordering = ["-payment_date"]
+
+
+    def __str__(self):
+        return f"{self.author.name} – {self.amount} {self.currency} ({self.payment_date})"
+
+
+
 class StockAdjustment(models.Model):
 
     REASON_DAMAGED = "damaged"

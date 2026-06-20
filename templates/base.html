@@ -624,7 +624,7 @@ html[dir="rtl"] .chat-panel{
 </a>
 {% endif %}
 {% if perms.books.view_royaltyrate %}
-<a class="sidebar-link {% if url_name == 'royalty_list' or url_name == 'royalty_report' %}active{% endif %}" href="{% url 'royalty_list' %}">
+<a class="sidebar-link {% if url_name == 'royalty_list' or url_name == 'royalty_report' or url_name == 'royalty_payment_list' %}active{% endif %}" href="{% url 'royalty_list' %}">
 <i class="bi bi-percent"></i> {% translate "Royalties" %}
 </a>
 {% endif %}
