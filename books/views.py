@@ -7,7 +7,7 @@ import math
 import random
 import secrets
 import stripe
-from datetime import timedelta
+from datetime import timedelta, timezone as dt_timezone
 from decimal import Decimal
 from functools import wraps
 from io import BytesIO
@@ -63,7 +63,7 @@ from .models import (
     Integration, Invoice, InvoiceItem,
     Location, PrintRun, Profile,
     Reorder, Return, RoyaltyPayment, RoyaltyRate,
-    Sale, StockAdjustment, StockLevel, Supplier,
+    Sale, StockAdjustment, StockLevel, Subscription, Supplier,
 )
 from .permissions import ensure_roles
 
@@ -3966,14 +3966,129 @@ def redeem_access_code(request):
                 user.groups.add(admin_group)
 
                 Category.objects.get_or_create(owner=user, name="General")
+                Subscription.objects.get_or_create(user=user)
 
                 del request.session["pending_user_id"]
 
                 login(request, user, backend="django.contrib.auth.backends.ModelBackend")
                 messages.success(request, gettext("Your account is active. Welcome to RumiPress!"))
-                return redirect("dashboard")
+                return redirect("billing_start")
 
     return render(request, "registration/redeem_access_code.html", {"form": form})
+
+
+# ---------------------------------------------------------------------------
+# Platform billing (Stripe subscriptions for RumiPress accounts themselves -
+# distinct from the per-owner Stripe Integration used for invoice payments)
+# ---------------------------------------------------------------------------
+
+def _get_or_create_subscription(user):
+    subscription, _ = Subscription.objects.get_or_create(user=user)
+    return subscription
+
+
+@login_required
+def billing_start(request):
+    subscription = _get_or_create_subscription(request.user)
+    if subscription.is_in_good_standing:
+        return redirect("dashboard")
+
+    client = stripe.StripeClient(api_key=settings.STRIPE_PLATFORM_SECRET_KEY)
+    dashboard_url = request.build_absolute_uri(reverse("dashboard"))
+    billing_required_url = request.build_absolute_uri(reverse("billing_required"))
+
+    try:
+        session = client.v1.checkout.sessions.create(params={
+            "mode": "subscription",
+            "client_reference_id": str(request.user.id),
+            "customer_email": request.user.email or None,
+            "line_items": [{"price": settings.STRIPE_PRICE_ID, "quantity": 1}],
+            "subscription_data": {"trial_period_days": settings.SUBSCRIPTION_TRIAL_DAYS},
+            "success_url": f"{dashboard_url}?subscribed=1",
+            "cancel_url": billing_required_url,
+        })
+    except stripe.StripeError:
+        messages.error(request, gettext("Couldn't start your subscription. Please try again or contact us."))
+        return redirect("billing_required")
+
+    return redirect(session.url)
+
+
+@login_required
+def billing_required(request):
+    subscription = _get_or_create_subscription(request.user)
+    if subscription.is_in_good_standing:
+        return redirect("dashboard")
+
+    return render(request, "registration/billing_required.html", {"subscription": subscription})
+
+
+@login_required
+def billing_portal(request):
+    subscription = _get_or_create_subscription(request.user)
+    if not subscription.stripe_customer_id:
+        return redirect("billing_start")
+
+    client = stripe.StripeClient(api_key=settings.STRIPE_PLATFORM_SECRET_KEY)
+    return_url = request.build_absolute_uri(reverse("billing_required"))
+
+    try:
+        portal_session = client.v1.billing_portal.sessions.create(params={
+            "customer": subscription.stripe_customer_id,
+            "return_url": return_url,
+        })
+    except stripe.StripeError:
+        messages.error(request, gettext("Couldn't open billing management. Please try again or contact us."))
+        return redirect("billing_required")
+
+    return redirect(portal_session.url)
+
+
+@csrf_exempt
+def platform_stripe_webhook(request):
+    if request.method != "POST":
+        return HttpResponse(status=405)
+
+    sig_header = request.headers.get("Stripe-Signature", "")
+
+    try:
+        event = stripe.Webhook.construct_event(
+            request.body, sig_header, settings.STRIPE_PLATFORM_WEBHOOK_SECRET,
+        )
+    except (ValueError, stripe.SignatureVerificationError):
+        return HttpResponse(status=401)
+
+    event_type = event["type"]
+    obj = event["data"]["object"]
+
+    if event_type == "checkout.session.completed" and _stripe_obj_get(obj, "mode") == "subscription":
+        user_id = _stripe_obj_get(obj, "client_reference_id")
+        user = User.objects.filter(id=user_id).first()
+        if user is not None:
+            subscription = _get_or_create_subscription(user)
+            subscription.stripe_customer_id = _stripe_obj_get(obj, "customer", "")
+            subscription.stripe_subscription_id = _stripe_obj_get(obj, "subscription", "")
+            subscription.status = Subscription.STATUS_TRIALING
+            subscription.save(update_fields=["stripe_customer_id", "stripe_subscription_id", "status"])
+
+    elif event_type in ("customer.subscription.created", "customer.subscription.updated", "customer.subscription.deleted"):
+        customer_id = _stripe_obj_get(obj, "customer", "")
+        subscription = Subscription.objects.filter(stripe_customer_id=customer_id).first()
+        if subscription is not None:
+            status = _stripe_obj_get(obj, "status", "")
+            if status in dict(Subscription.STATUS_CHOICES):
+                subscription.status = status
+            trial_end = _stripe_obj_get(obj, "trial_end")
+            subscription.trial_end = (
+                timezone.datetime.fromtimestamp(trial_end, tz=dt_timezone.utc) if trial_end else None
+            )
+            period_end = _stripe_obj_get(obj, "current_period_end")
+            subscription.current_period_end = (
+                timezone.datetime.fromtimestamp(period_end, tz=dt_timezone.utc) if period_end else None
+            )
+            subscription.save(update_fields=["status", "trial_end", "current_period_end"])
+
+    return HttpResponse(status=200)
 
 
 # ---------------------------------------------------------------------------

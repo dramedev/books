@@ -19,7 +19,7 @@ from . import ai_chat
 from .models import (
     AccessCode, AVATAR_MAX_SIZE_BYTES, Author, Book, Category, Customer, CustomerLoginToken,
     Integration, Invoice, InvoiceItem, Location, PrintRun, Profile, Reorder, RoyaltyPayment,
-    Sale, StockAdjustment, Supplier, validate_avatar_size,
+    Sale, StockAdjustment, Subscription, Supplier, validate_avatar_size,
 )
 from .views import _adjust_stock, _invoice_aging_data, _pl_data, _safe_json
 
@@ -841,7 +841,8 @@ class AccessCodeRedemptionTests(TestCase):
 
         response = self.client.post(reverse("redeem_access_code"), {"code": "ABCD1234EF"})
 
-        self.assertRedirects(response, reverse("dashboard"))
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.url, reverse("billing_start"))
 
         self.user.refresh_from_db()
         self.assertTrue(self.user.is_active)
@@ -856,6 +857,7 @@ class AccessCodeRedemptionTests(TestCase):
 
         self.assertTrue(self.user.groups.filter(name="Admin").exists())
         self.assertTrue(Category.objects.filter(owner=self.user, name="General").exists())
+        self.assertTrue(Subscription.objects.filter(user=self.user).exists())
 
         self.assertNotIn("pending_user_id", self.client.session)
 
@@ -2417,3 +2419,232 @@ class StripeWebhookTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.invoice.refresh_from_db()
         self.assertEqual(self.invoice.status, Invoice.STATUS_SENT)
+
+
+class SubscriptionRequiredMiddlewareTests(TestCase):
+
+    def setUp(self):
+        User = get_user_model()
+        self.user = User.objects.create_user(username="owner", password="pass1234")
+        grant(self.user, "view_book")
+        self.superuser = User.objects.create_superuser(username="root", password="pass1234", email="r@example.com")
+
+    def test_unauthenticated_not_redirected(self):
+        response = self.client.get(reverse("login"))
+        self.assertEqual(response.status_code, 200)
+
+    def test_superuser_bypasses_gate(self):
+        self.client.force_login(self.superuser)
+        response = self.client.get(reverse("dashboard"))
+        self.assertEqual(response.status_code, 200)
+
+    def test_user_with_no_subscription_row_is_grandfathered_in(self):
+        # No Subscription row at all = predates this feature - must not be
+        # retroactively gated, unlike a row that exists but isn't paid up.
+        self.client.force_login(self.user)
+        response = self.client.get(reverse("dashboard"))
+        self.assertEqual(response.status_code, 200)
+
+    def test_user_with_incomplete_subscription_redirected_to_billing_start(self):
+        Subscription.objects.create(user=self.user, status=Subscription.STATUS_INCOMPLETE)
+        self.client.force_login(self.user)
+        response = self.client.get(reverse("dashboard"))
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.url, reverse("billing_start"))
+
+    def test_user_with_trialing_subscription_allowed(self):
+        Subscription.objects.create(
+            user=self.user, stripe_customer_id="cus_1", status=Subscription.STATUS_TRIALING,
+        )
+        self.client.force_login(self.user)
+        response = self.client.get(reverse("dashboard"))
+        self.assertEqual(response.status_code, 200)
+
+    def test_user_with_past_due_subscription_redirected_to_billing_required(self):
+        Subscription.objects.create(
+            user=self.user, stripe_customer_id="cus_1", status=Subscription.STATUS_PAST_DUE,
+        )
+        self.client.force_login(self.user)
+        response = self.client.get(reverse("dashboard"))
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.url, reverse("billing_required"))
+
+    def test_canceled_subscription_with_no_customer_id_goes_to_billing_start(self):
+        Subscription.objects.create(user=self.user, status=Subscription.STATUS_CANCELED)
+        self.client.force_login(self.user)
+        response = self.client.get(reverse("dashboard"))
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.url, reverse("billing_start"))
+
+    def test_exempt_paths_not_gated(self):
+        self.client.force_login(self.user)
+        # billing_required renders directly (no outbound Stripe call) so it's a
+        # reliable probe that the middleware didn't intercept this exempt path
+        # and bounce it back to billing_start before the view ever ran.
+        response = self.client.get(reverse("billing_required"))
+        self.assertEqual(response.status_code, 200)
+
+        response = self.client.post(reverse("platform_stripe_webhook"))
+        self.assertNotEqual(response.status_code, 302)
+
+
+class BillingViewTests(TestCase):
+
+    def setUp(self):
+        User = get_user_model()
+        self.user = User.objects.create_user(username="owner", password="pass1234", email="owner@example.com")
+        grant(self.user, "view_book")
+        self.client.force_login(self.user)
+
+    def test_billing_start_redirects_to_dashboard_if_already_good_standing(self):
+        Subscription.objects.create(
+            user=self.user, stripe_customer_id="cus_1", status=Subscription.STATUS_ACTIVE,
+        )
+        response = self.client.get(reverse("billing_start"))
+        self.assertRedirects(response, reverse("dashboard"))
+
+    @patch("books.views.stripe.StripeClient")
+    def test_billing_start_creates_checkout_session_and_redirects(self, mock_client_cls):
+        fake_session = SimpleNamespace(url="https://checkout.stripe.com/test-sub-session")
+        mock_client = MagicMock()
+        mock_client.v1.checkout.sessions.create.return_value = fake_session
+        mock_client_cls.return_value = mock_client
+
+        response = self.client.get(reverse("billing_start"))
+
+        self.assertRedirects(response, fake_session.url, fetch_redirect_response=False)
+        call_kwargs = mock_client.v1.checkout.sessions.create.call_args.kwargs
+        self.assertEqual(call_kwargs["params"]["client_reference_id"], str(self.user.id))
+        self.assertEqual(call_kwargs["params"]["mode"], "subscription")
+        self.assertEqual(call_kwargs["params"]["subscription_data"]["trial_period_days"], 7)
+
+    @patch("books.views.stripe.StripeClient")
+    def test_billing_start_stripe_error_redirects_to_billing_required(self, mock_client_cls):
+        mock_client = MagicMock()
+        mock_client.v1.checkout.sessions.create.side_effect = stripe.StripeError("boom")
+        mock_client_cls.return_value = mock_client
+
+        response = self.client.get(reverse("billing_start"))
+        self.assertRedirects(response, reverse("billing_required"))
+
+    def test_billing_portal_redirects_to_start_without_customer_id(self):
+        response = self.client.get(reverse("billing_portal"))
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.url, reverse("billing_start"))
+
+    @patch("books.views.stripe.StripeClient")
+    def test_billing_portal_creates_session_and_redirects(self, mock_client_cls):
+        Subscription.objects.create(
+            user=self.user, stripe_customer_id="cus_1", status=Subscription.STATUS_PAST_DUE,
+        )
+        fake_session = SimpleNamespace(url="https://billing.stripe.com/test-portal")
+        mock_client = MagicMock()
+        mock_client.v1.billing_portal.sessions.create.return_value = fake_session
+        mock_client_cls.return_value = mock_client
+
+        response = self.client.get(reverse("billing_portal"))
+        self.assertRedirects(response, fake_session.url, fetch_redirect_response=False)
+
+    def test_billing_required_redirects_to_dashboard_if_good_standing(self):
+        Subscription.objects.create(
+            user=self.user, stripe_customer_id="cus_1", status=Subscription.STATUS_TRIALING,
+        )
+        response = self.client.get(reverse("billing_required"))
+        self.assertRedirects(response, reverse("dashboard"))
+
+    def test_billing_required_shown_when_past_due(self):
+        Subscription.objects.create(
+            user=self.user, stripe_customer_id="cus_1", status=Subscription.STATUS_PAST_DUE,
+        )
+        response = self.client.get(reverse("billing_required"))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Manage billing")
+
+
+class PlatformStripeWebhookTests(TestCase):
+
+    def setUp(self):
+        User = get_user_model()
+        self.user = User.objects.create_user(username="owner", password="pass1234")
+        grant(self.user, "view_book")
+
+    def _post_webhook(self):
+        return self.client.post(
+            reverse("platform_stripe_webhook"),
+            data=b"{}", content_type="application/json",
+            HTTP_STRIPE_SIGNATURE="t=1,v1=fake",
+        )
+
+    @patch("books.views.stripe.Webhook.construct_event")
+    def test_checkout_session_completed_creates_trialing_subscription(self, mock_construct):
+        mock_construct.return_value = stripe.StripeObject.construct_from({
+            "type": "checkout.session.completed",
+            "data": {"object": {
+                "mode": "subscription",
+                "client_reference_id": str(self.user.id),
+                "customer": "cus_new",
+                "subscription": "sub_new",
+            }},
+        }, None)
+
+        response = self._post_webhook()
+        self.assertEqual(response.status_code, 200)
+
+        subscription = Subscription.objects.get(user=self.user)
+        self.assertEqual(subscription.stripe_customer_id, "cus_new")
+        self.assertEqual(subscription.stripe_subscription_id, "sub_new")
+        self.assertEqual(subscription.status, Subscription.STATUS_TRIALING)
+
+    @patch("books.views.stripe.Webhook.construct_event")
+    def test_subscription_updated_sets_status(self, mock_construct):
+        Subscription.objects.create(user=self.user, stripe_customer_id="cus_existing", status=Subscription.STATUS_TRIALING)
+        mock_construct.return_value = stripe.StripeObject.construct_from({
+            "type": "customer.subscription.updated",
+            "data": {"object": {
+                "customer": "cus_existing",
+                "status": "past_due",
+                "trial_end": None,
+                "current_period_end": 1750000000,
+            }},
+        }, None)
+
+        response = self._post_webhook()
+        self.assertEqual(response.status_code, 200)
+
+        subscription = Subscription.objects.get(user=self.user)
+        self.assertEqual(subscription.status, Subscription.STATUS_PAST_DUE)
+        self.assertIsNotNone(subscription.current_period_end)
+
+    @patch("books.views.stripe.Webhook.construct_event")
+    def test_subscription_recovering_to_active_unblocks_user(self, mock_construct):
+        Subscription.objects.create(user=self.user, stripe_customer_id="cus_existing", status=Subscription.STATUS_PAST_DUE)
+        mock_construct.return_value = stripe.StripeObject.construct_from({
+            "type": "customer.subscription.updated",
+            "data": {"object": {"customer": "cus_existing", "status": "active"}},
+        }, None)
+
+        self._post_webhook()
+
+        self.client.force_login(self.user)
+        response = self.client.get(reverse("dashboard"))
+        self.assertEqual(response.status_code, 200)
+
+    @patch("books.views.stripe.Webhook.construct_event")
+    def test_unknown_customer_does_not_crash(self, mock_construct):
+        mock_construct.return_value = stripe.StripeObject.construct_from({
+            "type": "customer.subscription.updated",
+            "data": {"object": {"customer": "cus_unknown", "status": "active"}},
+        }, None)
+
+        response = self._post_webhook()
+        self.assertEqual(response.status_code, 200)
+
+    @patch("books.views.stripe.Webhook.construct_event")
+    def test_invalid_signature_returns_401(self, mock_construct):
+        mock_construct.side_effect = stripe.SignatureVerificationError("bad sig", "sig_header")
+        response = self._post_webhook()
+        self.assertEqual(response.status_code, 401)
+
+    def test_get_request_returns_405(self):
+        response = self.client.get(reverse("platform_stripe_webhook"))
+        self.assertEqual(response.status_code, 405)

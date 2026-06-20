@@ -1528,6 +1528,45 @@ msgstr "Bienvenue, %(name)s"
 msgid "Back to dashboard"
 msgstr "Retour au tableau de bord"
 
+msgid "Trialing"
+msgstr "Période d'essai"
+
+msgid "Past due"
+msgstr "En retard de paiement"
+
+msgid "Canceled"
+msgstr "Annulé"
+
+msgid "Incomplete"
+msgstr "Incomplet"
+
+msgid "Unpaid"
+msgstr "Impayé"
+
+msgid "Subscription required"
+msgstr "Abonnement requis"
+
+msgid "Your last payment didn't go through. Update your payment method to keep using RumiPress."
+msgstr "Votre dernier paiement n'a pas abouti. Mettez à jour votre moyen de paiement pour continuer à utiliser RumiPress."
+
+msgid "Your subscription has ended. Start a new one to keep using RumiPress."
+msgstr "Votre abonnement a pris fin. Démarrez-en un nouveau pour continuer à utiliser RumiPress."
+
+msgid "You need an active subscription to use RumiPress."
+msgstr "Vous avez besoin d'un abonnement actif pour utiliser RumiPress."
+
+msgid "Manage billing"
+msgstr "Gérer la facturation"
+
+msgid "Start subscription"
+msgstr "Démarrer l'abonnement"
+
+msgid "Couldn't start your subscription. Please try again or contact us."
+msgstr "Impossible de démarrer votre abonnement. Veuillez réessayer ou nous contacter."
+
+msgid "Couldn't open billing management. Please try again or contact us."
+msgstr "Impossible d'ouvrir la gestion de la facturation. Veuillez réessayer ou nous contacter."
+
 msgid "Locations"
 msgstr "Emplacements"
 

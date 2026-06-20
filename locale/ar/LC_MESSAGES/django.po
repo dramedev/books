@@ -1528,6 +1528,45 @@ msgstr "مرحبًا، %(name)s"
 msgid "Back to dashboard"
 msgstr "العودة إلى لوحة التحكم"
 
+msgid "Trialing"
+msgstr "فترة تجريبية"
+
+msgid "Past due"
+msgstr "متأخر السداد"
+
+msgid "Canceled"
+msgstr "أُلغي"
+
+msgid "Incomplete"
+msgstr "غير مكتمل"
+
+msgid "Unpaid"
+msgstr "غير مدفوع"
+
+msgid "Subscription required"
+msgstr "الاشتراك مطلوب"
+
+msgid "Your last payment didn't go through. Update your payment method to keep using RumiPress."
+msgstr "لم تتم معالجة آخر دفعة لك. حدّث طريقة الدفع للاستمرار في استخدام RumiPress."
+
+msgid "Your subscription has ended. Start a new one to keep using RumiPress."
+msgstr "انتهى اشتراكك. ابدأ اشتراكًا جديدًا للاستمرار في استخدام RumiPress."
+
+msgid "You need an active subscription to use RumiPress."
+msgstr "تحتاج إلى اشتراك نشط لاستخدام RumiPress."
+
+msgid "Manage billing"
+msgstr "إدارة الفوترة"
+
+msgid "Start subscription"
+msgstr "بدء الاشتراك"
+
+msgid "Couldn't start your subscription. Please try again or contact us."
+msgstr "تعذّر بدء اشتراكك. يرجى المحاولة مرة أخرى أو التواصل معنا."
+
+msgid "Couldn't open billing management. Please try again or contact us."
+msgstr "تعذّر فتح إدارة الفوترة. يرجى المحاولة مرة أخرى أو التواصل معنا."
+
 msgid "Locations"
 msgstr "المواقع"
 

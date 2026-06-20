@@ -633,6 +633,23 @@ FR = {
         'Ce lien de connexion est invalide ou a déjà été utilisé. Veuillez en demander un nouveau.',
     'Welcome, %(name)s': 'Bienvenue, %(name)s',
     'Back to dashboard': 'Retour au tableau de bord',
+    'Trialing': "Période d'essai",
+    'Past due': 'En retard de paiement',
+    'Canceled': 'Annulé',
+    'Incomplete': 'Incomplet',
+    'Unpaid': 'Impayé',
+    'Subscription required': 'Abonnement requis',
+    "Your last payment didn't go through. Update your payment method to keep using RumiPress.":
+        "Votre dernier paiement n'a pas abouti. Mettez à jour votre moyen de paiement pour continuer à utiliser RumiPress.",
+    'Your subscription has ended. Start a new one to keep using RumiPress.':
+        'Votre abonnement a pris fin. Démarrez-en un nouveau pour continuer à utiliser RumiPress.',
+    'You need an active subscription to use RumiPress.': 'Vous avez besoin d\'un abonnement actif pour utiliser RumiPress.',
+    'Manage billing': 'Gérer la facturation',
+    'Start subscription': "Démarrer l'abonnement",
+    "Couldn't start your subscription. Please try again or contact us.":
+        "Impossible de démarrer votre abonnement. Veuillez réessayer ou nous contacter.",
+    "Couldn't open billing management. Please try again or contact us.":
+        'Impossible d\'ouvrir la gestion de la facturation. Veuillez réessayer ou nous contacter.',
     'Locations': 'Emplacements',
     'Manage warehouse and store locations.': 'Gérez les entrepôts et points de vente.',
     'Add location': 'Ajouter un emplacement',
@@ -1341,6 +1358,23 @@ AR = {
         'رابط تسجيل الدخول هذا غير صالح أو تم استخدامه مسبقًا. يرجى طلب رابط جديد.',
     'Welcome, %(name)s': 'مرحبًا، %(name)s',
     'Back to dashboard': 'العودة إلى لوحة التحكم',
+    'Trialing': 'فترة تجريبية',
+    'Past due': 'متأخر السداد',
+    'Canceled': 'أُلغي',
+    'Incomplete': 'غير مكتمل',
+    'Unpaid': 'غير مدفوع',
+    'Subscription required': 'الاشتراك مطلوب',
+    "Your last payment didn't go through. Update your payment method to keep using RumiPress.":
+        'لم تتم معالجة آخر دفعة لك. حدّث طريقة الدفع للاستمرار في استخدام RumiPress.',
+    'Your subscription has ended. Start a new one to keep using RumiPress.':
+        'انتهى اشتراكك. ابدأ اشتراكًا جديدًا للاستمرار في استخدام RumiPress.',
+    'You need an active subscription to use RumiPress.': 'تحتاج إلى اشتراك نشط لاستخدام RumiPress.',
+    'Manage billing': 'إدارة الفوترة',
+    'Start subscription': 'بدء الاشتراك',
+    "Couldn't start your subscription. Please try again or contact us.":
+        'تعذّر بدء اشتراكك. يرجى المحاولة مرة أخرى أو التواصل معنا.',
+    "Couldn't open billing management. Please try again or contact us.":
+        'تعذّر فتح إدارة الفوترة. يرجى المحاولة مرة أخرى أو التواصل معنا.',
     'Locations': 'المواقع',
     'Manage warehouse and store locations.': 'إدارة مواقع المستودعات والمتاجر.',
     'Add location': 'إضافة موقع',

@@ -957,3 +957,54 @@ class AccessCode(models.Model):
     @property
     def is_valid(self):
         return not self.is_used and not self.is_expired
+
+
+
+class Subscription(models.Model):
+
+    STATUS_TRIALING = "trialing"
+    STATUS_ACTIVE = "active"
+    STATUS_PAST_DUE = "past_due"
+    STATUS_CANCELED = "canceled"
+    STATUS_INCOMPLETE = "incomplete"
+    STATUS_UNPAID = "unpaid"
+
+    STATUS_CHOICES = [
+        (STATUS_TRIALING, _("Trialing")),
+        (STATUS_ACTIVE, _("Active")),
+        (STATUS_PAST_DUE, _("Past due")),
+        (STATUS_CANCELED, _("Canceled")),
+        (STATUS_INCOMPLETE, _("Incomplete")),
+        (STATUS_UNPAID, _("Unpaid")),
+    ]
+
+    GOOD_STANDING_STATUSES = (STATUS_TRIALING, STATUS_ACTIVE)
+
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="subscription",
+    )
+
+    stripe_customer_id = models.CharField(max_length=200, blank=True)
+
+    stripe_subscription_id = models.CharField(max_length=200, blank=True)
+
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default=STATUS_INCOMPLETE)
+
+    trial_end = models.DateTimeField(null=True, blank=True)
+
+    current_period_end = models.DateTimeField(null=True, blank=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    updated_at = models.DateTimeField(auto_now=True)
+
+
+    def __str__(self):
+        return f"{self.user.username} subscription ({self.status})"
+
+
+    @property
+    def is_in_good_standing(self):
+        return self.status in self.GOOD_STANDING_STATUSES

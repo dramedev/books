@@ -56,6 +56,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'axes.middleware.AxesMiddleware',
+    'books.middleware.SubscriptionRequiredMiddleware',
 ]
 
 AUTHENTICATION_BACKENDS = [
@@ -196,6 +197,13 @@ VERIFICATION_CODE_TTL_MINUTES = 15
 CUSTOMER_PORTAL_TOKEN_TTL_MINUTES = 30
 
 CUSTOMER_PORTAL_LOGIN_COOLDOWN_SECONDS = 60
+
+# Platform-level Stripe billing (RumiPress charging its own account owners) -
+# distinct from the per-owner Integration model used for invoice payments.
+STRIPE_PLATFORM_SECRET_KEY = os.environ.get("STRIPE_PLATFORM_SECRET_KEY", "")
+STRIPE_PLATFORM_WEBHOOK_SECRET = os.environ.get("STRIPE_PLATFORM_WEBHOOK_SECRET", "")
+STRIPE_PRICE_ID = os.environ.get("STRIPE_PRICE_ID", "")
+SUBSCRIPTION_TRIAL_DAYS = 7
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
