@@ -116,6 +116,7 @@
 <th>{% translate "Currency" %}</th>
 <th>{% translate "Total" %}</th>
 <th>{% translate "Status" %}</th>
+<th>{% translate "Actions" %}</th>
 </tr>
 </thead>
 <tbody>
@@ -127,10 +128,25 @@
 <td>{{ invoice.currency }}</td>
 <td>{{ invoice.grand_total }}</td>
 <td><span class="badge {{ invoice.status_badge_class }}">{{ invoice.get_status_display }}</span></td>
+<td class="d-flex gap-2 flex-wrap">
+{% if perms.books.change_invoice %}
+{% if invoice.status == "draft" %}
+<form method="post" action="{% url 'invoice_update_status' invoice.id 'sent' %}" class="d-inline">
+{% csrf_token %}<input type="hidden" name="next" value="{{ request.get_full_path }}">
+<button type="submit" class="btn btn-info btn-sm">{% translate "Mark Sent" %}</button>
+</form>
+{% elif invoice.status == "sent" %}
+<form method="post" action="{% url 'invoice_update_status' invoice.id 'paid' %}" class="d-inline">
+{% csrf_token %}<input type="hidden" name="next" value="{{ request.get_full_path }}">
+<button type="submit" class="btn btn-success btn-sm">{% translate "Mark Paid" %}</button>
+</form>
+{% endif %}
+{% endif %}
+</td>
 </tr>
 {% empty %}
 <tr>
-<td colspan="6" class="text-center muted-text py-4">
+<td colspan="7" class="text-center muted-text py-4">
 {% translate "No invoices for this customer yet." %}
 </td>
 </tr>

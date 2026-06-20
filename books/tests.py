@@ -1133,7 +1133,7 @@ class CustomerViewTests(TestCase):
         self.user = User.objects.create_user(username="owner", password="pass1234")
         self.other = User.objects.create_user(username="other", password="pass1234")
         self.client.force_login(self.user)
-        grant(self.user, "view_customer", "add_customer", "change_customer", "delete_customer")
+        grant(self.user, "view_customer", "add_customer", "change_customer", "delete_customer", "change_invoice")
         self.customer = Customer.objects.create(owner=self.user, name="Test Shop", email="shop@example.com")
 
     def test_list_shows_own_customers_only(self):
@@ -1213,6 +1213,21 @@ class CustomerViewTests(TestCase):
 
         response = self.client.get(reverse("customer_detail", args=[self.customer.id]))
         self.assertEqual(response.context["last_portal_login"], None)
+
+    def test_detail_shows_mark_sent_action_for_draft_invoice(self):
+        invoice = Invoice.objects.create(
+            owner=self.user, customer=self.customer, customer_name=self.customer.name,
+            invoice_date=date.today(), currency="USD", status=Invoice.STATUS_DRAFT,
+        )
+
+        response = self.client.get(reverse("customer_detail", args=[self.customer.id]))
+        self.assertContains(response, "Mark Sent")
+
+        self.client.post(reverse("invoice_update_status", args=[invoice.id, "sent"]), {
+            "next": reverse("customer_detail", args=[self.customer.id]),
+        })
+        invoice.refresh_from_db()
+        self.assertEqual(invoice.status, Invoice.STATUS_SENT)
 
 
 class InvoiceModelTests(TestCase):
