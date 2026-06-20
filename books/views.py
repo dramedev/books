@@ -3671,6 +3671,14 @@ def shopify_webhook(request, integration_id):
     return HttpResponse(status=200)
 
 
+def _stripe_obj_get(obj, key, default=None):
+    """stripe's StripeObject only supports bracket access, not dict.get()."""
+    try:
+        return obj[key]
+    except KeyError:
+        return default
+
+
 @csrf_exempt
 def stripe_webhook(request, integration_id):
     """Verify the signature and mark an invoice paid on checkout.session.completed."""
@@ -3695,17 +3703,18 @@ def stripe_webhook(request, integration_id):
 
     if event["type"] == "checkout.session.completed":
         session = event["data"]["object"]
-        invoice_id = session.get("metadata", {}).get("invoice_id")
+        metadata = _stripe_obj_get(session, "metadata", {})
+        invoice_id = _stripe_obj_get(metadata, "invoice_id")
 
         invoice = Invoice.objects.filter(id=invoice_id, owner=intg.owner).first()
         if (
             invoice is not None
             and invoice.status != Invoice.STATUS_PAID
-            and session.get("currency", "").upper() == invoice.currency
-            and session.get("amount_total") == int((invoice.grand_total * 100).to_integral_value())
+            and _stripe_obj_get(session, "currency", "").upper() == invoice.currency
+            and _stripe_obj_get(session, "amount_total") == int((invoice.grand_total * 100).to_integral_value())
         ):
             invoice.status = Invoice.STATUS_PAID
-            invoice.stripe_payment_intent_id = session.get("payment_intent", "")
+            invoice.stripe_payment_intent_id = _stripe_obj_get(session, "payment_intent", "")
             invoice.save(update_fields=["status", "stripe_payment_intent_id"])
 
     return HttpResponse(status=200)

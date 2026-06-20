@@ -2330,7 +2330,10 @@ class StripeWebhookTests(TestCase):
         InvoiceItem.objects.create(invoice=self.invoice, description="Book", quantity=2, unit_price=Decimal("10.00"))
 
     def _fake_event(self, invoice_id, amount_total=2000, currency="usd", payment_intent="pi_123"):
-        return {
+        # Real Stripe webhook payloads are StripeObject instances, which only
+        # support bracket access, not dict.get() - construct_from mirrors that
+        # so tests catch the same bugs a real webhook delivery would.
+        return stripe.StripeObject.construct_from({
             "type": "checkout.session.completed",
             "data": {"object": {
                 "metadata": {"invoice_id": str(invoice_id)},
@@ -2338,7 +2341,7 @@ class StripeWebhookTests(TestCase):
                 "currency": currency,
                 "payment_intent": payment_intent,
             }},
-        }
+        }, None)
 
     def _post_webhook(self, integration_id=None):
         return self.client.post(
@@ -2406,7 +2409,9 @@ class StripeWebhookTests(TestCase):
 
     @patch("books.views.stripe.Webhook.construct_event")
     def test_unrelated_event_type_ignored(self, mock_construct):
-        mock_construct.return_value = {"type": "payment_intent.created", "data": {"object": {}}}
+        mock_construct.return_value = stripe.StripeObject.construct_from(
+            {"type": "payment_intent.created", "data": {"object": {}}}, None,
+        )
         response = self._post_webhook()
 
         self.assertEqual(response.status_code, 200)
