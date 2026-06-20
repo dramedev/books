@@ -9,9 +9,9 @@
 <h1 class="mb-3">{% translate "Subscription required" %}</h1>
 
 <p class="muted-text">
-{% if subscription.status == "past_due" or subscription.status == "unpaid" %}
+{% if subscription.status == "UNPAID" %}
 {% translate "Your last payment didn't go through. Update your payment method to keep using RumiPress." %}
-{% elif subscription.status == "canceled" %}
+{% elif subscription.status == "CANCELED" or subscription.status == "EXPIRED" %}
 {% translate "Your subscription has ended. Start a new one to keep using RumiPress." %}
 {% else %}
 {% translate "You need an active subscription to use RumiPress." %}
@@ -19,10 +19,10 @@
 </p>
 
 <div class="d-flex gap-2 flex-wrap">
-{% if subscription.stripe_customer_id %}
+{% if subscription.external_customer_id %}
 <a class="btn btn-primary" href="{% url 'billing_portal' %}">{% translate "Manage billing" %}</a>
 {% endif %}
-{% if subscription.status == "canceled" or not subscription.stripe_customer_id %}
+{% if subscription.status == "CANCELED" or subscription.status == "EXPIRED" or not subscription.external_customer_id %}
 <a class="btn btn-outline-light" href="{% url 'billing_start' %}">{% translate "Start subscription" %}</a>
 {% endif %}
 </div>

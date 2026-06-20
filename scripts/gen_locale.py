@@ -646,6 +646,18 @@ FR = {
     'You need an active subscription to use RumiPress.': 'Vous avez besoin d\'un abonnement actif pour utiliser RumiPress.',
     'Manage billing': 'Gérer la facturation',
     'Start subscription': "Démarrer l'abonnement",
+    'Start your subscription': "Démarrez votre abonnement",
+    'A free trial starts today. We need a few details to set up billing.':
+        "Un essai gratuit commence aujourd'hui. Nous avons besoin de quelques informations pour configurer la facturation.",
+    'Continue to payment': 'Continuer vers le paiement',
+    'Update payment method': 'Mettre à jour le moyen de paiement',
+    'National ID number': "Numéro d'identité national",
+    'Your subscription is active. Welcome to RumiPress!': "Votre abonnement est actif. Bienvenue sur RumiPress !",
+    "Your subscription couldn't be activated. Please try again or contact us.":
+        "Votre abonnement n'a pas pu être activé. Veuillez réessayer ou nous contacter.",
+    "Couldn't confirm your subscription. Please try again or contact us.":
+        "Impossible de confirmer votre abonnement. Veuillez réessayer ou nous contacter.",
+    'Your payment method has been updated.': 'Votre moyen de paiement a été mis à jour.',
     "Couldn't start your subscription. Please try again or contact us.":
         "Impossible de démarrer votre abonnement. Veuillez réessayer ou nous contacter.",
     "Couldn't open billing management. Please try again or contact us.":
@@ -1371,6 +1383,18 @@ AR = {
     'You need an active subscription to use RumiPress.': 'تحتاج إلى اشتراك نشط لاستخدام RumiPress.',
     'Manage billing': 'إدارة الفوترة',
     'Start subscription': 'بدء الاشتراك',
+    'Start your subscription': 'ابدأ اشتراكك',
+    'A free trial starts today. We need a few details to set up billing.':
+        'تبدأ فترة تجريبية مجانية اليوم. نحتاج إلى بعض التفاصيل لإعداد الفوترة.',
+    'Continue to payment': 'الاستمرار إلى الدفع',
+    'Update payment method': 'تحديث طريقة الدفع',
+    'National ID number': 'رقم الهوية الوطنية',
+    'Your subscription is active. Welcome to RumiPress!': 'اشتراكك نشط الآن. مرحبًا بك في RumiPress!',
+    "Your subscription couldn't be activated. Please try again or contact us.":
+        'تعذّر تفعيل اشتراكك. يرجى المحاولة مرة أخرى أو التواصل معنا.',
+    "Couldn't confirm your subscription. Please try again or contact us.":
+        'تعذّر تأكيد اشتراكك. يرجى المحاولة مرة أخرى أو التواصل معنا.',
+    'Your payment method has been updated.': 'تم تحديث طريقة الدفع.',
     "Couldn't start your subscription. Please try again or contact us.":
         'تعذّر بدء اشتراكك. يرجى المحاولة مرة أخرى أو التواصل معنا.',
     "Couldn't open billing management. Please try again or contact us.":

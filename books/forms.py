@@ -639,3 +639,28 @@ class IntegrationForm(forms.ModelForm):
             "api_key": _("Stripe: your secret key (sk_...)"),
             "webhook_secret": _("Used to verify incoming webhook payloads. Set this in your platform's webhook settings. Stripe: your endpoint's signing secret (whsec_...)"),
         }
+
+
+
+class IyzicoCustomerForm(forms.Form):
+
+    name = forms.CharField(max_length=100, widget=forms.TextInput(attrs={"class": "form-control"}))
+    surname = forms.CharField(max_length=100, widget=forms.TextInput(attrs={"class": "form-control"}))
+    email = forms.EmailField(widget=forms.EmailInput(attrs={"class": "form-control"}))
+    gsm_number = forms.CharField(
+        max_length=20,
+        widget=forms.TextInput(attrs={"class": "form-control", "placeholder": "+905XXXXXXXXX"}),
+    )
+    identity_number = forms.CharField(
+        max_length=20,
+        label=_("National ID number"),
+        widget=forms.TextInput(attrs={"class": "form-control"}),
+    )
+    address = forms.CharField(widget=forms.Textarea(attrs={"class": "form-control", "rows": 2}))
+    city = forms.CharField(max_length=100, widget=forms.TextInput(attrs={"class": "form-control"}))
+    country = forms.CharField(
+        max_length=100, initial="Turkey", widget=forms.TextInput(attrs={"class": "form-control"}),
+    )
+    zip_code = forms.CharField(
+        max_length=20, required=False, widget=forms.TextInput(attrs={"class": "form-control"}),
+    )

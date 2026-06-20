@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block content %}
+
+<div class="row justify-content-center">
+<div class="col-md-6">
+<div class="page-panel">
+<h1 class="mb-3">{{ heading }}</h1>
+<div id="iyzico-checkout-form">
+{{ checkout_form_content|safe }}
+</div>
+</div>
+</div>
+</div>
+
+{% endblock %}

@@ -961,24 +961,32 @@ class AccessCode(models.Model):
 
 
 class Subscription(models.Model):
+    """Platform billing status for a RumiPress account, via iyzico.
 
-    STATUS_TRIALING = "trialing"
-    STATUS_ACTIVE = "active"
-    STATUS_PAST_DUE = "past_due"
-    STATUS_CANCELED = "canceled"
-    STATUS_INCOMPLETE = "incomplete"
-    STATUS_UNPAID = "unpaid"
+    Status values match iyzico's subscriptionStatus enum directly (ACTIVE,
+    PENDING, UNPAID, UPGRADED, CANCELED, EXPIRED), plus a local-only
+    INCOMPLETE used before the customer ever completes checkout.
+    """
+
+    STATUS_INCOMPLETE = "INCOMPLETE"
+    STATUS_ACTIVE = "ACTIVE"
+    STATUS_PENDING = "PENDING"
+    STATUS_UNPAID = "UNPAID"
+    STATUS_UPGRADED = "UPGRADED"
+    STATUS_CANCELED = "CANCELED"
+    STATUS_EXPIRED = "EXPIRED"
 
     STATUS_CHOICES = [
-        (STATUS_TRIALING, _("Trialing")),
-        (STATUS_ACTIVE, _("Active")),
-        (STATUS_PAST_DUE, _("Past due")),
-        (STATUS_CANCELED, _("Canceled")),
         (STATUS_INCOMPLETE, _("Incomplete")),
+        (STATUS_ACTIVE, _("Active")),
+        (STATUS_PENDING, _("Pending")),
         (STATUS_UNPAID, _("Unpaid")),
+        (STATUS_UPGRADED, _("Upgraded")),
+        (STATUS_CANCELED, _("Canceled")),
+        (STATUS_EXPIRED, _("Expired")),
     ]
 
-    GOOD_STANDING_STATUSES = (STATUS_TRIALING, STATUS_ACTIVE)
+    GOOD_STANDING_STATUSES = (STATUS_ACTIVE,)
 
     user = models.OneToOneField(
         settings.AUTH_USER_MODEL,
@@ -986,9 +994,11 @@ class Subscription(models.Model):
         related_name="subscription",
     )
 
-    stripe_customer_id = models.CharField(max_length=200, blank=True)
+    external_customer_id = models.CharField(max_length=200, blank=True)
 
-    stripe_subscription_id = models.CharField(max_length=200, blank=True)
+    external_subscription_id = models.CharField(max_length=200, blank=True)
+
+    checkout_token = models.CharField(max_length=200, blank=True)
 
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default=STATUS_INCOMPLETE)
 

@@ -198,11 +198,15 @@ CUSTOMER_PORTAL_TOKEN_TTL_MINUTES = 30
 
 CUSTOMER_PORTAL_LOGIN_COOLDOWN_SECONDS = 60
 
-# Platform-level Stripe billing (RumiPress charging its own account owners) -
-# distinct from the per-owner Integration model used for invoice payments.
-STRIPE_PLATFORM_SECRET_KEY = os.environ.get("STRIPE_PLATFORM_SECRET_KEY", "")
-STRIPE_PLATFORM_WEBHOOK_SECRET = os.environ.get("STRIPE_PLATFORM_WEBHOOK_SECRET", "")
-STRIPE_PRICE_ID = os.environ.get("STRIPE_PRICE_ID", "")
+# Platform-level billing (RumiPress charging its own account owners via
+# iyzico) - distinct from the per-owner Stripe Integration model used for
+# invoice payments. The trial length itself is configured on the Pricing
+# Plan in the iyzico merchant panel, not passed per-request.
+IYZICO_API_KEY = os.environ.get("IYZICO_API_KEY", "")
+IYZICO_SECRET_KEY = os.environ.get("IYZICO_SECRET_KEY", "")
+IYZICO_MERCHANT_ID = os.environ.get("IYZICO_MERCHANT_ID", "")
+IYZICO_BASE_URL = os.environ.get("IYZICO_BASE_URL", "https://sandbox-api.iyzipay.com")
+IYZICO_PRICING_PLAN_REFERENCE_CODE = os.environ.get("IYZICO_PRICING_PLAN_REFERENCE_CODE", "")
 SUBSCRIPTION_TRIAL_DAYS = 7
 
 # Default primary key field type

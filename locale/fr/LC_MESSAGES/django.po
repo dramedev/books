@@ -1561,6 +1561,33 @@ msgstr "Gérer la facturation"
 msgid "Start subscription"
 msgstr "Démarrer l'abonnement"
 
+msgid "Start your subscription"
+msgstr "Démarrez votre abonnement"
+
+msgid "A free trial starts today. We need a few details to set up billing."
+msgstr "Un essai gratuit commence aujourd'hui. Nous avons besoin de quelques informations pour configurer la facturation."
+
+msgid "Continue to payment"
+msgstr "Continuer vers le paiement"
+
+msgid "Update payment method"
+msgstr "Mettre à jour le moyen de paiement"
+
+msgid "National ID number"
+msgstr "Numéro d'identité national"
+
+msgid "Your subscription is active. Welcome to RumiPress!"
+msgstr "Votre abonnement est actif. Bienvenue sur RumiPress !"
+
+msgid "Your subscription couldn't be activated. Please try again or contact us."
+msgstr "Votre abonnement n'a pas pu être activé. Veuillez réessayer ou nous contacter."
+
+msgid "Couldn't confirm your subscription. Please try again or contact us."
+msgstr "Impossible de confirmer votre abonnement. Veuillez réessayer ou nous contacter."
+
+msgid "Your payment method has been updated."
+msgstr "Votre moyen de paiement a été mis à jour."
+
 msgid "Couldn't start your subscription. Please try again or contact us."
 msgstr "Impossible de démarrer votre abonnement. Veuillez réessayer ou nous contacter."
 

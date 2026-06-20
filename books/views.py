@@ -7,7 +7,7 @@ import math
 import random
 import secrets
 import stripe
-from datetime import timedelta, timezone as dt_timezone
+from datetime import timedelta
 from decimal import Decimal
 from functools import wraps
 from io import BytesIO
@@ -32,7 +32,7 @@ from django.utils.translation import gettext, gettext_lazy
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 
-from . import ai_chat
+from . import ai_chat, iyzico_client
 from .forms import (
     AuthorForm,
     BookForm,
@@ -41,6 +41,7 @@ from .forms import (
     IntegrationForm,
     InvoiceForm,
     InvoiceItemForm,
+    IyzicoCustomerForm,
     LocationForm,
     PrintRunForm,
     EmailUpdateForm,
@@ -3978,7 +3979,7 @@ def redeem_access_code(request):
 
 
 # ---------------------------------------------------------------------------
-# Platform billing (Stripe subscriptions for RumiPress accounts themselves -
+# Platform billing (iyzico subscriptions for RumiPress accounts themselves -
 # distinct from the per-owner Stripe Integration used for invoice payments)
 # ---------------------------------------------------------------------------
 
@@ -3993,25 +3994,75 @@ def billing_start(request):
     if subscription.is_in_good_standing:
         return redirect("dashboard")
 
-    client = stripe.StripeClient(api_key=settings.STRIPE_PLATFORM_SECRET_KEY)
-    dashboard_url = request.build_absolute_uri(reverse("dashboard"))
-    billing_required_url = request.build_absolute_uri(reverse("billing_required"))
+    form = IyzicoCustomerForm(initial={"email": request.user.email})
+
+    if request.method == "POST":
+        form = IyzicoCustomerForm(request.POST)
+        if form.is_valid():
+            data = form.cleaned_data
+            customer = {
+                "name": data["name"],
+                "surname": data["surname"],
+                "email": data["email"],
+                "gsmNumber": data["gsm_number"],
+                "identityNumber": data["identity_number"],
+                "billingAddress": {
+                    "address": data["address"],
+                    "contactName": f"{data['name']} {data['surname']}",
+                    "city": data["city"],
+                    "country": data["country"],
+                    "zipCode": data.get("zip_code", ""),
+                },
+            }
+            callback_url = request.build_absolute_uri(reverse("billing_callback"))
+
+            try:
+                result = iyzico_client.initialize_subscription_checkout_form(
+                    settings.IYZICO_PRICING_PLAN_REFERENCE_CODE, callback_url, customer,
+                )
+            except iyzico_client.IyzicoError:
+                messages.error(request, gettext("Couldn't start your subscription. Please try again or contact us."))
+                return redirect("billing_required")
+
+            subscription.checkout_token = result["data"]["token"]
+            subscription.save(update_fields=["checkout_token"])
+
+            return render(request, "registration/billing_checkout.html", {
+                "checkout_form_content": result["data"]["checkoutFormContent"],
+                "heading": gettext("Start your subscription"),
+            })
+
+    return render(request, "registration/billing_start.html", {"form": form})
+
+
+@login_required
+def billing_callback(request):
+    subscription = _get_or_create_subscription(request.user)
+    token = request.GET.get("token", "")
 
     try:
-        session = client.v1.checkout.sessions.create(params={
-            "mode": "subscription",
-            "client_reference_id": str(request.user.id),
-            "customer_email": request.user.email or None,
-            "line_items": [{"price": settings.STRIPE_PRICE_ID, "quantity": 1}],
-            "subscription_data": {"trial_period_days": settings.SUBSCRIPTION_TRIAL_DAYS},
-            "success_url": f"{dashboard_url}?subscribed=1",
-            "cancel_url": billing_required_url,
-        })
-    except stripe.StripeError:
-        messages.error(request, gettext("Couldn't start your subscription. Please try again or contact us."))
+        result = iyzico_client.retrieve_checkout_form(token)
+    except iyzico_client.IyzicoError:
+        messages.error(request, gettext("Couldn't confirm your subscription. Please try again or contact us."))
         return redirect("billing_required")
 
-    return redirect(session.url)
+    data = result.get("data", {})
+    subscription.external_customer_id = data.get("customerReferenceCode", "")
+    subscription.external_subscription_id = data.get("referenceCode", "")
+    status = data.get("subscriptionStatus", "")
+    if status in dict(Subscription.STATUS_CHOICES):
+        subscription.status = status
+    subscription.checkout_token = ""
+    subscription.save(update_fields=[
+        "external_customer_id", "external_subscription_id", "status", "checkout_token",
+    ])
+
+    if subscription.is_in_good_standing:
+        messages.success(request, gettext("Your subscription is active. Welcome to RumiPress!"))
+        return redirect("dashboard")
+
+    messages.error(request, gettext("Your subscription couldn't be activated. Please try again or contact us."))
+    return redirect("billing_required")
 
 
 @login_required
@@ -4026,67 +4077,60 @@ def billing_required(request):
 @login_required
 def billing_portal(request):
     subscription = _get_or_create_subscription(request.user)
-    if not subscription.stripe_customer_id:
+    if not subscription.external_customer_id:
         return redirect("billing_start")
 
-    client = stripe.StripeClient(api_key=settings.STRIPE_PLATFORM_SECRET_KEY)
-    return_url = request.build_absolute_uri(reverse("billing_required"))
+    callback_url = request.build_absolute_uri(reverse("billing_card_update_callback"))
 
     try:
-        portal_session = client.v1.billing_portal.sessions.create(params={
-            "customer": subscription.stripe_customer_id,
-            "return_url": return_url,
-        })
-    except stripe.StripeError:
+        result = iyzico_client.initialize_card_update_checkout_form(
+            subscription.external_customer_id, callback_url,
+        )
+    except iyzico_client.IyzicoError:
         messages.error(request, gettext("Couldn't open billing management. Please try again or contact us."))
         return redirect("billing_required")
 
-    return redirect(portal_session.url)
+    return render(request, "registration/billing_checkout.html", {
+        "checkout_form_content": result["data"]["checkoutFormContent"],
+        "heading": gettext("Update payment method"),
+    })
+
+
+@login_required
+def billing_card_update_callback(request):
+    messages.success(request, gettext("Your payment method has been updated."))
+    return redirect("billing_required")
 
 
 @csrf_exempt
-def platform_stripe_webhook(request):
+def platform_webhook(request):
     if request.method != "POST":
         return HttpResponse(status=405)
 
-    sig_header = request.headers.get("Stripe-Signature", "")
-
     try:
-        event = stripe.Webhook.construct_event(
-            request.body, sig_header, settings.STRIPE_PLATFORM_WEBHOOK_SECRET,
-        )
-    except (ValueError, stripe.SignatureVerificationError):
+        payload = json.loads(request.body)
+    except json.JSONDecodeError:
+        return HttpResponse(status=400)
+
+    event_type = payload.get("iyziEventType", "")
+    subscription_ref = payload.get("subscriptionReferenceCode", "")
+    order_ref = payload.get("orderReferenceCode", "")
+    customer_ref = payload.get("customerReferenceCode", "")
+    signature_header = request.headers.get("X-IYZ-SIGNATURE-V3", "")
+
+    if not iyzico_client.verify_webhook_signature(
+        settings.IYZICO_MERCHANT_ID, event_type, subscription_ref, order_ref, customer_ref, signature_header,
+    ):
         return HttpResponse(status=401)
 
-    event_type = event["type"]
-    obj = event["data"]["object"]
-
-    if event_type == "checkout.session.completed" and _stripe_obj_get(obj, "mode") == "subscription":
-        user_id = _stripe_obj_get(obj, "client_reference_id")
-        user = User.objects.filter(id=user_id).first()
-        if user is not None:
-            subscription = _get_or_create_subscription(user)
-            subscription.stripe_customer_id = _stripe_obj_get(obj, "customer", "")
-            subscription.stripe_subscription_id = _stripe_obj_get(obj, "subscription", "")
-            subscription.status = Subscription.STATUS_TRIALING
-            subscription.save(update_fields=["stripe_customer_id", "stripe_subscription_id", "status"])
-
-    elif event_type in ("customer.subscription.created", "customer.subscription.updated", "customer.subscription.deleted"):
-        customer_id = _stripe_obj_get(obj, "customer", "")
-        subscription = Subscription.objects.filter(stripe_customer_id=customer_id).first()
-        if subscription is not None:
-            status = _stripe_obj_get(obj, "status", "")
-            if status in dict(Subscription.STATUS_CHOICES):
-                subscription.status = status
-            trial_end = _stripe_obj_get(obj, "trial_end")
-            subscription.trial_end = (
-                timezone.datetime.fromtimestamp(trial_end, tz=dt_timezone.utc) if trial_end else None
-            )
-            period_end = _stripe_obj_get(obj, "current_period_end")
-            subscription.current_period_end = (
-                timezone.datetime.fromtimestamp(period_end, tz=dt_timezone.utc) if period_end else None
-            )
-            subscription.save(update_fields=["status", "trial_end", "current_period_end"])
+    subscription = Subscription.objects.filter(external_subscription_id=subscription_ref).first()
+    if subscription is not None:
+        if event_type == "subscription.order.success":
+            subscription.status = Subscription.STATUS_ACTIVE
+            subscription.save(update_fields=["status"])
+        elif event_type == "subscription.order.failure":
+            subscription.status = Subscription.STATUS_UNPAID
+            subscription.save(update_fields=["status"])
 
     return HttpResponse(status=200)
 

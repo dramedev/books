@@ -1561,6 +1561,33 @@ msgstr "إدارة الفوترة"
 msgid "Start subscription"
 msgstr "بدء الاشتراك"
 
+msgid "Start your subscription"
+msgstr "ابدأ اشتراكك"
+
+msgid "A free trial starts today. We need a few details to set up billing."
+msgstr "تبدأ فترة تجريبية مجانية اليوم. نحتاج إلى بعض التفاصيل لإعداد الفوترة."
+
+msgid "Continue to payment"
+msgstr "الاستمرار إلى الدفع"
+
+msgid "Update payment method"
+msgstr "تحديث طريقة الدفع"
+
+msgid "National ID number"
+msgstr "رقم الهوية الوطنية"
+
+msgid "Your subscription is active. Welcome to RumiPress!"
+msgstr "اشتراكك نشط الآن. مرحبًا بك في RumiPress!"
+
+msgid "Your subscription couldn't be activated. Please try again or contact us."
+msgstr "تعذّر تفعيل اشتراكك. يرجى المحاولة مرة أخرى أو التواصل معنا."
+
+msgid "Couldn't confirm your subscription. Please try again or contact us."
+msgstr "تعذّر تأكيد اشتراكك. يرجى المحاولة مرة أخرى أو التواصل معنا."
+
+msgid "Your payment method has been updated."
+msgstr "تم تحديث طريقة الدفع."
+
 msgid "Couldn't start your subscription. Please try again or contact us."
 msgstr "تعذّر بدء اشتراكك. يرجى المحاولة مرة أخرى أو التواصل معنا."
 

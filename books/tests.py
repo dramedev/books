@@ -1,3 +1,6 @@
+import base64
+import hashlib
+import hmac
 import json
 import stripe
 from datetime import date, timedelta
@@ -11,11 +14,11 @@ from django.core import mail
 from django.core.cache import cache
 from django.core.exceptions import ValidationError
 from django.core.management import call_command
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
 
-from . import ai_chat
+from . import ai_chat, iyzico_client
 from .models import (
     AccessCode, AVATAR_MAX_SIZE_BYTES, Author, Book, Category, Customer, CustomerLoginToken,
     Integration, Invoice, InvoiceItem, Location, PrintRun, Profile, Reorder, RoyaltyPayment,
@@ -2452,17 +2455,17 @@ class SubscriptionRequiredMiddlewareTests(TestCase):
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response.url, reverse("billing_start"))
 
-    def test_user_with_trialing_subscription_allowed(self):
+    def test_user_with_active_subscription_allowed(self):
         Subscription.objects.create(
-            user=self.user, stripe_customer_id="cus_1", status=Subscription.STATUS_TRIALING,
+            user=self.user, external_customer_id="cust_1", status=Subscription.STATUS_ACTIVE,
         )
         self.client.force_login(self.user)
         response = self.client.get(reverse("dashboard"))
         self.assertEqual(response.status_code, 200)
 
-    def test_user_with_past_due_subscription_redirected_to_billing_required(self):
+    def test_user_with_unpaid_subscription_redirected_to_billing_required(self):
         Subscription.objects.create(
-            user=self.user, stripe_customer_id="cus_1", status=Subscription.STATUS_PAST_DUE,
+            user=self.user, external_customer_id="cust_1", status=Subscription.STATUS_UNPAID,
         )
         self.client.force_login(self.user)
         response = self.client.get(reverse("dashboard"))
@@ -2478,14 +2481,61 @@ class SubscriptionRequiredMiddlewareTests(TestCase):
 
     def test_exempt_paths_not_gated(self):
         self.client.force_login(self.user)
-        # billing_required renders directly (no outbound Stripe call) so it's a
-        # reliable probe that the middleware didn't intercept this exempt path
-        # and bounce it back to billing_start before the view ever ran.
+        # billing_required renders directly (no outbound iyzico call) so it's
+        # a reliable probe that the middleware didn't intercept this exempt
+        # path and bounce it back to billing_start before the view ever ran.
         response = self.client.get(reverse("billing_required"))
         self.assertEqual(response.status_code, 200)
 
-        response = self.client.post(reverse("platform_stripe_webhook"))
+        response = self.client.post(reverse("platform_webhook"))
         self.assertNotEqual(response.status_code, 302)
+
+
+class IyzicoClientSigningTests(TestCase):
+    """Unit tests for the signing algorithm itself, independent of any
+    mocking - a mock can't catch a wrong implementation of the algorithm
+    it's standing in for, only a hand-computed expected value can."""
+
+    def setUp(self):
+        self.override = override_settings(IYZICO_API_KEY="test-api-key", IYZICO_SECRET_KEY="test-secret-key")
+        self.override.enable()
+
+    def tearDown(self):
+        self.override.disable()
+
+    def test_auth_header_matches_documented_algorithm(self):
+        random_key, header = iyzico_client._auth_header("/v2/subscription/products", '{"name":"Plan"}')
+
+        expected_signature = hmac.new(
+            b"test-secret-key",
+            f'{random_key}/v2/subscription/products{{"name":"Plan"}}'.encode("utf-8"),
+            hashlib.sha256,
+        ).hexdigest()
+        expected_params = f"apiKey:test-api-key&randomKey:{random_key}&signature:{expected_signature}"
+        expected_header = f"IYZWSv2 {base64.b64encode(expected_params.encode('utf-8')).decode('ascii')}"
+
+        self.assertEqual(header, expected_header)
+
+    def test_verify_webhook_signature_accepts_correctly_signed_payload(self):
+        to_sign = "merchant1test-secret-keysubscription.order.successsub_1order_1cust_1"
+        valid_signature = hmac.new(b"test-secret-key", to_sign.encode("utf-8"), hashlib.sha256).hexdigest()
+
+        self.assertTrue(iyzico_client.verify_webhook_signature(
+            "merchant1", "subscription.order.success", "sub_1", "order_1", "cust_1", valid_signature,
+        ))
+
+    def test_verify_webhook_signature_rejects_tampered_payload(self):
+        to_sign = "merchant1test-secret-keysubscription.order.successsub_1order_1cust_1"
+        valid_signature = hmac.new(b"test-secret-key", to_sign.encode("utf-8"), hashlib.sha256).hexdigest()
+
+        self.assertFalse(iyzico_client.verify_webhook_signature(
+            "merchant1", "subscription.order.success", "sub_1", "order_1", "cust_999", valid_signature,
+        ))
+
+    def test_verify_webhook_signature_rejects_missing_signature(self):
+        self.assertFalse(iyzico_client.verify_webhook_signature(
+            "merchant1", "subscription.order.success", "sub_1", "order_1", "cust_1", "",
+        ))
 
 
 class BillingViewTests(TestCase):
@@ -2495,36 +2545,86 @@ class BillingViewTests(TestCase):
         self.user = User.objects.create_user(username="owner", password="pass1234", email="owner@example.com")
         grant(self.user, "view_book")
         self.client.force_login(self.user)
+        self.valid_form_data = {
+            "name": "Ada", "surname": "Lovelace", "email": "owner@example.com",
+            "gsm_number": "+905551234567", "identity_number": "11111111111",
+            "address": "Some street 1", "city": "Istanbul", "country": "Turkey", "zip_code": "",
+        }
 
     def test_billing_start_redirects_to_dashboard_if_already_good_standing(self):
         Subscription.objects.create(
-            user=self.user, stripe_customer_id="cus_1", status=Subscription.STATUS_ACTIVE,
+            user=self.user, external_customer_id="cust_1", status=Subscription.STATUS_ACTIVE,
         )
         response = self.client.get(reverse("billing_start"))
         self.assertRedirects(response, reverse("dashboard"))
 
-    @patch("books.views.stripe.StripeClient")
-    def test_billing_start_creates_checkout_session_and_redirects(self, mock_client_cls):
-        fake_session = SimpleNamespace(url="https://checkout.stripe.com/test-sub-session")
-        mock_client = MagicMock()
-        mock_client.v1.checkout.sessions.create.return_value = fake_session
-        mock_client_cls.return_value = mock_client
-
+    def test_billing_start_get_shows_form(self):
         response = self.client.get(reverse("billing_start"))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "name")
 
-        self.assertRedirects(response, fake_session.url, fetch_redirect_response=False)
-        call_kwargs = mock_client.v1.checkout.sessions.create.call_args.kwargs
-        self.assertEqual(call_kwargs["params"]["client_reference_id"], str(self.user.id))
-        self.assertEqual(call_kwargs["params"]["mode"], "subscription")
-        self.assertEqual(call_kwargs["params"]["subscription_data"]["trial_period_days"], 7)
+    @patch("books.views.iyzico_client.initialize_subscription_checkout_form")
+    def test_billing_start_post_initializes_checkout_and_renders_embed(self, mock_init):
+        mock_init.return_value = {"data": {"token": "tok_123", "checkoutFormContent": "<script>widget</script>"}}
 
-    @patch("books.views.stripe.StripeClient")
-    def test_billing_start_stripe_error_redirects_to_billing_required(self, mock_client_cls):
-        mock_client = MagicMock()
-        mock_client.v1.checkout.sessions.create.side_effect = stripe.StripeError("boom")
-        mock_client_cls.return_value = mock_client
+        response = self.client.post(reverse("billing_start"), self.valid_form_data)
 
-        response = self.client.get(reverse("billing_start"))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "widget")
+        call_kwargs = mock_init.call_args.kwargs if mock_init.call_args.kwargs else {}
+        call_args = mock_init.call_args.args
+        customer = call_args[2] if len(call_args) > 2 else call_kwargs.get("customer")
+        self.assertEqual(customer["identityNumber"], "11111111111")
+        self.assertEqual(customer["billingAddress"]["city"], "Istanbul")
+
+        subscription = Subscription.objects.get(user=self.user)
+        self.assertEqual(subscription.checkout_token, "tok_123")
+
+    @patch("books.views.iyzico_client.initialize_subscription_checkout_form")
+    def test_billing_start_post_iyzico_error_redirects_to_billing_required(self, mock_init):
+        mock_init.side_effect = iyzico_client.IyzicoError("boom")
+
+        response = self.client.post(reverse("billing_start"), self.valid_form_data)
+        self.assertRedirects(response, reverse("billing_required"))
+
+    def test_billing_start_post_invalid_form_reshows_form(self):
+        response = self.client.post(reverse("billing_start"), {})
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.context["form"].errors)
+        self.assertFalse(Subscription.objects.filter(user=self.user, checkout_token__gt="").exists())
+
+    @patch("books.views.iyzico_client.retrieve_checkout_form")
+    def test_billing_callback_activates_subscription(self, mock_retrieve):
+        Subscription.objects.create(user=self.user, checkout_token="tok_123", status=Subscription.STATUS_INCOMPLETE)
+        mock_retrieve.return_value = {"data": {
+            "customerReferenceCode": "cust_new",
+            "referenceCode": "sub_new",
+            "subscriptionStatus": "ACTIVE",
+        }}
+
+        response = self.client.get(reverse("billing_callback"), {"token": "tok_123"})
+        self.assertRedirects(response, reverse("dashboard"))
+
+        subscription = Subscription.objects.get(user=self.user)
+        self.assertEqual(subscription.external_customer_id, "cust_new")
+        self.assertEqual(subscription.external_subscription_id, "sub_new")
+        self.assertEqual(subscription.status, Subscription.STATUS_ACTIVE)
+        self.assertEqual(subscription.checkout_token, "")
+
+    @patch("books.views.iyzico_client.retrieve_checkout_form")
+    def test_billing_callback_pending_status_redirects_to_billing_required(self, mock_retrieve):
+        mock_retrieve.return_value = {"data": {
+            "customerReferenceCode": "cust_new", "referenceCode": "sub_new", "subscriptionStatus": "PENDING",
+        }}
+
+        response = self.client.get(reverse("billing_callback"), {"token": "tok_123"})
+        self.assertRedirects(response, reverse("billing_required"))
+
+    @patch("books.views.iyzico_client.retrieve_checkout_form")
+    def test_billing_callback_iyzico_error_redirects_to_billing_required(self, mock_retrieve):
+        mock_retrieve.side_effect = iyzico_client.IyzicoError("boom")
+
+        response = self.client.get(reverse("billing_callback"), {"token": "tok_123"})
         self.assertRedirects(response, reverse("billing_required"))
 
     def test_billing_portal_redirects_to_start_without_customer_id(self):
@@ -2532,119 +2632,101 @@ class BillingViewTests(TestCase):
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response.url, reverse("billing_start"))
 
-    @patch("books.views.stripe.StripeClient")
-    def test_billing_portal_creates_session_and_redirects(self, mock_client_cls):
+    @patch("books.views.iyzico_client.initialize_card_update_checkout_form")
+    def test_billing_portal_renders_embed(self, mock_init):
         Subscription.objects.create(
-            user=self.user, stripe_customer_id="cus_1", status=Subscription.STATUS_PAST_DUE,
+            user=self.user, external_customer_id="cust_1", status=Subscription.STATUS_UNPAID,
         )
-        fake_session = SimpleNamespace(url="https://billing.stripe.com/test-portal")
-        mock_client = MagicMock()
-        mock_client.v1.billing_portal.sessions.create.return_value = fake_session
-        mock_client_cls.return_value = mock_client
+        mock_init.return_value = {"data": {"checkoutFormContent": "<script>cardwidget</script>"}}
 
         response = self.client.get(reverse("billing_portal"))
-        self.assertRedirects(response, fake_session.url, fetch_redirect_response=False)
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "cardwidget")
+
+    def test_billing_card_update_callback_redirects_to_billing_required(self):
+        response = self.client.get(reverse("billing_card_update_callback"))
+        self.assertRedirects(response, reverse("billing_required"))
 
     def test_billing_required_redirects_to_dashboard_if_good_standing(self):
         Subscription.objects.create(
-            user=self.user, stripe_customer_id="cus_1", status=Subscription.STATUS_TRIALING,
+            user=self.user, external_customer_id="cust_1", status=Subscription.STATUS_ACTIVE,
         )
         response = self.client.get(reverse("billing_required"))
         self.assertRedirects(response, reverse("dashboard"))
 
-    def test_billing_required_shown_when_past_due(self):
+    def test_billing_required_shown_when_unpaid(self):
         Subscription.objects.create(
-            user=self.user, stripe_customer_id="cus_1", status=Subscription.STATUS_PAST_DUE,
+            user=self.user, external_customer_id="cust_1", status=Subscription.STATUS_UNPAID,
         )
         response = self.client.get(reverse("billing_required"))
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Manage billing")
 
 
-class PlatformStripeWebhookTests(TestCase):
+class PlatformWebhookTests(TestCase):
 
     def setUp(self):
         User = get_user_model()
         self.user = User.objects.create_user(username="owner", password="pass1234")
         grant(self.user, "view_book")
+        self.override = override_settings(IYZICO_MERCHANT_ID="merchant1", IYZICO_SECRET_KEY="test-secret-key")
+        self.override.enable()
+        self.addCleanup(self.override.disable)
 
-    def _post_webhook(self):
+    def _signed_payload(self, event_type, subscription_ref, order_ref="order_1", customer_ref="cust_1"):
+        to_sign = f"merchant1test-secret-key{event_type}{subscription_ref}{order_ref}{customer_ref}"
+        signature = hmac.new(b"test-secret-key", to_sign.encode("utf-8"), hashlib.sha256).hexdigest()
+        payload = {
+            "iyziEventType": event_type,
+            "subscriptionReferenceCode": subscription_ref,
+            "orderReferenceCode": order_ref,
+            "customerReferenceCode": customer_ref,
+        }
+        return payload, signature
+
+    def _post_webhook(self, payload, signature):
         return self.client.post(
-            reverse("platform_stripe_webhook"),
-            data=b"{}", content_type="application/json",
-            HTTP_STRIPE_SIGNATURE="t=1,v1=fake",
+            reverse("platform_webhook"),
+            data=json.dumps(payload), content_type="application/json",
+            HTTP_X_IYZ_SIGNATURE_V3=signature,
         )
 
-    @patch("books.views.stripe.Webhook.construct_event")
-    def test_checkout_session_completed_creates_trialing_subscription(self, mock_construct):
-        mock_construct.return_value = stripe.StripeObject.construct_from({
-            "type": "checkout.session.completed",
-            "data": {"object": {
-                "mode": "subscription",
-                "client_reference_id": str(self.user.id),
-                "customer": "cus_new",
-                "subscription": "sub_new",
-            }},
-        }, None)
+    def test_success_event_marks_subscription_active(self):
+        Subscription.objects.create(user=self.user, external_subscription_id="sub_1", status=Subscription.STATUS_UNPAID)
+        payload, signature = self._signed_payload("subscription.order.success", "sub_1")
 
-        response = self._post_webhook()
+        response = self._post_webhook(payload, signature)
         self.assertEqual(response.status_code, 200)
 
         subscription = Subscription.objects.get(user=self.user)
-        self.assertEqual(subscription.stripe_customer_id, "cus_new")
-        self.assertEqual(subscription.stripe_subscription_id, "sub_new")
-        self.assertEqual(subscription.status, Subscription.STATUS_TRIALING)
+        self.assertEqual(subscription.status, Subscription.STATUS_ACTIVE)
 
-    @patch("books.views.stripe.Webhook.construct_event")
-    def test_subscription_updated_sets_status(self, mock_construct):
-        Subscription.objects.create(user=self.user, stripe_customer_id="cus_existing", status=Subscription.STATUS_TRIALING)
-        mock_construct.return_value = stripe.StripeObject.construct_from({
-            "type": "customer.subscription.updated",
-            "data": {"object": {
-                "customer": "cus_existing",
-                "status": "past_due",
-                "trial_end": None,
-                "current_period_end": 1750000000,
-            }},
-        }, None)
+    def test_failure_event_marks_subscription_unpaid(self):
+        Subscription.objects.create(user=self.user, external_subscription_id="sub_1", status=Subscription.STATUS_ACTIVE)
+        payload, signature = self._signed_payload("subscription.order.failure", "sub_1")
 
-        response = self._post_webhook()
+        response = self._post_webhook(payload, signature)
         self.assertEqual(response.status_code, 200)
 
         subscription = Subscription.objects.get(user=self.user)
-        self.assertEqual(subscription.status, Subscription.STATUS_PAST_DUE)
-        self.assertIsNotNone(subscription.current_period_end)
+        self.assertEqual(subscription.status, Subscription.STATUS_UNPAID)
 
-    @patch("books.views.stripe.Webhook.construct_event")
-    def test_subscription_recovering_to_active_unblocks_user(self, mock_construct):
-        Subscription.objects.create(user=self.user, stripe_customer_id="cus_existing", status=Subscription.STATUS_PAST_DUE)
-        mock_construct.return_value = stripe.StripeObject.construct_from({
-            "type": "customer.subscription.updated",
-            "data": {"object": {"customer": "cus_existing", "status": "active"}},
-        }, None)
-
-        self._post_webhook()
-
-        self.client.force_login(self.user)
-        response = self.client.get(reverse("dashboard"))
-        self.assertEqual(response.status_code, 200)
-
-    @patch("books.views.stripe.Webhook.construct_event")
-    def test_unknown_customer_does_not_crash(self, mock_construct):
-        mock_construct.return_value = stripe.StripeObject.construct_from({
-            "type": "customer.subscription.updated",
-            "data": {"object": {"customer": "cus_unknown", "status": "active"}},
-        }, None)
-
-        response = self._post_webhook()
-        self.assertEqual(response.status_code, 200)
-
-    @patch("books.views.stripe.Webhook.construct_event")
-    def test_invalid_signature_returns_401(self, mock_construct):
-        mock_construct.side_effect = stripe.SignatureVerificationError("bad sig", "sig_header")
-        response = self._post_webhook()
+    def test_invalid_signature_returns_401(self):
+        payload, _ = self._signed_payload("subscription.order.success", "sub_1")
+        response = self._post_webhook(payload, "wrong-signature")
         self.assertEqual(response.status_code, 401)
 
+    def test_unknown_subscription_does_not_crash(self):
+        payload, signature = self._signed_payload("subscription.order.success", "sub_unknown")
+        response = self._post_webhook(payload, signature)
+        self.assertEqual(response.status_code, 200)
+
+    def test_invalid_json_returns_400(self):
+        response = self.client.post(
+            reverse("platform_webhook"), data=b"not json", content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 400)
+
     def test_get_request_returns_405(self):
-        response = self.client.get(reverse("platform_stripe_webhook"))
+        response = self.client.get(reverse("platform_webhook"))
         self.assertEqual(response.status_code, 405)

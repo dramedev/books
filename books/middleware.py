@@ -36,7 +36,7 @@ class SubscriptionRequiredMiddleware:
             # accounts predating this feature have no row and are unaffected.
             subscription = Subscription.objects.filter(user=request.user).first()
             if subscription is not None and not subscription.is_in_good_standing:
-                target = "billing_start" if not subscription.stripe_customer_id else "billing_required"
+                target = "billing_start" if not subscription.external_customer_id else "billing_required"
                 if request.path != reverse(target):
                     return redirect(target)
 
