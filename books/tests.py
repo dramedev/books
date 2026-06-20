@@ -2126,3 +2126,46 @@ class CustomerPortalTests(TestCase):
         self.assertNotEqual(self.client.session.session_key, logged_in_session_key)
         response = self.client.get(reverse("customer_portal_dashboard"))
         self.assertEqual(response.status_code, 302)
+
+
+class CleanupLoginTokensTests(TestCase):
+
+    def setUp(self):
+        User = get_user_model()
+        self.user = User.objects.create_user(username="owner", password="pass1234")
+        self.customer = Customer.objects.create(owner=self.user, name="Acme Shop", email="acme@example.com")
+        now = timezone.now()
+
+        self.fresh_unused = CustomerLoginToken.objects.create(
+            customer=self.customer, token="fresh-unused", expires_at=now + timedelta(minutes=30),
+        )
+        self.stale_unused = CustomerLoginToken.objects.create(
+            customer=self.customer, token="stale-unused", expires_at=now - timedelta(days=10),
+        )
+        self.recently_expired = CustomerLoginToken.objects.create(
+            customer=self.customer, token="recently-expired", expires_at=now - timedelta(hours=1),
+        )
+        self.stale_used = CustomerLoginToken.objects.create(
+            customer=self.customer, token="stale-used",
+            expires_at=now - timedelta(days=10), used_at=now - timedelta(days=10),
+        )
+        self.recently_used = CustomerLoginToken.objects.create(
+            customer=self.customer, token="recently-used",
+            expires_at=now - timedelta(days=10), used_at=now - timedelta(hours=1),
+        )
+
+    def test_deletes_only_used_or_expired_tokens_past_retention(self):
+        call_command("cleanup_login_tokens", "--days", "7")
+
+        remaining = set(CustomerLoginToken.objects.values_list("token", flat=True))
+        self.assertEqual(remaining, {"fresh-unused", "recently-expired", "recently-used"})
+
+    def test_dry_run_deletes_nothing(self):
+        call_command("cleanup_login_tokens", "--days", "7", "--dry-run")
+        self.assertEqual(CustomerLoginToken.objects.count(), 5)
+
+    def test_days_argument_controls_retention_window(self):
+        call_command("cleanup_login_tokens", "--days", "0")
+
+        remaining = set(CustomerLoginToken.objects.values_list("token", flat=True))
+        self.assertEqual(remaining, {"fresh-unused"})
