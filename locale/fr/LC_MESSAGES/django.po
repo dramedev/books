@@ -1462,6 +1462,48 @@ msgstr "Taux de droits d'auteur supprimé."
 msgid "royalty rate"
 msgstr "le taux de droits d'auteur"
 
+msgid "Royalty Payments"
+msgstr "Paiements de droits d'auteur"
+
+msgid "Payments made to authors against royalties owed."
+msgstr "Paiements effectués aux auteurs au titre des droits d'auteur dus."
+
+msgid "Payments"
+msgstr "Paiements"
+
+msgid "Record Payment"
+msgstr "Enregistrer un paiement"
+
+msgid "Amount"
+msgstr "Montant"
+
+msgid "Payment Date"
+msgstr "Date de paiement"
+
+msgid "Payment date"
+msgstr "Date de paiement"
+
+msgid "No royalty payments recorded yet."
+msgstr "Aucun paiement de droits d'auteur enregistré pour le moment."
+
+msgid "Record Royalty Payment"
+msgstr "Enregistrer un paiement de droits d'auteur"
+
+msgid "Payments Made"
+msgstr "Paiements effectués"
+
+msgid "Total Paid"
+msgstr "Total payé"
+
+msgid "Royalty payment recorded."
+msgstr "Paiement de droits d'auteur enregistré."
+
+msgid "Royalty payment deleted."
+msgstr "Paiement de droits d'auteur supprimé."
+
+msgid "royalty payment"
+msgstr "le paiement de droits d'auteur"
+
 msgid "Locations"
 msgstr "Emplacements"
 

@@ -1462,6 +1462,48 @@ msgstr "تم حذف معدل الأتعاب."
 msgid "royalty rate"
 msgstr "معدل الأتعاب"
 
+msgid "Royalty Payments"
+msgstr "دفعات الأتعاب"
+
+msgid "Payments made to authors against royalties owed."
+msgstr "الدفعات المسددة للمؤلفين مقابل الأتعاب المستحقة."
+
+msgid "Payments"
+msgstr "الدفعات"
+
+msgid "Record Payment"
+msgstr "تسجيل دفعة"
+
+msgid "Amount"
+msgstr "المبلغ"
+
+msgid "Payment Date"
+msgstr "تاريخ الدفع"
+
+msgid "Payment date"
+msgstr "تاريخ الدفع"
+
+msgid "No royalty payments recorded yet."
+msgstr "لا توجد دفعات أتعاب مسجلة حتى الآن."
+
+msgid "Record Royalty Payment"
+msgstr "تسجيل دفعة أتعاب"
+
+msgid "Payments Made"
+msgstr "الدفعات المسددة"
+
+msgid "Total Paid"
+msgstr "إجمالي المدفوع"
+
+msgid "Royalty payment recorded."
+msgstr "تم تسجيل دفعة الأتعاب."
+
+msgid "Royalty payment deleted."
+msgstr "تم حذف دفعة الأتعاب."
+
+msgid "royalty payment"
+msgstr "دفعة الأتعاب"
+
 msgid "Locations"
 msgstr "المواقع"
 
