@@ -195,6 +195,8 @@ VERIFICATION_CODE_TTL_MINUTES = 15
 
 CUSTOMER_PORTAL_TOKEN_TTL_MINUTES = 30
 
+CUSTOMER_PORTAL_LOGIN_COOLDOWN_SECONDS = 60
+
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 

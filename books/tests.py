@@ -7,6 +7,7 @@ from unittest.mock import patch
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Permission
 from django.core import mail
+from django.core.cache import cache
 from django.core.exceptions import ValidationError
 from django.core.management import call_command
 from django.test import TestCase
@@ -1932,6 +1933,7 @@ class RoyaltyPaymentViewTests(TestCase):
 class CustomerPortalTests(TestCase):
 
     def setUp(self):
+        cache.clear()
         User = get_user_model()
         self.owner = User.objects.create_user(username="owner", password="pass1234")
         self.customer = Customer.objects.create(
@@ -1974,6 +1976,20 @@ class CustomerPortalTests(TestCase):
         response = self._request_login_link("nobody@example.com")
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(mail.outbox), 0)
+
+    def test_repeated_requests_for_same_email_are_cooled_down(self):
+        self._request_login_link("acme@example.com")
+        self._request_login_link("acme@example.com")
+        self._request_login_link("acme@example.com")
+
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(CustomerLoginToken.objects.filter(customer=self.customer).count(), 1)
+
+    def test_cooldown_is_per_email_not_global(self):
+        self._request_login_link("acme@example.com")
+        self._request_login_link("other@example.com")
+
+        self.assertEqual(len(mail.outbox), 2)
 
     def test_valid_token_logs_in_and_reaches_dashboard(self):
         self._request_login_link("acme@example.com")

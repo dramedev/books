@@ -17,6 +17,7 @@ from django.contrib.auth import login, update_session_auth_hash
 from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib.auth.forms import PasswordChangeForm
 from django.contrib.auth.models import User
+from django.core.cache import cache
 from django.core.mail import send_mail
 from django.core.paginator import Paginator
 from django.db import models
@@ -4279,7 +4280,10 @@ def customer_portal_login(request):
 
     if request.method == "POST":
         email = request.POST.get("email", "").strip()
-        for customer in Customer.objects.filter(email__iexact=email).exclude(email=""):
+        cache_key = f"customer_portal_login_cooldown:{email.lower()}"
+        can_send = bool(email) and cache.add(cache_key, True, timeout=settings.CUSTOMER_PORTAL_LOGIN_COOLDOWN_SECONDS)
+
+        for customer in Customer.objects.filter(email__iexact=email).exclude(email="") if can_send else []:
             login_token = CustomerLoginToken.objects.create(
                 customer=customer,
                 token=secrets.token_urlsafe(32),
