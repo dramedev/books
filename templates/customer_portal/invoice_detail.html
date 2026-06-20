@@ -6,6 +6,12 @@
 <div class="d-flex justify-content-between align-items-center mb-3">
 <h1 class="mb-0 h3">{{ invoice.invoice_number }}</h1>
 <div class="d-flex gap-2">
+{% if can_pay %}
+<form method="post" action="{% url 'customer_portal_invoice_pay' invoice.id %}" class="d-inline">
+{% csrf_token %}
+<button type="submit" class="btn btn-success btn-sm">{% translate "Pay Now" %}</button>
+</form>
+{% endif %}
 <a class="btn btn-outline-light btn-sm" href="{% url 'customer_portal_invoice_pdf' invoice.id %}">{% translate "PDF" %}</a>
 <a class="btn btn-outline-light btn-sm" href="{% url 'customer_portal_dashboard' %}">{% translate "Back to dashboard" %}</a>
 </div>

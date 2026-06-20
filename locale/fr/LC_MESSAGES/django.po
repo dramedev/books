@@ -1654,6 +1654,36 @@ msgstr "Secret API"
 msgid "Webhook secret"
 msgstr "Secret webhook"
 
+msgid "Stripe"
+msgstr "Stripe"
+
+msgid "Shopify: your-store.myshopify.com — Amazon: Seller ID — Stripe: not used"
+msgstr "Shopify : your-store.myshopify.com — Amazon : ID vendeur — Stripe : non utilisé"
+
+msgid "Stripe: your secret key (sk_...)"
+msgstr "Stripe : votre clé secrète (sk_...)"
+
+msgid "Used to verify incoming webhook payloads. Set this in your platform's webhook settings. Stripe: your endpoint's signing secret (whsec_...)"
+msgstr "Utilisé pour vérifier les charges utiles des webhooks entrants. À définir dans les paramètres de webhook de votre plateforme. Stripe : le secret de signature de votre point de terminaison (whsec_...)"
+
+msgid "Stripe webhook URL:"
+msgstr "URL webhook Stripe :"
+
+msgid "(replace 0 with the integration ID; subscribe it to the checkout.session.completed event)"
+msgstr "(remplacer 0 par l'ID de l'intégration ; abonnez-la à l'événement checkout.session.completed)"
+
+msgid "Pay Now"
+msgstr "Payer maintenant"
+
+msgid "Payment received — it may take a moment to reflect on this invoice."
+msgstr "Paiement reçu — cela peut prendre un instant avant de se refléter sur cette facture."
+
+msgid "Online payment isn't available for this invoice yet."
+msgstr "Le paiement en ligne n'est pas encore disponible pour cette facture."
+
+msgid "Couldn't start payment. Please try again or contact us."
+msgstr "Impossible de démarrer le paiement. Veuillez réessayer ou nous contacter."
+
 msgid "P&L Report"
 msgstr "Rapport P&L"
 

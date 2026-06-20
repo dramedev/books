@@ -488,6 +488,8 @@ class Invoice(models.Model):
 
     note = models.TextField(blank=True, verbose_name=_("Note"))
 
+    stripe_payment_intent_id = models.CharField(max_length=200, blank=True)
+
     created_at = models.DateTimeField(auto_now_add=True)
 
 
@@ -835,10 +837,12 @@ class Integration(models.Model):
 
     PLATFORM_SHOPIFY = "shopify"
     PLATFORM_AMAZON = "amazon"
+    PLATFORM_STRIPE = "stripe"
 
     PLATFORM_CHOICES = [
         (PLATFORM_SHOPIFY, _("Shopify")),
         (PLATFORM_AMAZON, _("Amazon")),
+        (PLATFORM_STRIPE, _("Stripe")),
     ]
 
     owner = models.ForeignKey(

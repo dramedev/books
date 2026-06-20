@@ -1,8 +1,9 @@
 import json
+import stripe
 from datetime import date, timedelta
 from decimal import Decimal
 from types import SimpleNamespace
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Permission
@@ -17,8 +18,8 @@ from django.utils import timezone
 from . import ai_chat
 from .models import (
     AccessCode, AVATAR_MAX_SIZE_BYTES, Author, Book, Category, Customer, CustomerLoginToken,
-    Invoice, InvoiceItem, Location, PrintRun, Profile, Reorder, RoyaltyPayment, Sale,
-    StockAdjustment, Supplier, validate_avatar_size,
+    Integration, Invoice, InvoiceItem, Location, PrintRun, Profile, Reorder, RoyaltyPayment,
+    Sale, StockAdjustment, Supplier, validate_avatar_size,
 )
 from .views import _adjust_stock, _invoice_aging_data, _pl_data, _safe_json
 
@@ -2211,3 +2212,203 @@ class CleanupLoginTokensTests(TestCase):
 
         remaining = set(CustomerLoginToken.objects.values_list("token", flat=True))
         self.assertEqual(remaining, {"fresh-unused"})
+
+
+class CustomerPortalPaymentTests(TestCase):
+
+    def setUp(self):
+        cache.clear()
+        User = get_user_model()
+        self.owner = User.objects.create_user(username="owner", password="pass1234")
+        self.customer = Customer.objects.create(owner=self.owner, name="Acme Shop", email="acme@example.com")
+        self.invoice = Invoice.objects.create(
+            owner=self.owner, customer=self.customer, customer_name=self.customer.name,
+            invoice_date=date(2024, 1, 1), currency="USD", status=Invoice.STATUS_SENT,
+        )
+        InvoiceItem.objects.create(invoice=self.invoice, description="Book", quantity=2, unit_price=Decimal("10.00"))
+        self._login_as_customer()
+
+    def _login_as_customer(self):
+        self.client.post(reverse("customer_portal_login"), {"email": "acme@example.com"})
+        token = CustomerLoginToken.objects.get(customer=self.customer)
+        self.client.get(reverse("customer_portal_verify", args=[token.token]))
+
+    def _add_stripe_integration(self, is_active=True):
+        return Integration.objects.create(
+            owner=self.owner, platform=Integration.PLATFORM_STRIPE, name="Stripe",
+            api_key="sk_test_dummy", webhook_secret="whsec_dummy", is_active=is_active,
+        )
+
+    def test_pay_now_hidden_without_stripe_integration(self):
+        response = self.client.get(reverse("customer_portal_invoice_detail", args=[self.invoice.id]))
+        self.assertNotContains(response, "Pay Now")
+
+    def test_pay_now_shown_with_active_stripe_integration(self):
+        self._add_stripe_integration()
+        response = self.client.get(reverse("customer_portal_invoice_detail", args=[self.invoice.id]))
+        self.assertContains(response, "Pay Now")
+
+    def test_pay_now_hidden_for_inactive_integration(self):
+        self._add_stripe_integration(is_active=False)
+        response = self.client.get(reverse("customer_portal_invoice_detail", args=[self.invoice.id]))
+        self.assertNotContains(response, "Pay Now")
+
+    def test_pay_now_hidden_for_paid_invoice(self):
+        self._add_stripe_integration()
+        self.invoice.status = Invoice.STATUS_PAID
+        self.invoice.save()
+        response = self.client.get(reverse("customer_portal_invoice_detail", args=[self.invoice.id]))
+        self.assertNotContains(response, "Pay Now")
+
+    @patch("books.views.stripe.StripeClient")
+    def test_pay_creates_checkout_session_and_redirects(self, mock_client_cls):
+        self._add_stripe_integration()
+        fake_session = SimpleNamespace(url="https://checkout.stripe.com/test-session")
+        mock_client = MagicMock()
+        mock_client.v1.checkout.sessions.create.return_value = fake_session
+        mock_client_cls.return_value = mock_client
+
+        response = self.client.post(reverse("customer_portal_invoice_pay", args=[self.invoice.id]))
+
+        self.assertRedirects(response, fake_session.url, fetch_redirect_response=False)
+        call_kwargs = mock_client.v1.checkout.sessions.create.call_args.kwargs
+        self.assertEqual(call_kwargs["params"]["metadata"]["invoice_id"], str(self.invoice.id))
+        self.assertEqual(call_kwargs["params"]["line_items"][0]["price_data"]["unit_amount"], 2000)
+
+    def test_pay_without_integration_shows_error_and_redirects(self):
+        response = self.client.post(reverse("customer_portal_invoice_pay", args=[self.invoice.id]), follow=True)
+        self.assertContains(response, "Online payment isn")
+
+    def test_pay_already_paid_invoice_does_not_call_stripe(self):
+        self._add_stripe_integration()
+        self.invoice.status = Invoice.STATUS_PAID
+        self.invoice.save()
+
+        with patch("books.views.stripe.StripeClient") as mock_client_cls:
+            self.client.post(reverse("customer_portal_invoice_pay", args=[self.invoice.id]))
+            mock_client_cls.assert_not_called()
+
+    @patch("books.views.stripe.StripeClient")
+    def test_pay_stripe_error_shows_message(self, mock_client_cls):
+        self._add_stripe_integration()
+        mock_client = MagicMock()
+        mock_client.v1.checkout.sessions.create.side_effect = stripe.StripeError("boom")
+        mock_client_cls.return_value = mock_client
+
+        response = self.client.post(reverse("customer_portal_invoice_pay", args=[self.invoice.id]), follow=True)
+        self.assertContains(response, "Couldn")
+
+    def test_pay_requires_portal_login(self):
+        self.client.post(reverse("customer_portal_logout"))
+        response = self.client.post(reverse("customer_portal_invoice_pay", args=[self.invoice.id]))
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.url, reverse("customer_portal_login"))
+
+    def test_cannot_pay_other_customers_invoice(self):
+        other_customer = Customer.objects.create(owner=self.owner, name="Other", email="other@example.com")
+        other_invoice = Invoice.objects.create(
+            owner=self.owner, customer=other_customer, customer_name=other_customer.name,
+            invoice_date=date(2024, 1, 1), currency="USD", status=Invoice.STATUS_SENT,
+        )
+        response = self.client.post(reverse("customer_portal_invoice_pay", args=[other_invoice.id]))
+        self.assertEqual(response.status_code, 404)
+
+
+class StripeWebhookTests(TestCase):
+
+    def setUp(self):
+        User = get_user_model()
+        self.owner = User.objects.create_user(username="owner", password="pass1234")
+        self.integration = Integration.objects.create(
+            owner=self.owner, platform=Integration.PLATFORM_STRIPE, name="Stripe",
+            api_key="sk_test_dummy", webhook_secret="whsec_dummy", is_active=True,
+        )
+        self.invoice = Invoice.objects.create(
+            owner=self.owner, customer_name="Acme", invoice_date=date(2024, 1, 1),
+            currency="USD", status=Invoice.STATUS_SENT,
+        )
+        InvoiceItem.objects.create(invoice=self.invoice, description="Book", quantity=2, unit_price=Decimal("10.00"))
+
+    def _fake_event(self, invoice_id, amount_total=2000, currency="usd", payment_intent="pi_123"):
+        return {
+            "type": "checkout.session.completed",
+            "data": {"object": {
+                "metadata": {"invoice_id": str(invoice_id)},
+                "amount_total": amount_total,
+                "currency": currency,
+                "payment_intent": payment_intent,
+            }},
+        }
+
+    def _post_webhook(self, integration_id=None):
+        return self.client.post(
+            reverse("stripe_webhook", args=[integration_id or self.integration.id]),
+            data=b"{}", content_type="application/json",
+            HTTP_STRIPE_SIGNATURE="t=1,v1=fake",
+        )
+
+    @patch("books.views.stripe.Webhook.construct_event")
+    def test_valid_event_marks_invoice_paid(self, mock_construct):
+        mock_construct.return_value = self._fake_event(self.invoice.id)
+        response = self._post_webhook()
+
+        self.assertEqual(response.status_code, 200)
+        self.invoice.refresh_from_db()
+        self.assertEqual(self.invoice.status, Invoice.STATUS_PAID)
+        self.assertEqual(self.invoice.stripe_payment_intent_id, "pi_123")
+
+    @patch("books.views.stripe.Webhook.construct_event")
+    def test_invalid_signature_returns_401(self, mock_construct):
+        mock_construct.side_effect = stripe.SignatureVerificationError("bad sig", "sig_header")
+        response = self._post_webhook()
+
+        self.assertEqual(response.status_code, 401)
+        self.invoice.refresh_from_db()
+        self.assertEqual(self.invoice.status, Invoice.STATUS_SENT)
+
+    def test_unknown_integration_returns_404(self):
+        response = self._post_webhook(integration_id=999999)
+        self.assertEqual(response.status_code, 404)
+
+    @patch("books.views.stripe.Webhook.construct_event")
+    def test_amount_mismatch_does_not_mark_paid(self, mock_construct):
+        mock_construct.return_value = self._fake_event(self.invoice.id, amount_total=999)
+        response = self._post_webhook()
+
+        self.assertEqual(response.status_code, 200)
+        self.invoice.refresh_from_db()
+        self.assertEqual(self.invoice.status, Invoice.STATUS_SENT)
+
+    @patch("books.views.stripe.Webhook.construct_event")
+    def test_currency_mismatch_does_not_mark_paid(self, mock_construct):
+        mock_construct.return_value = self._fake_event(self.invoice.id, currency="eur")
+        response = self._post_webhook()
+
+        self.invoice.refresh_from_db()
+        self.assertEqual(self.invoice.status, Invoice.STATUS_SENT)
+
+    @patch("books.views.stripe.Webhook.construct_event")
+    def test_already_paid_invoice_not_reprocessed(self, mock_construct):
+        self.invoice.status = Invoice.STATUS_PAID
+        self.invoice.stripe_payment_intent_id = "pi_original"
+        self.invoice.save()
+        mock_construct.return_value = self._fake_event(self.invoice.id, payment_intent="pi_new")
+
+        response = self._post_webhook()
+
+        self.assertEqual(response.status_code, 200)
+        self.invoice.refresh_from_db()
+        self.assertEqual(self.invoice.stripe_payment_intent_id, "pi_original")
+
+    def test_get_request_returns_405(self):
+        response = self.client.get(reverse("stripe_webhook", args=[self.integration.id]))
+        self.assertEqual(response.status_code, 405)
+
+    @patch("books.views.stripe.Webhook.construct_event")
+    def test_unrelated_event_type_ignored(self, mock_construct):
+        mock_construct.return_value = {"type": "payment_intent.created", "data": {"object": {}}}
+        response = self._post_webhook()
+
+        self.assertEqual(response.status_code, 200)
+        self.invoice.refresh_from_db()
+        self.assertEqual(self.invoice.status, Invoice.STATUS_SENT)

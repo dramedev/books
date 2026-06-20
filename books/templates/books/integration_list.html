@@ -57,6 +57,12 @@
 <code>{{ request.scheme }}://{{ request.get_host }}{% url 'shopify_webhook' integration_id=0 %}</code>
 <span class="text-muted">{% translate "(replace 0 with the integration ID)" %}</span>
 </div>
+
+<div class="alert alert-info mt-2 small">
+{% translate "Stripe webhook URL:" %}
+<code>{{ request.scheme }}://{{ request.get_host }}{% url 'stripe_webhook' integration_id=0 %}</code>
+<span class="text-muted">{% translate "(replace 0 with the integration ID; subscribe it to the checkout.session.completed event)" %}</span>
+</div>
 {% else %}
 <p class="text-muted">{% translate "No integrations yet." %}</p>
 {% endif %}

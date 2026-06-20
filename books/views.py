@@ -6,6 +6,7 @@ import json
 import math
 import random
 import secrets
+import stripe
 from datetime import timedelta
 from decimal import Decimal
 from functools import wraps
@@ -3670,6 +3671,46 @@ def shopify_webhook(request, integration_id):
     return HttpResponse(status=200)
 
 
+@csrf_exempt
+def stripe_webhook(request, integration_id):
+    """Verify the signature and mark an invoice paid on checkout.session.completed."""
+    if request.method != "POST":
+        return HttpResponse(status=405)
+
+    try:
+        intg = Integration.objects.get(
+            id=integration_id,
+            platform=Integration.PLATFORM_STRIPE,
+            is_active=True,
+        )
+    except Integration.DoesNotExist:
+        return HttpResponse(status=404)
+
+    sig_header = request.headers.get("Stripe-Signature", "")
+
+    try:
+        event = stripe.Webhook.construct_event(request.body, sig_header, intg.webhook_secret)
+    except (ValueError, stripe.SignatureVerificationError):
+        return HttpResponse(status=401)
+
+    if event["type"] == "checkout.session.completed":
+        session = event["data"]["object"]
+        invoice_id = session.get("metadata", {}).get("invoice_id")
+
+        invoice = Invoice.objects.filter(id=invoice_id, owner=intg.owner).first()
+        if (
+            invoice is not None
+            and invoice.status != Invoice.STATUS_PAID
+            and session.get("currency", "").upper() == invoice.currency
+            and session.get("amount_total") == int((invoice.grand_total * 100).to_integral_value())
+        ):
+            invoice.status = Invoice.STATUS_PAID
+            invoice.stripe_payment_intent_id = session.get("payment_intent", "")
+            invoice.save(update_fields=["status", "stripe_payment_intent_id"])
+
+    return HttpResponse(status=200)
+
+
 # ---------------------------------------------------------------------------
 # PWA views
 # ---------------------------------------------------------------------------
@@ -4361,13 +4402,74 @@ def customer_portal_dashboard(request):
     })
 
 
+def _get_stripe_integration(owner):
+    return Integration.objects.filter(
+        owner=owner, platform=Integration.PLATFORM_STRIPE, is_active=True,
+    ).first()
+
+
 @customer_portal_required
 def customer_portal_invoice_detail(request, id):
     invoice = get_object_or_404(Invoice, id=id, customer=request.portal_customer)
-    return render(request, "customer_portal/invoice_detail.html", {"invoice": invoice})
+
+    if request.GET.get("paid") == "1" and invoice.status != Invoice.STATUS_PAID:
+        messages.success(
+            request,
+            gettext("Payment received — it may take a moment to reflect on this invoice."),
+        )
+
+    can_pay = (
+        invoice.status != Invoice.STATUS_PAID
+        and _get_stripe_integration(invoice.owner) is not None
+    )
+
+    return render(request, "customer_portal/invoice_detail.html", {
+        "invoice": invoice,
+        "can_pay": can_pay,
+    })
 
 
 @customer_portal_required
 def customer_portal_invoice_pdf(request, id):
     invoice = get_object_or_404(Invoice, id=id, customer=request.portal_customer)
     return _invoice_pdf_response(invoice)
+
+
+@customer_portal_required
+@require_POST
+def customer_portal_invoice_pay(request, id):
+    invoice = get_object_or_404(Invoice, id=id, customer=request.portal_customer)
+
+    if invoice.status == Invoice.STATUS_PAID:
+        return redirect("customer_portal_invoice_detail", id=invoice.id)
+
+    integration = _get_stripe_integration(invoice.owner)
+    if integration is None:
+        messages.error(request, gettext("Online payment isn't available for this invoice yet."))
+        return redirect("customer_portal_invoice_detail", id=invoice.id)
+
+    detail_url = request.build_absolute_uri(reverse("customer_portal_invoice_detail", args=[invoice.id]))
+    client = stripe.StripeClient(api_key=integration.api_key)
+
+    try:
+        session = client.v1.checkout.sessions.create(params={
+            "mode": "payment",
+            "success_url": f"{detail_url}?paid=1",
+            "cancel_url": detail_url,
+            "metadata": {"invoice_id": str(invoice.id)},
+            "line_items": [{
+                "quantity": 1,
+                "price_data": {
+                    "currency": invoice.currency.lower(),
+                    "unit_amount": int((invoice.grand_total * 100).to_integral_value()),
+                    "product_data": {
+                        "name": f"Invoice {invoice.invoice_number or invoice.id}",
+                    },
+                },
+            }],
+        })
+    except stripe.StripeError:
+        messages.error(request, gettext("Couldn't start payment. Please try again or contact us."))
+        return redirect("customer_portal_invoice_detail", id=invoice.id)
+
+    return redirect(session.url)

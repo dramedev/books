@@ -91,6 +91,7 @@ urlpatterns = [
     path("integrations/<int:id>/edit/", views.integration_update, name="integration_update"),
     path("integrations/<int:id>/delete/", views.integration_delete, name="integration_delete"),
     path("webhooks/shopify/<int:integration_id>/", views.shopify_webhook, name="shopify_webhook"),
+    path("webhooks/stripe/<int:integration_id>/", views.stripe_webhook, name="stripe_webhook"),
     path("customers/", views.customer_list, name="customer_list"),
     path("customers/add/", views.customer_create, name="customer_create"),
     path("customers/<int:id>/", views.customer_detail, name="customer_detail"),
@@ -105,4 +106,5 @@ urlpatterns = [
     path("portal/", views.customer_portal_dashboard, name="customer_portal_dashboard"),
     path("portal/invoices/<int:id>/", views.customer_portal_invoice_detail, name="customer_portal_invoice_detail"),
     path("portal/invoices/<int:id>/pdf/", views.customer_portal_invoice_pdf, name="customer_portal_invoice_pdf"),
+    path("portal/invoices/<int:id>/pay/", views.customer_portal_invoice_pay, name="customer_portal_invoice_pay"),
 ]

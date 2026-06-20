@@ -675,6 +675,20 @@ FR = {
     'API key': 'Clé API',
     'API secret': 'Secret API',
     'Webhook secret': 'Secret webhook',
+    'Stripe': 'Stripe',
+    'Shopify: your-store.myshopify.com — Amazon: Seller ID — Stripe: not used':
+        "Shopify : your-store.myshopify.com — Amazon : ID vendeur — Stripe : non utilisé",
+    'Stripe: your secret key (sk_...)': 'Stripe : votre clé secrète (sk_...)',
+    "Used to verify incoming webhook payloads. Set this in your platform's webhook settings. Stripe: your endpoint's signing secret (whsec_...)":
+        "Utilisé pour vérifier les charges utiles des webhooks entrants. À définir dans les paramètres de webhook de votre plateforme. Stripe : le secret de signature de votre point de terminaison (whsec_...)",
+    'Stripe webhook URL:': 'URL webhook Stripe :',
+    '(replace 0 with the integration ID; subscribe it to the checkout.session.completed event)':
+        "(remplacer 0 par l'ID de l'intégration ; abonnez-la à l'événement checkout.session.completed)",
+    'Pay Now': 'Payer maintenant',
+    'Payment received — it may take a moment to reflect on this invoice.':
+        'Paiement reçu — cela peut prendre un instant avant de se refléter sur cette facture.',
+    "Online payment isn't available for this invoice yet.": "Le paiement en ligne n'est pas encore disponible pour cette facture.",
+    "Couldn't start payment. Please try again or contact us.": "Impossible de démarrer le paiement. Veuillez réessayer ou nous contacter.",
     'P&L Report': 'Rapport P&L',
     'Profit / Loss Report': 'Rapport Profit / Perte',
     'Revenue minus purchase costs, distribution expenses, and royalties.': "Chiffre d'affaires moins coûts d'achat, frais de distribution et redevances.",
@@ -1369,6 +1383,20 @@ AR = {
     'API key': 'مفتاح API',
     'API secret': 'المفتاح السري لـ API',
     'Webhook secret': 'المفتاح السري لـ webhook',
+    'Stripe': 'Stripe',
+    'Shopify: your-store.myshopify.com — Amazon: Seller ID — Stripe: not used':
+        'Shopify: your-store.myshopify.com — Amazon: معرّف البائع — Stripe: غير مستخدم',
+    'Stripe: your secret key (sk_...)': 'Stripe: مفتاحك السري (sk_...)',
+    "Used to verify incoming webhook payloads. Set this in your platform's webhook settings. Stripe: your endpoint's signing secret (whsec_...)":
+        'يُستخدم للتحقق من حمولات الـ webhook الواردة. يتم تعيينه في إعدادات webhook لمنصتك. Stripe: سر توقيع نقطة النهاية (whsec_...)',
+    'Stripe webhook URL:': 'رابط webhook لـ Stripe:',
+    '(replace 0 with the integration ID; subscribe it to the checkout.session.completed event)':
+        '(استبدل 0 بمعرّف التكامل، واشترك به في حدث checkout.session.completed)',
+    'Pay Now': 'الدفع الآن',
+    'Payment received — it may take a moment to reflect on this invoice.':
+        'تم استلام الدفعة — قد يستغرق ظهورها في هذه الفاتورة لحظة.',
+    "Online payment isn't available for this invoice yet.": 'الدفع عبر الإنترنت غير متاح لهذه الفاتورة حتى الآن.',
+    "Couldn't start payment. Please try again or contact us.": 'تعذّر بدء الدفع. يرجى المحاولة مرة أخرى أو التواصل معنا.',
     'P&L Report': 'تقرير الأرباح والخسائر',
     'Profit / Loss Report': 'تقرير الأرباح والخسائر',
     'Revenue minus purchase costs, distribution expenses, and royalties.': 'الإيرادات مطروحاً منها تكاليف الشراء ومصاريف التوزيع وحقوق المؤلف.',

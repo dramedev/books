@@ -110,6 +110,16 @@ input{
 </header>
 
 <main class="portal-content">
+{% if messages %}
+<div class="mb-3">
+{% for message in messages %}
+<div class="alert {% if message.tags == 'error' %}alert-danger{% else %}alert-{{ message.tags|default:'info' }}{% endif %} mb-2">
+{{ message }}
+</div>
+{% endfor %}
+</div>
+{% endif %}
+
 {% block content %}{% endblock %}
 </main>
 

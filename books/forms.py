@@ -635,6 +635,7 @@ class IntegrationForm(forms.ModelForm):
         }
 
         help_texts = {
-            "store_url": _("Shopify: your-store.myshopify.com — Amazon: Seller ID"),
-            "webhook_secret": _("Used to verify incoming webhook payloads. Set this in your platform's webhook settings."),
+            "store_url": _("Shopify: your-store.myshopify.com — Amazon: Seller ID — Stripe: not used"),
+            "api_key": _("Stripe: your secret key (sk_...)"),
+            "webhook_secret": _("Used to verify incoming webhook payloads. Set this in your platform's webhook settings. Stripe: your endpoint's signing secret (whsec_...)"),
         }
