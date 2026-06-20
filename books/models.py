@@ -1,4 +1,4 @@
-from decimal import Decimal
+from decimal import Decimal, ROUND_HALF_UP
 
 from django.conf import settings
 from django.core.exceptions import ValidationError
@@ -575,7 +575,8 @@ class InvoiceItem(models.Model):
 
     @property
     def tax_amount(self):
-        return self.subtotal * self.tax_rate / Decimal(100)
+        amount = self.subtotal * self.tax_rate / Decimal(100)
+        return amount.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
 
 
     @property
