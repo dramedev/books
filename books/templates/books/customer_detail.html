@@ -53,6 +53,9 @@
 
 <dt class="col-sm-4">{% translate "Address" %}</dt>
 <dd class="col-sm-8">{{ customer.address|default:"-"|linebreaksbr }}</dd>
+
+<dt class="col-sm-4">{% translate "Last portal login" %}</dt>
+<dd class="col-sm-8">{{ last_portal_login|default:"-" }}</dd>
 </dl>
 </div>
 </div>

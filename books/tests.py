@@ -1187,6 +1187,33 @@ class CustomerViewTests(TestCase):
         response = self.client.get(reverse("customer_list"))
         self.assertEqual(response.status_code, 302)
 
+    def test_detail_shows_no_portal_login_when_never_logged_in(self):
+        response = self.client.get(reverse("customer_detail", args=[self.customer.id]))
+        self.assertEqual(response.context["last_portal_login"], None)
+
+    def test_detail_shows_most_recent_portal_login(self):
+        older = timezone.now() - timedelta(days=2)
+        newer = timezone.now() - timedelta(hours=1)
+        CustomerLoginToken.objects.create(
+            customer=self.customer, token="old", expires_at=older + timedelta(minutes=30), used_at=older,
+        )
+        CustomerLoginToken.objects.create(
+            customer=self.customer, token="new", expires_at=newer + timedelta(minutes=30), used_at=newer,
+        )
+
+        response = self.client.get(reverse("customer_detail", args=[self.customer.id]))
+        self.assertEqual(response.context["last_portal_login"], newer)
+
+    def test_detail_ignores_other_customers_logins(self):
+        other_customer = Customer.objects.create(owner=self.user, name="Other Customer", email="o@example.com")
+        CustomerLoginToken.objects.create(
+            customer=other_customer, token="other-token",
+            expires_at=timezone.now() + timedelta(minutes=30), used_at=timezone.now(),
+        )
+
+        response = self.client.get(reverse("customer_detail", args=[self.customer.id]))
+        self.assertEqual(response.context["last_portal_login"], None)
+
 
 class InvoiceModelTests(TestCase):
 

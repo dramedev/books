@@ -1729,6 +1729,9 @@ msgstr "le client"
 msgid "Back to Customers"
 msgstr "Retour aux clients"
 
+msgid "Last portal login"
+msgstr "Dernière connexion au portail"
+
 msgid "Contact"
 msgstr "Contact"
 

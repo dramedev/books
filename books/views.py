@@ -21,7 +21,7 @@ from django.core.cache import cache
 from django.core.mail import send_mail
 from django.core.paginator import Paginator
 from django.db import models
-from django.db.models import Case, Count, DecimalField, ExpressionWrapper, F, IntegerField, OuterRef, Q, Subquery, Sum, Value, When
+from django.db.models import Case, Count, DecimalField, ExpressionWrapper, F, IntegerField, Max, OuterRef, Q, Subquery, Sum, Value, When
 from django.db.models.functions import Coalesce, TruncMonth
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
@@ -3978,6 +3978,11 @@ def customer_detail(request, id):
     paginator = Paginator(invoices, 10)
     page_obj = paginator.get_page(request.GET.get("page"))
 
+    last_portal_login = (
+        CustomerLoginToken.objects.filter(customer=customer, used_at__isnull=False)
+        .aggregate(last=Max("used_at"))["last"]
+    )
+
     return render(request, "books/customer_detail.html", {
         "customer": customer,
         "invoices": page_obj.object_list,
@@ -3986,6 +3991,7 @@ def customer_detail(request, id):
         "outstanding_by_currency": sorted(outstanding_by_currency.items()),
         "overdue_count": overdue_count,
         "overdue_badge_text": gettext("%(count)s overdue") % {"count": overdue_count},
+        "last_portal_login": last_portal_login,
     })
 
 

@@ -1729,6 +1729,9 @@ msgstr "العميل"
 msgid "Back to Customers"
 msgstr "العودة إلى العملاء"
 
+msgid "Last portal login"
+msgstr "آخر تسجيل دخول للبوابة"
+
 msgid "Contact"
 msgstr "التواصل"
 
