@@ -15,9 +15,9 @@ from django.utils import timezone
 
 from . import ai_chat
 from .models import (
-    AccessCode, AVATAR_MAX_SIZE_BYTES, Author, Book, Category, Customer, Invoice, InvoiceItem,
-    Location, PrintRun, Profile, Reorder, RoyaltyPayment, Sale, StockAdjustment, Supplier,
-    validate_avatar_size,
+    AccessCode, AVATAR_MAX_SIZE_BYTES, Author, Book, Category, Customer, CustomerLoginToken,
+    Invoice, InvoiceItem, Location, PrintRun, Profile, Reorder, RoyaltyPayment, Sale,
+    StockAdjustment, Supplier, validate_avatar_size,
 )
 from .views import _adjust_stock, _invoice_aging_data, _pl_data, _safe_json
 
@@ -1927,3 +1927,123 @@ class RoyaltyPaymentViewTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Jane Doe")
         self.assertContains(response, "100 USD")
+
+
+class CustomerPortalTests(TestCase):
+
+    def setUp(self):
+        User = get_user_model()
+        self.owner = User.objects.create_user(username="owner", password="pass1234")
+        self.customer = Customer.objects.create(
+            owner=self.owner, name="Acme Shop", email="acme@example.com",
+        )
+        self.other_customer = Customer.objects.create(
+            owner=self.owner, name="Other Shop", email="other@example.com",
+        )
+        self.invoice = Invoice.objects.create(
+            owner=self.owner,
+            customer=self.customer,
+            customer_name=self.customer.name,
+            invoice_date=date(2024, 1, 1),
+            currency="USD",
+            status=Invoice.STATUS_SENT,
+        )
+        InvoiceItem.objects.create(
+            invoice=self.invoice, description="Book", quantity=2, unit_price=Decimal("10.00"),
+        )
+        self.other_invoice = Invoice.objects.create(
+            owner=self.owner,
+            customer=self.other_customer,
+            customer_name=self.other_customer.name,
+            invoice_date=date(2024, 1, 1),
+            currency="USD",
+            status=Invoice.STATUS_SENT,
+        )
+
+    def _request_login_link(self, email):
+        return self.client.post(reverse("customer_portal_login"), {"email": email})
+
+    def test_login_request_sends_email_and_creates_token(self):
+        response = self._request_login_link("acme@example.com")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertIn("acme@example.com", mail.outbox[0].to)
+        self.assertEqual(CustomerLoginToken.objects.filter(customer=self.customer).count(), 1)
+
+    def test_login_request_for_unknown_email_sends_nothing_but_no_error(self):
+        response = self._request_login_link("nobody@example.com")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(mail.outbox), 0)
+
+    def test_valid_token_logs_in_and_reaches_dashboard(self):
+        self._request_login_link("acme@example.com")
+        token = CustomerLoginToken.objects.get(customer=self.customer)
+
+        response = self.client.get(reverse("customer_portal_verify", args=[token.token]))
+        self.assertEqual(response.status_code, 302)
+
+        response = self.client.get(reverse("customer_portal_dashboard"))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Acme Shop")
+
+    def test_token_is_single_use(self):
+        self._request_login_link("acme@example.com")
+        token = CustomerLoginToken.objects.get(customer=self.customer)
+
+        self.client.get(reverse("customer_portal_verify", args=[token.token]))
+        self.client.post(reverse("customer_portal_logout"))
+
+        response = self.client.get(reverse("customer_portal_verify", args=[token.token]))
+        self.assertEqual(response.status_code, 400)
+
+    def test_expired_token_rejected(self):
+        token = CustomerLoginToken.objects.create(
+            customer=self.customer,
+            token="expired-token",
+            expires_at=timezone.now() - timedelta(minutes=1),
+        )
+        response = self.client.get(reverse("customer_portal_verify", args=[token.token]))
+        self.assertEqual(response.status_code, 400)
+
+    def test_dashboard_requires_login(self):
+        response = self.client.get(reverse("customer_portal_dashboard"))
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.url, reverse("customer_portal_login"))
+
+    def test_dashboard_shows_only_own_invoices(self):
+        self._request_login_link("acme@example.com")
+        token = CustomerLoginToken.objects.get(customer=self.customer)
+        self.client.get(reverse("customer_portal_verify", args=[token.token]))
+
+        response = self.client.get(reverse("customer_portal_dashboard"))
+        self.assertContains(response, reverse("customer_portal_invoice_detail", args=[self.invoice.id]))
+        self.assertEqual(response.context["page_obj"].paginator.count, 1)
+
+    def test_cannot_view_other_customers_invoice(self):
+        self._request_login_link("acme@example.com")
+        token = CustomerLoginToken.objects.get(customer=self.customer)
+        self.client.get(reverse("customer_portal_verify", args=[token.token]))
+
+        response = self.client.get(reverse("customer_portal_invoice_detail", args=[self.other_invoice.id]))
+        self.assertEqual(response.status_code, 404)
+
+    def test_own_invoice_detail_and_pdf_accessible(self):
+        self._request_login_link("acme@example.com")
+        token = CustomerLoginToken.objects.get(customer=self.customer)
+        self.client.get(reverse("customer_portal_verify", args=[token.token]))
+
+        response = self.client.get(reverse("customer_portal_invoice_detail", args=[self.invoice.id]))
+        self.assertEqual(response.status_code, 200)
+
+        response = self.client.get(reverse("customer_portal_invoice_pdf", args=[self.invoice.id]))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response["Content-Type"], "application/pdf")
+
+    def test_logout_clears_session(self):
+        self._request_login_link("acme@example.com")
+        token = CustomerLoginToken.objects.get(customer=self.customer)
+        self.client.get(reverse("customer_portal_verify", args=[token.token]))
+
+        self.client.post(reverse("customer_portal_logout"))
+        response = self.client.get(reverse("customer_portal_dashboard"))
+        self.assertEqual(response.status_code, 302)

@@ -1504,6 +1504,30 @@ msgstr "تم حذف دفعة الأتعاب."
 msgid "royalty payment"
 msgstr "دفعة الأتعاب"
 
+msgid "Customer Portal"
+msgstr "بوابة العملاء"
+
+msgid "Customer Portal Login"
+msgstr "تسجيل الدخول إلى بوابة العملاء"
+
+msgid "If an account exists for that email, we've sent a login link. Check your inbox (and spam folder)."
+msgstr "إذا كان هناك حساب مرتبط بهذا البريد، فقد أرسلنا رابط تسجيل دخول. تحقق من صندوق الوارد (ومجلد البريد العشوائي)."
+
+msgid "Enter your email address and we'll send you a link to access your invoices."
+msgstr "أدخل بريدك الإلكتروني وسنرسل لك رابطًا للوصول إلى فواتيرك."
+
+msgid "Send login link"
+msgstr "إرسال رابط تسجيل الدخول"
+
+msgid "This login link is invalid or has already been used. Please request a new one."
+msgstr "رابط تسجيل الدخول هذا غير صالح أو تم استخدامه مسبقًا. يرجى طلب رابط جديد."
+
+msgid "Welcome, %(name)s"
+msgstr "مرحبًا، %(name)s"
+
+msgid "Back to dashboard"
+msgstr "العودة إلى لوحة التحكم"
+
 msgid "Locations"
 msgstr "المواقع"
 

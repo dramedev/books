@@ -99,4 +99,10 @@ urlpatterns = [
     path("reports/profit-loss/", views.profit_loss_report, name="profit_loss_report"),
     path("reports/profit-loss/pdf/", views.export_profit_loss_pdf, name="export_profit_loss_pdf"),
     path("reports/invoice-aging/", views.invoice_aging_report, name="invoice_aging_report"),
+    path("portal/login/", views.customer_portal_login, name="customer_portal_login"),
+    path("portal/verify/<str:token>/", views.customer_portal_verify, name="customer_portal_verify"),
+    path("portal/logout/", views.customer_portal_logout, name="customer_portal_logout"),
+    path("portal/", views.customer_portal_dashboard, name="customer_portal_dashboard"),
+    path("portal/invoices/<int:id>/", views.customer_portal_invoice_detail, name="customer_portal_invoice_detail"),
+    path("portal/invoices/<int:id>/pdf/", views.customer_portal_invoice_pdf, name="customer_portal_invoice_pdf"),
 ]

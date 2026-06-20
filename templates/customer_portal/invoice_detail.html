@@ -1,0 +1,65 @@
+{% extends "customer_portal/base.html" %}
+{% load i18n %}
+
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+<h1 class="mb-0 h3">{{ invoice.invoice_number }}</h1>
+<div class="d-flex gap-2">
+<a class="btn btn-outline-light btn-sm" href="{% url 'customer_portal_invoice_pdf' invoice.id %}">{% translate "PDF" %}</a>
+<a class="btn btn-outline-light btn-sm" href="{% url 'customer_portal_dashboard' %}">{% translate "Back to dashboard" %}</a>
+</div>
+</div>
+
+<div class="page-panel mb-3">
+<dl class="row mb-0">
+<dt class="col-sm-3">{% translate "Date" %}</dt>
+<dd class="col-sm-9">{{ invoice.invoice_date }}</dd>
+
+<dt class="col-sm-3">{% translate "Due" %}</dt>
+<dd class="col-sm-9">{{ invoice.due_date|default:"-" }}</dd>
+
+<dt class="col-sm-3">{% translate "Status" %}</dt>
+<dd class="col-sm-9"><span class="badge {{ invoice.status_badge_class }}">{{ invoice.get_status_display }}</span></dd>
+</dl>
+</div>
+
+<div class="page-panel">
+<h2 class="mb-3 h5">{% translate "Line items" %}</h2>
+
+<div class="table-responsive">
+<table class="table table-striped align-middle mb-0">
+<thead>
+<tr>
+<th>{% translate "Description" %}</th>
+<th>{% translate "Qty" %}</th>
+<th>{% translate "Unit Price" %}</th>
+<th>{% translate "Tax %" %}</th>
+<th>{% translate "Total" %}</th>
+</tr>
+</thead>
+<tbody>
+{% for item in invoice.items.all %}
+<tr>
+<td>{{ item.description }}</td>
+<td>{{ item.quantity }}</td>
+<td>{{ item.unit_price }}</td>
+<td>{{ item.tax_rate }}</td>
+<td>{{ item.total }}</td>
+</tr>
+{% endfor %}
+<tr>
+<td colspan="3"></td>
+<td><strong>{% translate "Grand Total" %}</strong></td>
+<td><strong>{{ invoice.grand_total }} {{ invoice.currency }}</strong></td>
+</tr>
+</tbody>
+</table>
+</div>
+
+{% if invoice.note %}
+<p class="mt-3 mb-0"><strong>{% translate "Note" %}:</strong> {{ invoice.note }}</p>
+{% endif %}
+</div>
+
+{% endblock %}

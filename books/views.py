@@ -5,8 +5,10 @@ import hmac as _hmac
 import json
 import math
 import random
+import secrets
 from datetime import timedelta
 from decimal import Decimal
+from functools import wraps
 from io import BytesIO
 
 from django.conf import settings
@@ -55,7 +57,7 @@ from .forms import (
 )
 from .models import (
     CURRENCY_CHOICES,
-    AccessCode, Author, Book, Category, Customer,
+    AccessCode, Author, Book, Category, Customer, CustomerLoginToken,
     Integration, Invoice, InvoiceItem,
     Location, PrintRun, Profile,
     Reorder, Return, RoyaltyPayment, RoyaltyRate,
@@ -3130,9 +3132,7 @@ def invoice_aging_report(request):
     })
 
 
-@login_required
-@permission_required("books.view_invoice", raise_exception=True)
-def invoice_pdf(request, id):
+def _invoice_pdf_response(invoice):
     from reportlab.lib import colors
     from reportlab.lib.pagesizes import letter
     from reportlab.lib.styles import getSampleStyleSheet
@@ -3141,7 +3141,6 @@ def invoice_pdf(request, id):
     _register_pdf_fonts()
     body_font, bold_font = _pdf_fonts()
 
-    invoice = get_object_or_404(Invoice, id=id, owner=request.user)
     items = invoice.items.all()
 
     buffer = BytesIO()
@@ -3210,6 +3209,13 @@ def invoice_pdf(request, id):
     response = HttpResponse(buffer.getvalue(), content_type="application/pdf")
     response["Content-Disposition"] = f'attachment; filename="invoice-{invoice.invoice_number}.pdf"'
     return response
+
+
+@login_required
+@permission_required("books.view_invoice", raise_exception=True)
+def invoice_pdf(request, id):
+    invoice = get_object_or_404(Invoice, id=id, owner=request.user)
+    return _invoice_pdf_response(invoice)
 
 
 @login_required
@@ -4222,3 +4228,127 @@ def export_profit_loss_pdf(request):
     response = HttpResponse(buffer.getvalue(), content_type="application/pdf")
     response["Content-Disposition"] = 'attachment; filename="rumi-press-profit-loss.pdf"'
     return response
+
+
+# ---------------------------------------------------------------------------
+# Customer self-service portal
+# ---------------------------------------------------------------------------
+
+CUSTOMER_PORTAL_SESSION_KEY = "customer_portal_customer_id"
+
+
+def _get_portal_customer(request):
+    customer_id = request.session.get(CUSTOMER_PORTAL_SESSION_KEY)
+    if not customer_id:
+        return None
+    return Customer.objects.filter(id=customer_id).first()
+
+
+def customer_portal_required(view_func):
+    @wraps(view_func)
+    def wrapper(request, *args, **kwargs):
+        customer = _get_portal_customer(request)
+        if customer is None:
+            return redirect("customer_portal_login")
+        request.portal_customer = customer
+        return view_func(request, *args, **kwargs)
+    return wrapper
+
+
+def _send_customer_portal_login_email(customer, link):
+    send_mail(
+        subject="Your RumiPress customer portal login link",
+        message=(
+            f"Hi {customer.name},\n\n"
+            f"Click the link below to access your customer portal:\n{link}\n\n"
+            f"This link expires in {settings.CUSTOMER_PORTAL_TOKEN_TTL_MINUTES} minutes "
+            "and can only be used once.\n\n"
+            "If you didn't request this, you can ignore this email."
+        ),
+        from_email=settings.DEFAULT_FROM_EMAIL,
+        recipient_list=[customer.email],
+        fail_silently=True,
+    )
+
+
+def customer_portal_login(request):
+    if _get_portal_customer(request):
+        return redirect("customer_portal_dashboard")
+
+    sent = False
+
+    if request.method == "POST":
+        email = request.POST.get("email", "").strip()
+        for customer in Customer.objects.filter(email__iexact=email).exclude(email=""):
+            login_token = CustomerLoginToken.objects.create(
+                customer=customer,
+                token=secrets.token_urlsafe(32),
+                expires_at=timezone.now() + timedelta(minutes=settings.CUSTOMER_PORTAL_TOKEN_TTL_MINUTES),
+            )
+            link = request.build_absolute_uri(reverse("customer_portal_verify", args=[login_token.token]))
+            _send_customer_portal_login_email(customer, link)
+        sent = True
+
+    return render(request, "customer_portal/login.html", {"sent": sent})
+
+
+def customer_portal_verify(request, token):
+    login_token = CustomerLoginToken.objects.select_related("customer").filter(token=token).first()
+
+    if login_token is None or not login_token.is_valid:
+        return render(request, "customer_portal/link_invalid.html", status=400)
+
+    login_token.used_at = timezone.now()
+    login_token.save(update_fields=["used_at"])
+
+    request.session[CUSTOMER_PORTAL_SESSION_KEY] = login_token.customer_id
+    return redirect("customer_portal_dashboard")
+
+
+@require_POST
+def customer_portal_logout(request):
+    request.session.pop(CUSTOMER_PORTAL_SESSION_KEY, None)
+    return redirect("customer_portal_login")
+
+
+@customer_portal_required
+def customer_portal_dashboard(request):
+    customer = request.portal_customer
+    invoices = customer.invoices.order_by("-invoice_date")
+
+    billed_by_currency = {}
+    outstanding_by_currency = {}
+    overdue_count = 0
+    for invoice in invoices:
+        billed_by_currency[invoice.currency] = billed_by_currency.get(invoice.currency, Decimal(0)) + invoice.grand_total
+        if invoice.status != Invoice.STATUS_PAID:
+            outstanding_by_currency[invoice.currency] = (
+                outstanding_by_currency.get(invoice.currency, Decimal(0)) + invoice.grand_total
+            )
+        if invoice.is_overdue:
+            overdue_count += 1
+
+    paginator = Paginator(invoices, 10)
+    page_obj = paginator.get_page(request.GET.get("page"))
+
+    return render(request, "customer_portal/dashboard.html", {
+        "customer": customer,
+        "invoices": page_obj.object_list,
+        "page_obj": page_obj,
+        "billed_by_currency": sorted(billed_by_currency.items()),
+        "outstanding_by_currency": sorted(outstanding_by_currency.items()),
+        "overdue_count": overdue_count,
+        "overdue_badge_text": gettext("%(count)s overdue") % {"count": overdue_count},
+    })
+
+
+@customer_portal_required
+def customer_portal_invoice_detail(request, id):
+    invoice = get_object_or_404(Invoice, id=id, customer=request.portal_customer)
+    return render(request, "customer_portal/invoice_detail.html", {"invoice": invoice})
+
+
+@customer_portal_required
+def customer_portal_invoice_pdf(request, id):
+    invoice = get_object_or_404(Invoice, id=id, customer=request.portal_customer)
+    return _invoice_pdf_response(invoice)

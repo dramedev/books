@@ -193,6 +193,8 @@ DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL", EMAIL_HOST_USER)
 
 VERIFICATION_CODE_TTL_MINUTES = 15
 
+CUSTOMER_PORTAL_TOKEN_TTL_MINUTES = 30
+
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 

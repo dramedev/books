@@ -1,0 +1,77 @@
+{% extends "customer_portal/base.html" %}
+{% load i18n %}
+
+{% block content %}
+
+<h1 class="mb-3 h3">{% blocktranslate with name=customer.name %}Welcome, {{ name }}{% endblocktranslate %}</h1>
+
+<div class="page-panel mb-3">
+<h2 class="mb-3 h5">{% translate "Billing Summary" %}</h2>
+
+<dl class="row mb-0">
+<dt class="col-sm-4">{% translate "Invoices" %}</dt>
+<dd class="col-sm-8">
+{{ page_obj.paginator.count }}
+{% if overdue_count %}<span class="badge bg-danger ms-1">{{ overdue_badge_text }}</span>{% endif %}
+</dd>
+
+<dt class="col-sm-4">{% translate "Total billed" %}</dt>
+<dd class="col-sm-8">
+{% for currency, amount in billed_by_currency %}
+<div>{{ amount }} {{ currency }}</div>
+{% empty %}
+-
+{% endfor %}
+</dd>
+
+<dt class="col-sm-4">{% translate "Outstanding balance" %}</dt>
+<dd class="col-sm-8">
+{% for currency, amount in outstanding_by_currency %}
+<div>{{ amount }} {{ currency }} <span class="badge bg-danger">{% translate "Due" %}</span></div>
+{% empty %}
+-
+{% endfor %}
+</dd>
+</dl>
+</div>
+
+<div class="page-panel">
+<h2 class="mb-3 h5">{% translate "Invoices" %}</h2>
+
+<div class="table-responsive">
+<table class="table table-striped align-middle mb-0">
+<thead>
+<tr>
+<th>{% translate "Number" %}</th>
+<th>{% translate "Date" %}</th>
+<th>{% translate "Due" %}</th>
+<th>{% translate "Currency" %}</th>
+<th>{% translate "Total" %}</th>
+<th>{% translate "Status" %}</th>
+</tr>
+</thead>
+<tbody>
+{% for invoice in invoices %}
+<tr {% if invoice.is_overdue %}class="table-danger"{% endif %}>
+<td><a href="{% url 'customer_portal_invoice_detail' invoice.id %}">{{ invoice.invoice_number }}</a></td>
+<td>{{ invoice.invoice_date }}</td>
+<td>{{ invoice.due_date|default:"-" }}</td>
+<td>{{ invoice.currency }}</td>
+<td>{{ invoice.grand_total }}</td>
+<td><span class="badge {{ invoice.status_badge_class }}">{{ invoice.get_status_display }}</span></td>
+</tr>
+{% empty %}
+<tr>
+<td colspan="6" class="text-center muted-text py-4">
+{% translate "No invoices yet." %}
+</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+
+{% include "books/_pagination.html" %}
+</div>
+
+{% endblock %}

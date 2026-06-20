@@ -1,0 +1,29 @@
+{% extends "customer_portal/base.html" %}
+{% load i18n %}
+
+{% block content %}
+
+<div class="page-panel mx-auto" style="max-width:420px;">
+<h1 class="mb-3 h4">{% translate "Customer Portal Login" %}</h1>
+
+{% if sent %}
+<p class="muted-text">
+{% translate "If an account exists for that email, we've sent a login link. Check your inbox (and spam folder)." %}
+</p>
+<a class="btn btn-outline-light btn-sm" href="{% url 'customer_portal_login' %}">{% translate "Back to login" %}</a>
+{% else %}
+<p class="muted-text mb-3">
+{% translate "Enter your email address and we'll send you a link to access your invoices." %}
+</p>
+<form method="post">
+{% csrf_token %}
+<div class="mb-3">
+<label class="form-label" for="email">{% translate "Email" %}</label>
+<input type="email" class="form-control" id="email" name="email" required>
+</div>
+<button class="btn btn-primary w-100" type="submit">{% translate "Send login link" %}</button>
+</form>
+{% endif %}
+</div>
+
+{% endblock %}

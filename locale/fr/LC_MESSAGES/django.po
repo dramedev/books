@@ -1504,6 +1504,30 @@ msgstr "Paiement de droits d'auteur supprimé."
 msgid "royalty payment"
 msgstr "le paiement de droits d'auteur"
 
+msgid "Customer Portal"
+msgstr "Portail client"
+
+msgid "Customer Portal Login"
+msgstr "Connexion au portail client"
+
+msgid "If an account exists for that email, we've sent a login link. Check your inbox (and spam folder)."
+msgstr "Si un compte existe pour cette adresse, nous avons envoyé un lien de connexion. Vérifiez votre boîte de réception (et le dossier spam)."
+
+msgid "Enter your email address and we'll send you a link to access your invoices."
+msgstr "Saisissez votre adresse e-mail et nous vous enverrons un lien pour accéder à vos factures."
+
+msgid "Send login link"
+msgstr "Envoyer le lien de connexion"
+
+msgid "This login link is invalid or has already been used. Please request a new one."
+msgstr "Ce lien de connexion est invalide ou a déjà été utilisé. Veuillez en demander un nouveau."
+
+msgid "Welcome, %(name)s"
+msgstr "Bienvenue, %(name)s"
+
+msgid "Back to dashboard"
+msgstr "Retour au tableau de bord"
+
 msgid "Locations"
 msgstr "Emplacements"
 

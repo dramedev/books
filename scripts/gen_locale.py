@@ -622,6 +622,17 @@ FR = {
     'Royalty payment recorded.': "Paiement de droits d'auteur enregistré.",
     'Royalty payment deleted.': "Paiement de droits d'auteur supprimé.",
     'royalty payment': "le paiement de droits d'auteur",
+    'Customer Portal': 'Portail client',
+    'Customer Portal Login': 'Connexion au portail client',
+    "If an account exists for that email, we've sent a login link. Check your inbox (and spam folder).":
+        'Si un compte existe pour cette adresse, nous avons envoyé un lien de connexion. Vérifiez votre boîte de réception (et le dossier spam).',
+    "Enter your email address and we'll send you a link to access your invoices.":
+        'Saisissez votre adresse e-mail et nous vous enverrons un lien pour accéder à vos factures.',
+    'Send login link': 'Envoyer le lien de connexion',
+    'This login link is invalid or has already been used. Please request a new one.':
+        'Ce lien de connexion est invalide ou a déjà été utilisé. Veuillez en demander un nouveau.',
+    'Welcome, %(name)s': 'Bienvenue, %(name)s',
+    'Back to dashboard': 'Retour au tableau de bord',
     'Locations': 'Emplacements',
     'Manage warehouse and store locations.': 'Gérez les entrepôts et points de vente.',
     'Add location': 'Ajouter un emplacement',
@@ -1304,6 +1315,17 @@ AR = {
     'Royalty payment recorded.': 'تم تسجيل دفعة الأتعاب.',
     'Royalty payment deleted.': 'تم حذف دفعة الأتعاب.',
     'royalty payment': 'دفعة الأتعاب',
+    'Customer Portal': 'بوابة العملاء',
+    'Customer Portal Login': 'تسجيل الدخول إلى بوابة العملاء',
+    "If an account exists for that email, we've sent a login link. Check your inbox (and spam folder).":
+        'إذا كان هناك حساب مرتبط بهذا البريد، فقد أرسلنا رابط تسجيل دخول. تحقق من صندوق الوارد (ومجلد البريد العشوائي).',
+    "Enter your email address and we'll send you a link to access your invoices.":
+        'أدخل بريدك الإلكتروني وسنرسل لك رابطًا للوصول إلى فواتيرك.',
+    'Send login link': 'إرسال رابط تسجيل الدخول',
+    'This login link is invalid or has already been used. Please request a new one.':
+        'رابط تسجيل الدخول هذا غير صالح أو تم استخدامه مسبقًا. يرجى طلب رابط جديد.',
+    'Welcome, %(name)s': 'مرحبًا، %(name)s',
+    'Back to dashboard': 'العودة إلى لوحة التحكم',
     'Locations': 'المواقع',
     'Manage warehouse and store locations.': 'إدارة مواقع المستودعات والمتاجر.',
     'Add location': 'إضافة موقع',

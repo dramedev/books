@@ -406,6 +406,33 @@ class Customer(models.Model):
 
 
 
+class CustomerLoginToken(models.Model):
+
+    customer = models.ForeignKey(
+        Customer,
+        on_delete=models.CASCADE,
+        related_name="login_tokens",
+    )
+
+    token = models.CharField(max_length=64, unique=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    expires_at = models.DateTimeField()
+
+    used_at = models.DateTimeField(null=True, blank=True)
+
+
+    def __str__(self):
+        return f"Login token for {self.customer.name}"
+
+
+    @property
+    def is_valid(self):
+        return self.used_at is None and timezone.now() <= self.expires_at
+
+
+
 class Invoice(models.Model):
 
     STATUS_DRAFT = "draft"
