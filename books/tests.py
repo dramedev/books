@@ -31,7 +31,7 @@ from .isbn_lookup import IsbnLookupError, lookup_isbn
 from .models import (
     AccessCode, AVATAR_MAX_SIZE_BYTES, Account, AccountInvitation, AccountMembership, Author, Book, Category,
     Customer, CustomerLoginToken, get_or_create_account_for_user,
-    Integration, Invoice, InvoiceItem, Location, PrintRun, Profile, Reorder, RoyaltyPayment, RoyaltyRate,
+    Integration, Invoice, InvoiceItem, Location, PrintRun, ProcessedShopifyOrder, Profile, Reorder, RoyaltyPayment, RoyaltyRate,
     Sale, StockAdjustment, Subscription, Supplier, validate_avatar_size,
 )
 from .views import _adjust_stock, _invoice_aging_data, _parse_publish_date, _pl_data, _safe_json
@@ -1452,6 +1452,75 @@ class IntegrationEncryptionAtRestTests(TestCase):
     def test_blank_value_is_not_encrypted(self):
         self.assertEqual(encrypt_value(""), "")
         self.assertEqual(decrypt_value(""), "")
+
+
+class ShopifyWebhookTests(TestCase):
+    """Covers HMAC verification, stock deduction, and replay protection for
+    the Shopify orders/create webhook."""
+
+    def setUp(self):
+        User = get_user_model()
+        self.user = User.objects.create_user(username="shop_owner", password="pass1234")
+        self.account = get_or_create_account_for_user(self.user)
+        self.integration = Integration.objects.create(
+            owner=self.user, account=self.account, platform=Integration.PLATFORM_SHOPIFY,
+            name="My Shopify", webhook_secret="shpss_testsecret123", is_active=True,
+        )
+        category = Category.objects.create(owner=self.user, account=self.account, name="Fiction")
+        self.book = Book.objects.create(
+            owner=self.user, account=self.account, title="Race Condition Handbook",
+            published_date=date(2024, 1, 1), category=category,
+            isbn="9781234567890", stock_on_hand=10, distribution_expense=5,
+        )
+
+    def _post_webhook(self, payload):
+        body = json.dumps(payload).encode()
+        digest = base64.b64encode(
+            hmac.new(b"shpss_testsecret123", body, hashlib.sha256).digest()
+        ).decode()
+        return self.client.post(
+            reverse("shopify_webhook", args=[self.integration.id]),
+            data=body, content_type="application/json",
+            HTTP_X_SHOPIFY_HMAC_SHA256=digest,
+        )
+
+    def test_invalid_signature_rejected(self):
+        body = json.dumps({"id": 1, "line_items": []}).encode()
+        response = self.client.post(
+            reverse("shopify_webhook", args=[self.integration.id]),
+            data=body, content_type="application/json",
+            HTTP_X_SHOPIFY_HMAC_SHA256="not-the-right-signature",
+        )
+        self.assertEqual(response.status_code, 401)
+        self.book.refresh_from_db()
+        self.assertEqual(self.book.stock_on_hand, 10)
+
+    def test_valid_order_deducts_stock(self):
+        response = self._post_webhook({
+            "id": 555,
+            "line_items": [{"sku": "9781234567890", "quantity": 3}],
+        })
+        self.assertEqual(response.status_code, 200)
+        self.book.refresh_from_db()
+        self.assertEqual(self.book.stock_on_hand, 7)
+
+    def test_replayed_order_does_not_deduct_stock_twice(self):
+        payload = {"id": 555, "line_items": [{"sku": "9781234567890", "quantity": 3}]}
+        self._post_webhook(payload)
+        self._post_webhook(payload)
+
+        self.book.refresh_from_db()
+        self.assertEqual(self.book.stock_on_hand, 7)
+        self.assertEqual(
+            ProcessedShopifyOrder.objects.filter(integration=self.integration, order_id="555").count(), 1,
+        )
+
+    def test_different_orders_both_processed(self):
+        self._post_webhook({"id": 1, "line_items": [{"sku": "9781234567890", "quantity": 2}]})
+        self._post_webhook({"id": 2, "line_items": [{"sku": "9781234567890", "quantity": 1}]})
+
+        self.book.refresh_from_db()
+        self.assertEqual(self.book.stock_on_hand, 7)
 
 
 class MultiTenancyIsolationTests(TestCase):

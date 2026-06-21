@@ -1063,6 +1063,20 @@ class Integration(AccountScopedModel):
         return f"{self.name} ({self.get_platform_display()})"
 
 
+class ProcessedShopifyOrder(models.Model):
+    """Records each Shopify order ID we've synced, so a retried webhook
+    delivery (Shopify explicitly documents these as possible) doesn't
+    decrement stock a second time for the same order."""
+
+    integration = models.ForeignKey(
+        Integration, on_delete=models.CASCADE, related_name="processed_orders",
+    )
+    order_id = models.CharField(max_length=64)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ("integration", "order_id")
+
 
 class Profile(models.Model):
 

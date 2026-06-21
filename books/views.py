@@ -75,7 +75,7 @@ from .models import (
     CURRENCY_CHOICES,
     AccessCode, Account, AccountInvitation, AccountMembership, Author, Book, Category, Customer, CustomerLoginToken,
     Integration, Invoice, InvoiceItem,
-    Location, PrintRun, Profile,
+    Location, PrintRun, ProcessedShopifyOrder, Profile,
     Reorder, Return, RoyaltyPayment, RoyaltyRate,
     Sale, StockAdjustment, StockLevel, Subscription, Supplier,
 )
@@ -3721,24 +3721,39 @@ def integration_delete(request, id):
 
 
 def _process_shopify_order(integration, payload):
-    """Deduct stock for each line item in a Shopify order."""
-    owner = integration.owner
-    account = integration.account
-    line_items = payload.get("line_items", [])
-    synced = 0
+    """Deduct stock for each line item in a Shopify order.
 
-    for item in line_items:
-        sku = item.get("sku", "").strip()
-        qty = item.get("quantity", 0)
-        if not sku or not qty:
-            continue
+    Records the order ID first, inside the same transaction, so a retried
+    webhook delivery for an order we've already synced is a no-op instead
+    of decrementing stock twice.
+    """
+    order_id = str(payload.get("id") or "")
 
-        book = Book.objects.filter(account=account, isbn=sku).first()
-        if book:
-            _adjust_stock(book.id, -qty, owner, account)
-            synced += 1
+    with transaction.atomic():
+        if order_id:
+            _, created = ProcessedShopifyOrder.objects.get_or_create(
+                integration=integration, order_id=order_id,
+            )
+            if not created:
+                return 0
 
-    return synced
+        owner = integration.owner
+        account = integration.account
+        line_items = payload.get("line_items", [])
+        synced = 0
+
+        for item in line_items:
+            sku = item.get("sku", "").strip()
+            qty = item.get("quantity", 0)
+            if not sku or not qty:
+                continue
+
+            book = Book.objects.filter(account=account, isbn=sku).first()
+            if book:
+                _adjust_stock(book.id, -qty, owner, account)
+                synced += 1
+
+        return synced
 
 
 @csrf_exempt
