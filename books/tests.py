@@ -574,6 +574,10 @@ class AiChatToolTests(TestCase):
         self.assertNotIn("get_overdue_invoices", tool_names)
         self.assertNotIn("get_customer_balance", tool_names)
         self.assertNotIn("get_royalty_summary", tool_names)
+        self.assertNotIn("get_sales_trend", tool_names)
+        self.assertNotIn("get_top_customers", tool_names)
+        self.assertIn("get_category_performance", tool_names)
+        self.assertIn("get_business_insights", tool_names)
 
     def test_list_books_returns_everything(self):
         result = ai_chat.list_books({}, self.account)
@@ -841,6 +845,81 @@ class AiChatToolTests(TestCase):
         result = ai_chat.get_royalty_summary({"author_name": "Other"}, self.account)
         names = {entry["author"] for entry in result["authors"]}
         self.assertEqual(names, {"Other Author"})
+
+    def test_get_sales_trend_detects_growth(self):
+        Sale.objects.create(
+            owner=self.user, account=self.account, book=self.low_book,
+            quantity=1, unit_price=Decimal("100.00"), sale_date=date.today() - timedelta(days=5),
+        )
+        Sale.objects.create(
+            owner=self.user, account=self.account, book=self.low_book,
+            quantity=1, unit_price=Decimal("10.00"), sale_date=date.today() - timedelta(days=35),
+        )
+
+        result = ai_chat.get_sales_trend({"days": 30}, self.account)
+        self.assertEqual(result["current_revenue"], "100.00")
+        self.assertEqual(result["previous_revenue"], "10.00")
+        self.assertEqual(result["direction"], "up")
+        self.assertEqual(result["revenue_change_percent"], 900.0)
+
+    def test_get_sales_trend_handles_no_sales(self):
+        result = ai_chat.get_sales_trend({}, self.account)
+        self.assertEqual(result["current_revenue"], "0.00")
+        self.assertIsNone(result["revenue_change_percent"])
+        self.assertEqual(result["direction"], "flat")
+
+    def test_get_category_performance_aggregates_revenue_and_profit(self):
+        result = ai_chat.get_category_performance({}, self.account)
+        self.assertEqual(len(result["categories"]), 1)
+        entry = result["categories"][0]
+        self.assertEqual(entry["category"], "Fiction")
+        self.assertEqual(entry["revenue"], "50.00")
+        self.assertEqual(entry["profit"], "30.00")
+
+    def test_get_category_performance_respects_days_filter(self):
+        result = ai_chat.get_category_performance({"days": 1}, self.account)
+        entry = result["categories"][0]
+        self.assertEqual(entry["revenue"], "0.00")
+
+    def test_get_top_customers_ranks_by_total_billed(self):
+        big_customer = Customer.objects.create(owner=self.user, account=self.account, name="Big Spender")
+        small_customer = Customer.objects.create(owner=self.user, account=self.account, name="Small Spender")
+
+        big_invoice = Invoice.objects.create(
+            owner=self.user, account=self.account, customer=big_customer, customer_name=big_customer.name,
+            invoice_date=date.today(), currency="USD", status=Invoice.STATUS_SENT,
+        )
+        InvoiceItem.objects.create(invoice=big_invoice, description="Order", quantity=1, unit_price=Decimal("500.00"))
+
+        small_invoice = Invoice.objects.create(
+            owner=self.user, account=self.account, customer=small_customer, customer_name=small_customer.name,
+            invoice_date=date.today(), currency="USD", status=Invoice.STATUS_SENT,
+        )
+        InvoiceItem.objects.create(invoice=small_invoice, description="Order", quantity=1, unit_price=Decimal("50.00"))
+
+        result = ai_chat.get_top_customers({"limit": 1}, self.account)
+        self.assertEqual(len(result["customers"]), 1)
+        self.assertEqual(result["customers"][0]["customer"], "Big Spender")
+        self.assertEqual(result["customers"][0]["total_billed"], "500.00")
+
+    def test_get_business_insights_flags_low_stock_and_respects_permissions(self):
+        result = ai_chat.execute_tool("get_business_insights", {}, self.user, self.account)
+        self.assertIn("error", result)
+
+        grant(self.user, "view_book")
+        self.user = get_user_model().objects.get(pk=self.user.pk)
+        result = ai_chat.execute_tool("get_business_insights", {}, self.user, self.account)
+        headlines = " ".join(item["headline"] for item in result["insights"])
+        self.assertIn("reorder threshold", headlines)
+        self.assertNotIn("overdue invoice", headlines)
+
+    def test_get_business_insights_reports_nothing_urgent_when_clean(self):
+        Book.objects.filter(account=self.account).delete()
+        grant(self.user, "view_book")
+        self.user = get_user_model().objects.get(pk=self.user.pk)
+        result = ai_chat.execute_tool("get_business_insights", {}, self.user, self.account)
+        self.assertEqual(len(result["insights"]), 1)
+        self.assertEqual(result["insights"][0]["headline"], "Nothing urgent right now")
 
 
 class SetupRolesCommandTests(TestCase):

@@ -77,6 +77,29 @@ EVAL_CASES = [
         "expect_no_tools": True,
         "expect_keywords": ["stock"],
     },
+    {
+        "name": "sales_trend",
+        "turns": ["Is my business growing or shrinking lately?"],
+        "expect_tools": {"get_sales_trend"},
+    },
+    {
+        "name": "category_performance",
+        "turns": ["Which category makes me the most money?"],
+        "expect_tools": {"get_category_performance"},
+        "expect_keywords": ["Fiction"],
+    },
+    {
+        "name": "top_customers",
+        "turns": ["Who are my best customers?"],
+        "expect_tools": {"get_top_customers"},
+        "expect_keywords": ["Riverside"],
+    },
+    {
+        "name": "business_insights_health_check",
+        "turns": ["Give me a quick health check on my business - what should I focus on?"],
+        "expect_tools": {"get_business_insights"},
+        "expect_keywords": ["overdue"],
+    },
 ]
 
 
@@ -181,6 +204,16 @@ class Command(BaseCommand):
         )
         InvoiceItem.objects.create(
             invoice=overdue_invoice, description="Order", quantity=1, unit_price=Decimal("75.00"),
+        )
+
+        best_customer = Customer.objects.create(owner=user, account=account, name="Riverside Books")
+        paid_invoice = Invoice.objects.create(
+            owner=user, account=account, customer=best_customer, customer_name=best_customer.name,
+            invoice_date=date.today() - timedelta(days=10),
+            currency="USD", status=Invoice.STATUS_PAID,
+        )
+        InvoiceItem.objects.create(
+            invoice=paid_invoice, description="Order", quantity=1, unit_price=Decimal("200.00"),
         )
 
         return user, account

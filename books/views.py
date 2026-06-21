@@ -34,6 +34,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 
 from . import ai_chat, iyzico_client
+from .analytics import PURCHASE_COST_EXPRESSION, REVENUE_EXPRESSION
 from .reorder_logic import (
     REORDER_VELOCITY_WINDOW_DAYS, REORDER_COVER_DAYS,
     daily_sales_velocity as _daily_sales_velocity,
@@ -1050,16 +1051,6 @@ def supplier_delete(request, id):
         },
     )
 
-
-REVENUE_EXPRESSION = ExpressionWrapper(
-    F("quantity") * F("unit_price"),
-    output_field=DecimalField(max_digits=10, decimal_places=2),
-)
-
-PURCHASE_COST_EXPRESSION = ExpressionWrapper(
-    F("quantity") * F("unit_cost"),
-    output_field=DecimalField(max_digits=10, decimal_places=2),
-)
 
 SALE_TOTAL_EXPRESSION = ExpressionWrapper(
     F("quantity") * F("unit_price") * (1 + F("tax_rate") / Decimal("100")),

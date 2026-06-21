@@ -7,6 +7,7 @@ from django.db.models import IntegerField, OuterRef, Q, Subquery, Sum, Value
 from django.db.models.functions import Coalesce
 from django.utils import timezone
 
+from .analytics import PURCHASE_COST_EXPRESSION, REVENUE_EXPRESSION
 from .models import Book, Category, Customer, Invoice, RoyaltyPayment, RoyaltyRate, Sale, Supplier
 from .reorder_logic import (
     REORDER_COVER_DAYS, REORDER_VELOCITY_WINDOW_DAYS, suggested_reorder_quantity,
@@ -16,6 +17,15 @@ from .reorder_logic import (
 SYSTEM_PROMPT = """You are the RumiPress Assistant, embedded as a chat widget \
 in RumiPress, a Django app for managing a small book publisher's catalog, \
 stock and sales.
+
+Formatting: you're rendered in a narrow chat panel that only supports plain \
+text and one special pattern, [label](/path/) for a clickable link - it does \
+NOT render markdown tables, headers (###), bold (**text**), or emoji into \
+anything but literal characters, so avoid all of those. Write in short plain \
+sentences or simple "- " dashed lines instead of tables/headers/bullet \
+symbols. For lists of items (books, invoices, customers, etc.), use one \
+dashed line per item with the key facts inline, e.g. "- The Last Lighthouse: \
+2 in stock, threshold 10" rather than a table.
 
 RumiPress has these sections:
 - Dashboard: overview of total books, units sold, low stock count, revenue, \
@@ -62,7 +72,14 @@ link, e.g. [Create reorder](/reorders/add/3/), so the user can click through.
 
 If a request is ambiguous - a customer/supplier/author name you weren't \
 given, or one that matches nothing - ask a short clarifying question instead \
-of guessing or calling a tool with empty/made-up input."""
+of guessing or calling a tool with empty/made-up input.
+
+For open-ended questions like "how's my business doing" or "what should I \
+focus on", lead with get_business_insights - it already combines the trend, \
+stock, billing and royalty signals into one prioritized list, so you don't \
+need to call every tool individually. For a specific trend, category, or \
+customer-ranking question, use get_sales_trend, get_category_performance, or \
+get_top_customers directly instead."""
 
 
 TOOL_SPECS = [
@@ -332,6 +349,75 @@ TOOL_SPECS = [
             },
         },
         "permission": "books.view_royaltyrate",
+    },
+    {
+        "name": "get_sales_trend",
+        "description": (
+            "Compare total revenue and units sold over the last N days "
+            "against the same-length period before that, with percent "
+            "change and a direction ('up'/'down'/'flat'). Use this for "
+            "questions like 'is my business growing', 'how do sales this "
+            "month compare to last month', or 'are we trending up or down'."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "days": {
+                    "type": "integer",
+                    "description": "Length of the period to compare, in days (default 30).",
+                },
+            },
+        },
+        "permission": "books.view_sale",
+    },
+    {
+        "name": "get_category_performance",
+        "description": (
+            "Revenue and profit per category, sorted by revenue (highest "
+            "first). Use this for questions like 'which category makes me "
+            "the most money' or 'how is each category performing'."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "days": {
+                    "type": "integer",
+                    "description": "Only include sales from the last N days (optional - omit for all-time).",
+                },
+            },
+        },
+        "permission": "books.view_book",
+    },
+    {
+        "name": "get_top_customers",
+        "description": (
+            "Rank customers by total amount billed across all their "
+            "invoices. Use this for questions like 'who are my best "
+            "customers' or 'who has bought the most from me'."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "limit": {
+                    "type": "integer",
+                    "description": "Maximum number of customers to return (default 5).",
+                },
+            },
+        },
+        "permission": "books.view_customer",
+    },
+    {
+        "name": "get_business_insights",
+        "description": (
+            "Get a prioritized list of things that need attention right "
+            "now - overdue invoices, low stock, slow-moving stock, "
+            "outstanding royalties, and the recent sales trend - each with "
+            "a headline and why it matters. Use this for open-ended "
+            "questions like 'how's my business doing', 'what should I "
+            "focus on', or 'give me a health check'."
+        ),
+        "input_schema": {"type": "object", "properties": {}},
+        "permission": "books.view_book",
     },
 ]
 
@@ -702,6 +788,166 @@ def get_royalty_summary(tool_input, account):
     return {"authors": summary}
 
 
+def _money(value):
+    return Decimal(value).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+
+
+def get_sales_trend(tool_input, account):
+    days = tool_input.get("days") or 30
+    today = timezone.now().date()
+    current_start = today - timedelta(days=days)
+    previous_start = today - timedelta(days=2 * days)
+
+    current = Sale.objects.filter(account=account, sale_date__gte=current_start, sale_date__lt=today)
+    previous = Sale.objects.filter(account=account, sale_date__gte=previous_start, sale_date__lt=current_start)
+
+    current_revenue = current.aggregate(total=Sum(REVENUE_EXPRESSION))["total"] or Decimal(0)
+    previous_revenue = previous.aggregate(total=Sum(REVENUE_EXPRESSION))["total"] or Decimal(0)
+    current_units = current.aggregate(total=Sum("quantity"))["total"] or 0
+    previous_units = previous.aggregate(total=Sum("quantity"))["total"] or 0
+
+    if previous_revenue == 0:
+        revenue_change = None if current_revenue == 0 else 100.0
+    else:
+        revenue_change = float((current_revenue - previous_revenue) / previous_revenue * 100)
+
+    direction = "flat"
+    if revenue_change is not None:
+        if revenue_change > 1:
+            direction = "up"
+        elif revenue_change < -1:
+            direction = "down"
+
+    return {
+        "days": days,
+        "current_revenue": str(_money(current_revenue)),
+        "previous_revenue": str(_money(previous_revenue)),
+        "revenue_change_percent": round(revenue_change, 1) if revenue_change is not None else None,
+        "current_units": current_units,
+        "previous_units": previous_units,
+        "direction": direction,
+    }
+
+
+def get_category_performance(tool_input, account):
+    days = tool_input.get("days")
+    books = Book.objects.filter(account=account)
+    sales = Sale.objects.filter(account=account)
+    if days:
+        cutoff = timezone.now().date() - timedelta(days=days)
+        sales = sales.filter(sale_date__gte=cutoff)
+
+    expense_by_category = {
+        item["category__name"]: item["expense"] or 0
+        for item in books.values("category__name").annotate(expense=Sum("distribution_expense"))
+    }
+    revenue_by_category = {
+        item["book__category__name"]: item["revenue"] or 0
+        for item in sales.values("book__category__name").annotate(revenue=Sum(REVENUE_EXPRESSION))
+    }
+
+    results = []
+    for name in sorted(set(expense_by_category) | set(revenue_by_category)):
+        revenue = revenue_by_category.get(name, 0)
+        expense = expense_by_category.get(name, 0)
+        results.append({
+            "category": name,
+            "revenue": revenue,
+            "profit": revenue - expense,
+        })
+
+    results.sort(key=lambda item: item["revenue"], reverse=True)
+    for item in results:
+        item["revenue"] = str(_money(item["revenue"]))
+        item["profit"] = str(_money(item["profit"]))
+
+    return {"categories": results}
+
+
+def get_top_customers(tool_input, account):
+    limit = tool_input.get("limit") or 5
+    customers = Customer.objects.filter(account=account).prefetch_related("invoices__items")
+
+    ranked = []
+    for customer in customers:
+        total_billed = sum((invoice.grand_total for invoice in customer.invoices.all()), Decimal(0))
+        if total_billed <= 0:
+            continue
+        ranked.append({"customer": customer.name, "total_billed": total_billed})
+
+    ranked.sort(key=lambda item: item["total_billed"], reverse=True)
+    ranked = ranked[:limit]
+    for item in ranked:
+        item["total_billed"] = str(item["total_billed"])
+
+    return {"customers": ranked}
+
+
+def get_business_insights(tool_input, account, user):
+    insights = []
+
+    if user.has_perm("books.view_invoice"):
+        overdue = get_overdue_invoices({}, account)["invoices"]
+        if overdue:
+            total = sum((Decimal(item["grand_total"]) for item in overdue), Decimal(0))
+            insights.append({
+                "headline": f"{len(overdue)} overdue invoice(s) totaling {total}",
+                "detail": "Customers who are late paying - following up directly affects cash flow.",
+                "severity": "high",
+            })
+
+    low_stock = get_low_stock_books({}, account)["books"]
+    if low_stock:
+        insights.append({
+            "headline": f"{len(low_stock)} book(s) at or below their reorder threshold",
+            "detail": "Restock soon to avoid running out - see get_reorder_suggestions for quantities.",
+            "severity": "high",
+        })
+
+    if user.has_perm("books.view_sale"):
+        slow = get_slow_moving_books({}, account)["books"]
+        if slow:
+            tied_up = sum((Decimal(item["stock_value"]) for item in slow), Decimal(0))
+            insights.append({
+                "headline": f"{len(slow)} book(s) with no recent sales, {tied_up} tied up in stock",
+                "detail": "Candidates to discount, promote, or return to free up capital.",
+                "severity": "medium",
+            })
+
+        trend = get_sales_trend({}, account)
+        if trend["revenue_change_percent"] is not None and abs(trend["revenue_change_percent"]) >= 5:
+            insights.append({
+                "headline": (
+                    f"Revenue is {trend['direction']} {abs(trend['revenue_change_percent'])}% "
+                    f"vs the prior {trend['days']} days"
+                ),
+                "detail": "Based on comparing the last two equal-length periods of sales.",
+                "severity": "medium" if trend["direction"] == "down" else "low",
+            })
+
+    if user.has_perm("books.view_royaltyrate"):
+        royalties = get_royalty_summary({}, account)["authors"]
+        outstanding_total = sum((Decimal(item["outstanding"]) for item in royalties), Decimal(0))
+        if outstanding_total > 0:
+            insights.append({
+                "headline": f"{outstanding_total} in royalties currently owed",
+                "detail": "See get_royalty_summary for the per-author breakdown.",
+                "severity": "low",
+            })
+
+    severity_order = {"high": 0, "medium": 1, "low": 2}
+    insights.sort(key=lambda item: severity_order.get(item["severity"], 3))
+
+    if not insights:
+        insights.append({
+            "headline": "Nothing urgent right now",
+            "detail": "No overdue invoices, low stock, slow movers, or outstanding royalties found.",
+            "severity": "low",
+        })
+
+    return {"insights": insights}
+
+
 TOOL_FUNCTIONS = {
     "get_dashboard_overview": get_dashboard_overview,
     "list_books": list_books,
@@ -716,6 +962,10 @@ TOOL_FUNCTIONS = {
     "get_overdue_invoices": get_overdue_invoices,
     "get_customer_balance": get_customer_balance,
     "get_royalty_summary": get_royalty_summary,
+    "get_sales_trend": get_sales_trend,
+    "get_category_performance": get_category_performance,
+    "get_top_customers": get_top_customers,
+    "get_business_insights": get_business_insights,
 }
 
 
@@ -731,6 +981,9 @@ def execute_tool(name, tool_input, user, account):
     spec = next((spec for spec in TOOL_SPECS if spec["name"] == name), None)
     if spec is None or not user.has_perm(spec["permission"]):
         return {"error": "You don't have permission to access this information."}
+
+    if name == "get_business_insights":
+        return get_business_insights(tool_input, account, user)
 
     return TOOL_FUNCTIONS[name](tool_input, account)
 
