@@ -1338,6 +1338,60 @@ class CsvExportInjectionTests(TestCase):
         self.assertNotIn("'A Normal Title", content)
 
 
+class IntegrationSecretExposureTests(TestCase):
+    """Integration api_key/api_secret/webhook_secret must never be rendered
+    back into the edit form, since that puts them in plain text in the page's
+    HTML (view-source, browser history, dev tools)."""
+
+    def setUp(self):
+        User = get_user_model()
+        self.user = User.objects.create_user(username="intg_owner", password="pass1234")
+        self.account = get_or_create_account_for_user(self.user)
+        self.client.force_login(self.user)
+        grant(self.user, "add_integration", "change_integration", "view_integration")
+
+        self.integration = Integration.objects.create(
+            owner=self.user, account=self.account, platform=Integration.PLATFORM_STRIPE, name="My Stripe",
+            api_key="sk_live_SUPERSECRET123", api_secret="whsec_ANOTHERSECRET456",
+            webhook_secret="whsec_THIRDSECRET789",
+        )
+
+    def test_edit_page_does_not_render_existing_secrets(self):
+        response = self.client.get(reverse("integration_update", args=[self.integration.id]))
+        content = response.content.decode()
+
+        self.assertNotIn("sk_live_SUPERSECRET123", content)
+        self.assertNotIn("whsec_ANOTHERSECRET456", content)
+        self.assertNotIn("whsec_THIRDSECRET789", content)
+
+    def test_leaving_secrets_blank_keeps_existing_values(self):
+        self.client.post(reverse("integration_update", args=[self.integration.id]), {
+            "platform": Integration.PLATFORM_STRIPE, "name": "Renamed", "store_url": "",
+            "api_key": "", "api_secret": "", "webhook_secret": "", "is_active": "on",
+        })
+
+        self.integration.refresh_from_db()
+        self.assertEqual(self.integration.name, "Renamed")
+        self.assertEqual(self.integration.api_key, "sk_live_SUPERSECRET123")
+        self.assertEqual(self.integration.api_secret, "whsec_ANOTHERSECRET456")
+        self.assertEqual(self.integration.webhook_secret, "whsec_THIRDSECRET789")
+
+    def test_providing_a_new_secret_updates_it(self):
+        self.client.post(reverse("integration_update", args=[self.integration.id]), {
+            "platform": Integration.PLATFORM_STRIPE, "name": "My Stripe", "store_url": "",
+            "api_key": "sk_live_NEWVALUE999", "api_secret": "", "webhook_secret": "", "is_active": "on",
+        })
+
+        self.integration.refresh_from_db()
+        self.assertEqual(self.integration.api_key, "sk_live_NEWVALUE999")
+        self.assertEqual(self.integration.api_secret, "whsec_ANOTHERSECRET456")
+
+    def test_create_form_has_no_existing_value_to_leak(self):
+        response = self.client.get(reverse("integration_create"))
+        self.assertEqual(response.status_code, 200)
+        self.assertNotIn("sk_live", response.content.decode())
+
+
 class MultiTenancyIsolationTests(TestCase):
 
     def setUp(self):

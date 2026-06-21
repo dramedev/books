@@ -677,6 +677,8 @@ class StockTransferForm(forms.Form):
 
 class IntegrationForm(forms.ModelForm):
 
+    _SECRET_FIELDS = ("api_key", "api_secret", "webhook_secret")
+
     class Meta:
         model = Integration
 
@@ -686,9 +688,9 @@ class IntegrationForm(forms.ModelForm):
             "platform": forms.Select(attrs={"class": "form-select"}),
             "name": forms.TextInput(attrs={"class": "form-control"}),
             "store_url": forms.TextInput(attrs={"class": "form-control", "placeholder": "your-store.myshopify.com"}),
-            "api_key": forms.TextInput(attrs={"class": "form-control"}),
-            "api_secret": forms.PasswordInput(attrs={"class": "form-control"}, render_value=True),
-            "webhook_secret": forms.PasswordInput(attrs={"class": "form-control"}, render_value=True),
+            "api_key": forms.PasswordInput(attrs={"class": "form-control"}, render_value=False),
+            "api_secret": forms.PasswordInput(attrs={"class": "form-control"}, render_value=False),
+            "webhook_secret": forms.PasswordInput(attrs={"class": "form-control"}, render_value=False),
             "is_active": forms.CheckboxInput(attrs={"class": "form-check-input"}),
         }
 
@@ -697,6 +699,29 @@ class IntegrationForm(forms.ModelForm):
             "api_key": _("Stripe: your secret key (sk_...)"),
             "webhook_secret": _("Used to verify incoming webhook payloads. Set this in your platform's webhook settings. Stripe: your endpoint's signing secret (whsec_...)"),
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        # Secrets are write-only: never pre-fill an existing value back into
+        # the form (it would otherwise appear in plain text in the page's
+        # HTML). On edit, leaving a secret field blank keeps its current value.
+        if self.instance.pk:
+            for field_name in self._SECRET_FIELDS:
+                self.fields[field_name].required = False
+                self.fields[field_name].help_text = (
+                    str(self.fields[field_name].help_text) + " " if self.fields[field_name].help_text else ""
+                ) + str(_("Leave blank to keep the current value."))
+
+    def clean(self):
+        cleaned_data = super().clean()
+
+        if self.instance.pk:
+            for field_name in self._SECRET_FIELDS:
+                if not cleaned_data.get(field_name):
+                    cleaned_data[field_name] = getattr(self.instance, field_name)
+
+        return cleaned_data
 
 
 
