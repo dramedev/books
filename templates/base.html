@@ -519,6 +519,21 @@ html[dir="rtl"] .chat-panel{
         width:auto;
     }
 }
+
+@media print{
+    .sidebar,
+    .sidebar-backdrop,
+    .topbar,
+    .chat-toggle,
+    .chat-panel,
+    .no-print{
+        display:none !important;
+    }
+    .app-main{
+        margin-left:0 !important;
+        margin-right:0 !important;
+    }
+}
 </style>
 </head>
 
