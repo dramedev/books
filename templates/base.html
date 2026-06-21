@@ -810,6 +810,17 @@ if(chatToggle){
         chatPanel.classList.toggle("show");
     });
 
+    function renderAssistantReply(el, text){
+        const escaped = text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        const linked = escaped.replace(/\[([^\]]+)\]\((\/[^\s)]+)\)/g, function(match, label, path){
+            if(path.startsWith("//")){
+                return match;
+            }
+            return '<a href="' + path + '">' + label + '</a>';
+        });
+        el.innerHTML = linked;
+    }
+
     function addChatMessage(role, text){
         const el = document.createElement("div");
         el.className = "chat-message " + role;
@@ -845,7 +856,7 @@ if(chatToggle){
         .then(function(response){ return response.json(); })
         .then(function(data){
             if(data.reply){
-                pending.textContent = data.reply;
+                renderAssistantReply(pending, data.reply);
             }
             else{
                 pending.textContent = i18nChatError;

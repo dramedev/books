@@ -34,6 +34,11 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 
 from . import ai_chat, iyzico_client
+from .reorder_logic import (
+    REORDER_VELOCITY_WINDOW_DAYS, REORDER_COVER_DAYS,
+    daily_sales_velocity as _daily_sales_velocity,
+    suggested_reorder_quantity as _suggested_reorder_quantity,
+)
 from .forms import (
     AcceptInviteForm,
     AuthorForm,
@@ -1089,32 +1094,6 @@ def _annotate_stock_value(books):
             output_field=DecimalField(max_digits=12, decimal_places=2),
         )
     )
-
-
-REORDER_VELOCITY_WINDOW_DAYS = 30
-REORDER_COVER_DAYS = 30
-
-
-def _daily_sales_velocity(book):
-    cutoff = timezone.now().date() - timedelta(days=REORDER_VELOCITY_WINDOW_DAYS)
-
-    units_sold = Sale.objects.filter(
-        book=book, sale_date__gte=cutoff
-    ).aggregate(total=Sum("quantity"))["total"] or 0
-
-    return units_sold / REORDER_VELOCITY_WINDOW_DAYS
-
-
-def _suggested_reorder_quantity(book, velocity=None):
-    if velocity is None:
-        velocity = _daily_sales_velocity(book)
-
-    needed_for_cover = math.ceil(velocity * REORDER_COVER_DAYS) - book.stock_on_hand
-
-    if needed_for_cover > 0:
-        return needed_for_cover
-
-    return max(book.reorder_threshold * 2 - book.stock_on_hand, book.reorder_threshold, 1)
 
 
 def _safe_json(value):

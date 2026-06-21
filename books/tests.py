@@ -568,6 +568,9 @@ class AiChatToolTests(TestCase):
         self.assertIn("search_books", tool_names)
         self.assertNotIn("get_sales_summary", tool_names)
         self.assertNotIn("get_categories", tool_names)
+        self.assertNotIn("get_reorder_suggestions", tool_names)
+        self.assertNotIn("get_slow_moving_books", tool_names)
+        self.assertNotIn("draft_supplier_email", tool_names)
 
     def test_list_books_returns_everything(self):
         result = ai_chat.list_books({}, self.account)
@@ -657,6 +660,97 @@ class AiChatToolTests(TestCase):
 
     def test_execute_tool_denies_without_permission(self):
         result = ai_chat.execute_tool("get_categories", {}, self.user, self.account)
+        self.assertIn("error", result)
+
+    def test_get_reorder_suggestions_includes_low_stock_book(self):
+        result = ai_chat.get_reorder_suggestions({}, self.account)
+        titles = {item["title"] for item in result["suggestions"]}
+        self.assertEqual(titles, {"Low Stock Book"})
+
+        suggestion = result["suggestions"][0]
+        self.assertEqual(suggestion["suggested_quantity"], 9)
+        self.assertEqual(suggestion["reorder_url"], f"/reorders/add/{self.low_book.id}/")
+
+    def test_get_reorder_suggestions_respects_limit(self):
+        Book.objects.create(
+            owner=self.user, account=self.account, title="Another Low Book", isbn="555",
+            publisher="Acme", published_date=date(2024, 1, 1), category=self.fiction,
+            distribution_expense=Decimal("10.00"), stock_on_hand=1, reorder_threshold=5,
+        )
+
+        result = ai_chat.get_reorder_suggestions({"limit": 1}, self.account)
+        self.assertEqual(len(result["suggestions"]), 1)
+
+    def test_get_slow_moving_books_excludes_recently_sold_and_out_of_stock(self):
+        recently_sold = Book.objects.create(
+            owner=self.user, account=self.account, title="Recently Sold Book", isbn="666",
+            publisher="Acme", published_date=date(2024, 1, 1), category=self.fiction,
+            distribution_expense=Decimal("10.00"), stock_on_hand=20, reorder_threshold=5,
+        )
+        Sale.objects.create(
+            owner=self.user, account=self.account, book=recently_sold,
+            quantity=1, unit_price=Decimal("10.00"), sale_date=date.today(),
+        )
+        Book.objects.create(
+            owner=self.user, account=self.account, title="Out of Stock Book", isbn="777",
+            publisher="Acme", published_date=date(2024, 1, 1), category=self.fiction,
+            distribution_expense=Decimal("10.00"), stock_on_hand=0, reorder_threshold=5,
+        )
+
+        result = ai_chat.get_slow_moving_books({}, self.account)
+        titles = {item["title"] for item in result["books"]}
+        self.assertIn("Well Stocked Book", titles)
+        self.assertIn("Low Stock Book", titles)
+        self.assertNotIn("Recently Sold Book", titles)
+        self.assertNotIn("Out of Stock Book", titles)
+
+    def test_get_slow_moving_books_sorted_by_stock_value_descending(self):
+        result = ai_chat.get_slow_moving_books({}, self.account)
+        values = [Decimal(item["stock_value"]) for item in result["books"]]
+        self.assertEqual(values, sorted(values, reverse=True))
+
+    def test_draft_supplier_email_returns_subject_and_body(self):
+        supplier = Supplier.objects.create(
+            owner=self.user, account=self.account, name="Acme Supplies",
+            contact_name="Pat", email="orders@acme.test",
+        )
+
+        result = ai_chat.draft_supplier_email(
+            {"supplier_name": "Acme", "items": [{"title": "Low Stock", "quantity": 10}]},
+            self.account,
+        )
+
+        self.assertEqual(result["supplier_name"], supplier.name)
+        self.assertEqual(result["supplier_email"], "orders@acme.test")
+        self.assertIn("Low Stock Book", result["body"])
+        self.assertIn("10 units", result["body"])
+        self.assertEqual(result["note"], "")
+
+    def test_draft_supplier_email_notes_missing_email(self):
+        Supplier.objects.create(owner=self.user, account=self.account, name="No Email Supplier")
+
+        result = ai_chat.draft_supplier_email(
+            {"supplier_name": "No Email", "items": [{"title": "Low Stock", "quantity": 5}]},
+            self.account,
+        )
+
+        self.assertEqual(result["supplier_email"], "")
+        self.assertNotEqual(result["note"], "")
+
+    def test_draft_supplier_email_unknown_supplier_returns_error(self):
+        result = ai_chat.draft_supplier_email(
+            {"supplier_name": "Nonexistent", "items": [{"title": "Low Stock", "quantity": 5}]},
+            self.account,
+        )
+        self.assertIn("error", result)
+
+    def test_draft_supplier_email_no_matching_books_returns_error(self):
+        Supplier.objects.create(owner=self.user, account=self.account, name="Acme Supplies")
+
+        result = ai_chat.draft_supplier_email(
+            {"supplier_name": "Acme", "items": [{"title": "Nonexistent Title", "quantity": 5}]},
+            self.account,
+        )
         self.assertIn("error", result)
 
 

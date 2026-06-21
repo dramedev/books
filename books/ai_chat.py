@@ -1,9 +1,15 @@
 import json
+from datetime import timedelta
 
 from django.conf import settings
-from django.db.models import Q, Sum
+from django.db.models import IntegerField, OuterRef, Q, Subquery, Sum, Value
+from django.db.models.functions import Coalesce
+from django.utils import timezone
 
-from .models import Book, Category, Sale
+from .models import Book, Category, Sale, Supplier
+from .reorder_logic import (
+    REORDER_COVER_DAYS, REORDER_VELOCITY_WINDOW_DAYS, suggested_reorder_quantity,
+)
 
 
 SYSTEM_PROMPT = """You are the RumiPress Assistant, embedded as a chat widget \
@@ -28,12 +34,23 @@ available stock. Exportable to CSV/Excel/PDF.
 charts and a sales trend, exportable to CSV/Excel/PDF.
 - Profile: each user can upload a profile photo; access to sections is \
 controlled by permissions.
+- Reorders: tracks purchase orders to suppliers (pending/ordered/received), \
+with reorder suggestions based on stock and recent sales velocity.
+- Suppliers: name, contact, email and phone for each supplier used on reorders.
 
 For general questions about how the app works, answer directly from this \
 description. For questions about the user's actual books, stock or sales, \
 use the provided tools to look up real data rather than guessing. If a tool \
 is not available to you, it means the current user doesn't have permission \
-to view that data - tell them so. Keep answers concise."""
+to view that data - tell them so. Keep answers concise.
+
+You can suggest what to reorder and why (get_reorder_suggestions), point out \
+slow-moving stock (get_slow_moving_books), and draft a reorder email to a \
+supplier (draft_supplier_email - call get_reorder_suggestions first to pick \
+which books/quantities to include). You never create a reorder or send an \
+email yourself - always hand off to the user to take the actual action. When \
+a tool result includes a "reorder_url", mention the action as a markdown \
+link, e.g. [Create reorder](/reorders/add/3/), so the user can click through."""
 
 
 TOOL_SPECS = [
@@ -167,6 +184,82 @@ TOOL_SPECS = [
         "description": "List all categories with the number of books in each.",
         "input_schema": {"type": "object", "properties": {}},
         "permission": "books.view_category",
+    },
+    {
+        "name": "get_reorder_suggestions",
+        "description": (
+            "List books that should be reordered soon, with reasoning: "
+            "current stock, daily sales velocity, estimated days of stock "
+            "remaining, and a suggested reorder quantity. Each result "
+            "includes a reorder_url the user can follow to actually create "
+            "the reorder. Use this for questions like 'what should I "
+            "reorder', 'what's about to run out', or 'how much should I "
+            "order of X'."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "limit": {
+                    "type": "integer",
+                    "description": "Maximum number of suggestions to return (optional).",
+                },
+            },
+        },
+        "permission": "books.view_reorder",
+    },
+    {
+        "name": "get_slow_moving_books",
+        "description": (
+            "List books in stock that haven't sold at all in the last 30 "
+            "days, sorted by how much capital is tied up in their stock "
+            "(highest first). Use this for questions like 'what's not "
+            "selling', 'what's been sitting on the shelf', or 'what should "
+            "I discount or return'."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "limit": {
+                    "type": "integer",
+                    "description": "Maximum number of books to return (optional).",
+                },
+            },
+        },
+        "permission": "books.view_sale",
+    },
+    {
+        "name": "draft_supplier_email",
+        "description": (
+            "Draft (but do not send) a reorder email to a supplier, given "
+            "the supplier's name and a list of books with quantities. Call "
+            "get_reorder_suggestions first to decide which books and "
+            "quantities to include, then pass them here. Returns subject/"
+            "body text and the supplier's email address for the user to "
+            "review and send themselves - this tool never sends anything."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "supplier_name": {
+                    "type": "string",
+                    "description": "Name (or partial name) of the supplier to draft the email to.",
+                },
+                "items": {
+                    "type": "array",
+                    "description": "Books to request, each with a title and quantity.",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "title": {"type": "string"},
+                            "quantity": {"type": "integer"},
+                        },
+                        "required": ["title", "quantity"],
+                    },
+                },
+            },
+            "required": ["supplier_name", "items"],
+        },
+        "permission": "books.view_supplier",
     },
 ]
 
@@ -316,6 +409,125 @@ def get_categories(_input, account):
     }
 
 
+def _recent_sales_annotation():
+    cutoff = timezone.now().date() - timedelta(days=REORDER_VELOCITY_WINDOW_DAYS)
+    recent_sales = (
+        Sale.objects.filter(book=OuterRef("pk"), sale_date__gte=cutoff)
+        .values("book")
+        .annotate(total=Sum("quantity"))
+        .values("total")
+    )
+    return Coalesce(
+        Subquery(recent_sales, output_field=IntegerField()),
+        Value(0, output_field=IntegerField()),
+    )
+
+
+def get_reorder_suggestions(tool_input, account):
+    books = Book.objects.filter(account=account).annotate(
+        units_sold_recent=_recent_sales_annotation()
+    )
+
+    suggestions = []
+    for book in books:
+        velocity = book.units_sold_recent / REORDER_VELOCITY_WINDOW_DAYS
+        days_of_stock = book.stock_on_hand / velocity if velocity > 0 else None
+        needs_reorder = book.is_low_stock or (
+            days_of_stock is not None and days_of_stock <= REORDER_COVER_DAYS
+        )
+        if not needs_reorder:
+            continue
+
+        suggestions.append({
+            "title": book.title,
+            "isbn": book.isbn,
+            "stock_on_hand": book.stock_on_hand,
+            "daily_sales_velocity": round(velocity, 2),
+            "days_of_stock": round(days_of_stock, 1) if days_of_stock is not None else None,
+            "suggested_quantity": suggested_reorder_quantity(book, velocity=velocity),
+            "reorder_url": f"/reorders/add/{book.id}/",
+        })
+
+    suggestions.sort(
+        key=lambda item: item["days_of_stock"] if item["days_of_stock"] is not None else -1
+    )
+
+    limit = tool_input.get("limit")
+    if limit:
+        suggestions = suggestions[:limit]
+
+    return {"suggestions": suggestions}
+
+
+def get_slow_moving_books(tool_input, account):
+    books = (
+        Book.objects.filter(account=account, stock_on_hand__gt=0)
+        .annotate(units_sold_recent=_recent_sales_annotation())
+        .filter(units_sold_recent=0)
+    )
+
+    results = [
+        {
+            "title": book.title,
+            "isbn": book.isbn,
+            "stock_on_hand": book.stock_on_hand,
+            "stock_value": book.stock_on_hand * book.distribution_expense,
+        }
+        for book in books
+    ]
+    results.sort(key=lambda item: item["stock_value"], reverse=True)
+
+    limit = tool_input.get("limit")
+    if limit:
+        results = results[:limit]
+
+    for item in results:
+        item["stock_value"] = str(item["stock_value"])
+
+    return {"books": results}
+
+
+def draft_supplier_email(tool_input, account):
+    supplier_name = (tool_input.get("supplier_name") or "").strip()
+    if not supplier_name:
+        return {"error": "supplier_name is required."}
+
+    supplier = Supplier.objects.filter(account=account, name__icontains=supplier_name).first()
+    if supplier is None:
+        return {"error": f"No supplier found matching '{supplier_name}'."}
+
+    lines = []
+    for item in tool_input.get("items") or []:
+        title = (item.get("title") or "").strip()
+        quantity = item.get("quantity")
+        if not title or not quantity:
+            continue
+        book = Book.objects.filter(account=account, title__icontains=title).first()
+        if book is None:
+            continue
+        lines.append(f"- {book.title} (ISBN {book.isbn or 'n/a'}): {quantity} units")
+
+    if not lines:
+        return {"error": "No matching books found for the requested items."}
+
+    contact = supplier.contact_name or supplier.name
+    subject = f"Reorder request - {len(lines)} title(s)"
+    body = (
+        f"Hi {contact},\n\n"
+        "We'd like to place a reorder for the following titles:\n\n"
+        + "\n".join(lines)
+        + "\n\nPlease let us know expected availability and pricing.\n\nThanks!"
+    )
+
+    return {
+        "supplier_name": supplier.name,
+        "supplier_email": supplier.email,
+        "subject": subject,
+        "body": body,
+        "note": "" if supplier.email else "No email on file for this supplier - share this draft manually.",
+    }
+
+
 TOOL_FUNCTIONS = {
     "get_dashboard_overview": get_dashboard_overview,
     "list_books": list_books,
@@ -324,6 +536,9 @@ TOOL_FUNCTIONS = {
     "get_sales_summary": get_sales_summary,
     "get_top_selling_books": get_top_selling_books,
     "get_categories": get_categories,
+    "get_reorder_suggestions": get_reorder_suggestions,
+    "get_slow_moving_books": get_slow_moving_books,
+    "draft_supplier_email": draft_supplier_email,
 }
 
 
