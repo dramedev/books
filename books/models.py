@@ -1173,6 +1173,14 @@ class Subscription(models.Model):
         related_name="subscription",
     )
 
+    account = models.OneToOneField(
+        Account,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="subscription",
+    )
+
     external_customer_id = models.CharField(max_length=200, blank=True)
 
     external_subscription_id = models.CharField(max_length=200, blank=True)
@@ -1197,3 +1205,9 @@ class Subscription(models.Model):
     @property
     def is_in_good_standing(self):
         return self.status in self.GOOD_STANDING_STATUSES
+
+
+    def save(self, *args, **kwargs):
+        if self.account_id is None and self.user_id is not None:
+            self.account = get_or_create_account_for_user(self.user)
+        super().save(*args, **kwargs)

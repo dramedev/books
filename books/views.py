@@ -3996,7 +3996,7 @@ def redeem_access_code(request):
                 AccountMembership.objects.create(account=account, user=user, role=AccountMembership.ROLE_ADMIN)
 
                 Category.objects.get_or_create(owner=user, account=account, name="General")
-                Subscription.objects.get_or_create(user=user)
+                Subscription.objects.get_or_create(account=account, defaults={"user": user})
 
                 del request.session["pending_user_id"]
 
@@ -4195,14 +4195,14 @@ def team_accept_invite(request, token):
 # distinct from the per-owner Stripe Integration used for invoice payments)
 # ---------------------------------------------------------------------------
 
-def _get_or_create_subscription(user):
-    subscription, _ = Subscription.objects.get_or_create(user=user)
+def _get_or_create_subscription(account, user):
+    subscription, _ = Subscription.objects.get_or_create(account=account, defaults={"user": user})
     return subscription
 
 
 @login_required
 def billing_start(request):
-    subscription = _get_or_create_subscription(request.user)
+    subscription = _get_or_create_subscription(request.account, request.user)
     if subscription.is_in_good_standing:
         return redirect("dashboard")
 
@@ -4249,7 +4249,7 @@ def billing_start(request):
 
 @login_required
 def billing_callback(request):
-    subscription = _get_or_create_subscription(request.user)
+    subscription = _get_or_create_subscription(request.account, request.user)
     token = request.GET.get("token", "")
 
     try:
@@ -4279,7 +4279,7 @@ def billing_callback(request):
 
 @login_required
 def billing_required(request):
-    subscription = _get_or_create_subscription(request.user)
+    subscription = _get_or_create_subscription(request.account, request.user)
     if subscription.is_in_good_standing:
         return redirect("dashboard")
 
@@ -4288,7 +4288,7 @@ def billing_required(request):
 
 @login_required
 def billing_portal(request):
-    subscription = _get_or_create_subscription(request.user)
+    subscription = _get_or_create_subscription(request.account, request.user)
     if not subscription.external_customer_id:
         return redirect("billing_start")
 

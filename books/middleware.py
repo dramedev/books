@@ -54,7 +54,9 @@ class SubscriptionRequiredMiddleware:
             # Only accounts that already have a Subscription row (created by
             # the signup flow going forward) are subject to this gate at all -
             # accounts predating this feature have no row and are unaffected.
-            subscription = Subscription.objects.filter(user=request.user).first()
+            # Gating by account (not user) means a lapsed subscription blocks
+            # every member of the account, not just whoever first subscribed.
+            subscription = Subscription.objects.filter(account=request.account).first()
             if subscription is not None and not subscription.is_in_good_standing:
                 target = "billing_start" if not subscription.external_customer_id else "billing_required"
                 if request.path != reverse(target):
