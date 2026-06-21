@@ -203,6 +203,10 @@ CUSTOMER_PORTAL_TOKEN_TTL_MINUTES = 30
 
 CUSTOMER_PORTAL_LOGIN_COOLDOWN_SECONDS = 60
 
+ISBN_LOOKUP_COOLDOWN_SECONDS = 2
+
+CHAT_API_COOLDOWN_SECONDS = 2
+
 # Platform-level billing (RumiPress charging its own account owners via
 # iyzico) - distinct from the per-owner Stripe Integration model used for
 # invoice payments. The trial length itself is configured on the Pricing

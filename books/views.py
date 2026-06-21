@@ -1517,6 +1517,10 @@ def chat_api(request):
     if not message:
         return JsonResponse({"error": "Message is required."}, status=400)
 
+    cooldown_key = f"chat_api_cooldown:{request.user.id}"
+    if not cache.add(cooldown_key, True, timeout=settings.CHAT_API_COOLDOWN_SECONDS):
+        return JsonResponse({"error": gettext("Please wait a moment before sending another message.")}, status=429)
+
     try:
         reply, updated_history = ai_chat.get_chat_reply(request.user, request.account, message, history)
     except Exception:
@@ -2341,10 +2345,15 @@ def _parse_publish_date(value):
 
 
 @login_required
+@require_POST
 def isbn_lookup(request):
-    isbn = request.GET.get("isbn", "").strip()
+    isbn = request.POST.get("isbn", "").strip()
     if not isbn:
         return JsonResponse({"error": gettext("ISBN is required.")}, status=400)
+
+    cooldown_key = f"isbn_lookup_cooldown:{request.user.id}"
+    if not cache.add(cooldown_key, True, timeout=settings.ISBN_LOOKUP_COOLDOWN_SECONDS):
+        return JsonResponse({"error": gettext("Please wait a moment before looking up another ISBN.")}, status=429)
 
     try:
         data = lookup_isbn(isbn)

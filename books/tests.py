@@ -457,6 +457,7 @@ class ReportViewTests(TestCase):
 class ChatApiTests(TestCase):
 
     def setUp(self):
+        cache.clear()
         User = get_user_model()
         self.user = User.objects.create_user(username="chatter", password="pass1234")
 
@@ -3278,19 +3279,24 @@ class ParsePublishDateTests(TestCase):
 class IsbnLookupViewTests(TestCase):
 
     def setUp(self):
+        cache.clear()
         User = get_user_model()
         self.user = User.objects.create_user(username="lookup_user", password="pass1234")
         self.account = get_or_create_account_for_user(self.user)
         self.client.force_login(self.user)
 
+    def test_get_not_allowed(self):
+        response = self.client.get(reverse("isbn_lookup"), {"isbn": "111"})
+        self.assertEqual(response.status_code, 405)
+
     def test_requires_isbn_param(self):
-        response = self.client.get(reverse("isbn_lookup"))
+        response = self.client.post(reverse("isbn_lookup"))
         self.assertEqual(response.status_code, 400)
 
     @patch("books.views.lookup_isbn")
     def test_returns_404_when_not_found(self, mock_lookup):
         mock_lookup.side_effect = IsbnLookupError("No book found for this ISBN.")
-        response = self.client.get(reverse("isbn_lookup"), {"isbn": "999"})
+        response = self.client.post(reverse("isbn_lookup"), {"isbn": "999"})
         self.assertEqual(response.status_code, 404)
         self.assertIn("error", response.json())
 
@@ -3305,7 +3311,7 @@ class IsbnLookupViewTests(TestCase):
             "cover_url": "https://covers.example/large.jpg",
         }
 
-        response = self.client.get(reverse("isbn_lookup"), {"isbn": "111"})
+        response = self.client.post(reverse("isbn_lookup"), {"isbn": "111"})
         self.assertEqual(response.status_code, 200)
         data = response.json()
 
@@ -3326,6 +3332,64 @@ class IsbnLookupViewTests(TestCase):
             "authors": ["Jane Doe"], "cover_url": "",
         }
 
-        self.client.get(reverse("isbn_lookup"), {"isbn": "111"})
+        self.client.post(reverse("isbn_lookup"), {"isbn": "111"})
 
         self.assertEqual(Author.objects.filter(account=self.account, name="Jane Doe").count(), 1)
+
+    @patch("books.views.lookup_isbn")
+    def test_second_rapid_request_is_rate_limited(self, mock_lookup):
+        mock_lookup.return_value = {
+            "title": "Book", "subtitle": "", "publishers": [], "publish_date": "",
+            "authors": [], "cover_url": "",
+        }
+
+        first = self.client.post(reverse("isbn_lookup"), {"isbn": "111"})
+        second = self.client.post(reverse("isbn_lookup"), {"isbn": "222"})
+
+        self.assertEqual(first.status_code, 200)
+        self.assertEqual(second.status_code, 429)
+        self.assertIn("error", second.json())
+
+
+class BookCoverUrlFormTests(TestCase):
+    """cover_url is only ever set by the ISBN lookup JS (hidden field), but
+    it still needs to round-trip correctly through the real form views."""
+
+    def setUp(self):
+        User = get_user_model()
+        self.user = User.objects.create_user(username="cover_user", password="pass1234")
+        self.account = get_or_create_account_for_user(self.user)
+        self.client.force_login(self.user)
+        grant(self.user, "add_book", "change_book", "view_book")
+        self.category = Category.objects.create(owner=self.user, account=self.account, name="Fiction")
+
+    def _book_payload(self, **overrides):
+        payload = {
+            "isbn": "111", "title": "A Book", "subtitle": "", "authors": [],
+            "publisher": "Acme", "published_date": "2024-01-01",
+            "category": self.category.id, "distribution_expense": "10.00",
+            "reorder_threshold": "5", "cover_url": "https://covers.example/large.jpg",
+        }
+        payload.update(overrides)
+        return payload
+
+    def test_create_saves_cover_url(self):
+        self.client.post(reverse("book_create"), self._book_payload())
+        book = Book.objects.get(account=self.account, title="A Book")
+        self.assertEqual(book.cover_url, "https://covers.example/large.jpg")
+
+    def test_create_without_cover_url_is_fine(self):
+        self.client.post(reverse("book_create"), self._book_payload(cover_url=""))
+        book = Book.objects.get(account=self.account, title="A Book")
+        self.assertEqual(book.cover_url, "")
+
+    def test_update_changes_cover_url(self):
+        self.client.post(reverse("book_create"), self._book_payload())
+        book = Book.objects.get(account=self.account, title="A Book")
+
+        self.client.post(
+            reverse("book_update", args=[book.id]),
+            self._book_payload(cover_url="https://covers.example/updated.jpg"),
+        )
+        book.refresh_from_db()
+        self.assertEqual(book.cover_url, "https://covers.example/updated.jpg")
