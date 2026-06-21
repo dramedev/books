@@ -24,11 +24,76 @@ CURRENCY_CHOICES = [
 ]
 
 
+class Account(models.Model):
+    name = models.CharField(max_length=200, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.name or f"Account #{self.pk}"
+
+
+class AccountMembership(models.Model):
+    ROLE_ADMIN = "Admin"
+    ROLE_STAFF = "Staff"
+    ROLE_VIEWER = "Viewer"
+    ROLE_CHOICES = [
+        (ROLE_ADMIN, _("Admin")),
+        (ROLE_STAFF, _("Staff")),
+        (ROLE_VIEWER, _("Viewer")),
+    ]
+
+    account = models.ForeignKey(Account, on_delete=models.CASCADE, related_name="memberships")
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="account_memberships",
+    )
+    role = models.CharField(max_length=20, choices=ROLE_CHOICES, default=ROLE_STAFF)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ("account", "user")
+
+    def __str__(self):
+        return f"{self.user} @ {self.account} ({self.role})"
+
+
+class AccountInvitation(models.Model):
+    account = models.ForeignKey(Account, on_delete=models.CASCADE, related_name="invitations")
+    email = models.EmailField()
+    role = models.CharField(
+        max_length=20,
+        choices=AccountMembership.ROLE_CHOICES,
+        default=AccountMembership.ROLE_STAFF,
+    )
+    token = models.CharField(max_length=64, unique=True)
+    invited_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name="+",
+    )
+    accepted_at = models.DateTimeField(null=True, blank=True)
+    expires_at = models.DateTimeField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.email} -> {self.account} ({self.role})"
+
+
 class Category(models.Model):
     owner = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         related_name="owned_categories",
+    )
+
+    account = models.ForeignKey(
+        Account,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="+",
     )
 
     name = models.CharField(max_length=100, verbose_name=_("Name"))
@@ -45,6 +110,14 @@ class Author(models.Model):
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         related_name="owned_authors",
+    )
+
+    account = models.ForeignKey(
+        Account,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="+",
     )
 
     name = models.CharField(max_length=200, verbose_name=_("Name"))
@@ -66,6 +139,14 @@ class Book(models.Model):
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         related_name="owned_books",
+    )
+
+    account = models.ForeignKey(
+        Account,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="+",
     )
 
     isbn = models.CharField(
@@ -153,6 +234,14 @@ class Sale(models.Model):
         related_name="owned_sales",
     )
 
+    account = models.ForeignKey(
+        Account,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="+",
+    )
+
     book = models.ForeignKey(
         Book,
         on_delete=models.CASCADE,
@@ -229,6 +318,14 @@ class Supplier(models.Model):
         related_name="owned_suppliers",
     )
 
+    account = models.ForeignKey(
+        Account,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="+",
+    )
+
     name = models.CharField(max_length=200, verbose_name=_("Name"))
 
     contact_name = models.CharField(max_length=200, blank=True, verbose_name=_("Contact name"))
@@ -268,6 +365,14 @@ class Reorder(models.Model):
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         related_name="owned_reorders",
+    )
+
+    account = models.ForeignKey(
+        Account,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="+",
     )
 
     book = models.ForeignKey(
@@ -346,6 +451,14 @@ class Return(models.Model):
         related_name="owned_returns",
     )
 
+    account = models.ForeignKey(
+        Account,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="+",
+    )
+
     sale = models.ForeignKey(
         Sale,
         on_delete=models.CASCADE,
@@ -383,6 +496,14 @@ class Customer(models.Model):
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         related_name="owned_customers",
+    )
+
+    account = models.ForeignKey(
+        Account,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="+",
     )
 
     name = models.CharField(max_length=200, verbose_name=_("Name"))
@@ -449,6 +570,14 @@ class Invoice(models.Model):
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         related_name="owned_invoices",
+    )
+
+    account = models.ForeignKey(
+        Account,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="+",
     )
 
     customer = models.ForeignKey(
@@ -603,6 +732,14 @@ class PrintRun(models.Model):
         related_name="owned_print_runs",
     )
 
+    account = models.ForeignKey(
+        Account,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="+",
+    )
+
     book = models.ForeignKey(
         Book,
         on_delete=models.CASCADE,
@@ -650,6 +787,14 @@ class RoyaltyRate(models.Model):
         related_name="owned_royalty_rates",
     )
 
+    account = models.ForeignKey(
+        Account,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="+",
+    )
+
     book = models.ForeignKey(
         Book,
         on_delete=models.CASCADE,
@@ -686,6 +831,14 @@ class RoyaltyPayment(models.Model):
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         related_name="owned_royalty_payments",
+    )
+
+    account = models.ForeignKey(
+        Account,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="+",
     )
 
     author = models.ForeignKey(
@@ -742,6 +895,14 @@ class StockAdjustment(models.Model):
         related_name="owned_stock_adjustments",
     )
 
+    account = models.ForeignKey(
+        Account,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="+",
+    )
+
     book = models.ForeignKey(
         Book,
         on_delete=models.CASCADE,
@@ -782,6 +943,14 @@ class Location(models.Model):
         related_name="owned_locations",
     )
 
+    account = models.ForeignKey(
+        Account,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="+",
+    )
+
     name = models.CharField(max_length=200, verbose_name=_("Name"))
 
     address = models.TextField(blank=True, verbose_name=_("Address"))
@@ -805,6 +974,14 @@ class StockLevel(models.Model):
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         related_name="owned_stock_levels",
+    )
+
+    account = models.ForeignKey(
+        Account,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="+",
     )
 
     book = models.ForeignKey(
@@ -849,6 +1026,14 @@ class Integration(models.Model):
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         related_name="owned_integrations",
+    )
+
+    account = models.ForeignKey(
+        Account,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="+",
     )
 
     platform = models.CharField(max_length=20, choices=PLATFORM_CHOICES, verbose_name=_("Platform"))

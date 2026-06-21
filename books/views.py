@@ -60,7 +60,7 @@ from .forms import (
 )
 from .models import (
     CURRENCY_CHOICES,
-    AccessCode, Author, Book, Category, Customer, CustomerLoginToken,
+    AccessCode, Account, AccountMembership, Author, Book, Category, Customer, CustomerLoginToken,
     Integration, Invoice, InvoiceItem,
     Location, PrintRun, Profile,
     Reorder, Return, RoyaltyPayment, RoyaltyRate,
@@ -3966,7 +3966,10 @@ def redeem_access_code(request):
                 admin_group = ensure_roles()["Admin"]
                 user.groups.add(admin_group)
 
-                Category.objects.get_or_create(owner=user, name="General")
+                account = Account.objects.create(name=user.username)
+                AccountMembership.objects.create(account=account, user=user, role=AccountMembership.ROLE_ADMIN)
+
+                Category.objects.get_or_create(owner=user, account=account, name="General")
                 Subscription.objects.get_or_create(user=user)
 
                 del request.session["pending_user_id"]

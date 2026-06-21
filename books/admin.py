@@ -8,7 +8,10 @@ from django.contrib import admin
 from django.core.mail import send_mail
 from django.db.models import Count, F, Sum
 
-from .models import AccessCode, Author, Book, Category, PendingActivation, Sale, StockAdjustment
+from .models import (
+    AccessCode, Account, AccountInvitation, AccountMembership,
+    Author, Book, Category, PendingActivation, Sale, StockAdjustment,
+)
 
 
 def _safe_json(value):
@@ -19,6 +22,29 @@ def _safe_json(value):
     """
     return json.dumps(value).replace("</", "<\\/")
 
+
+
+@admin.register(Account)
+class AccountAdmin(admin.ModelAdmin):
+
+    list_display = ("id", "name", "created_at")
+    search_fields = ("name",)
+
+
+@admin.register(AccountMembership)
+class AccountMembershipAdmin(admin.ModelAdmin):
+
+    list_display = ("id", "account", "user", "role", "created_at")
+    list_filter = ("role",)
+    search_fields = ("account__name", "user__username", "user__email")
+
+
+@admin.register(AccountInvitation)
+class AccountInvitationAdmin(admin.ModelAdmin):
+
+    list_display = ("id", "account", "email", "role", "accepted_at", "expires_at")
+    list_filter = ("role",)
+    search_fields = ("account__name", "email")
 
 
 @admin.register(Category)
