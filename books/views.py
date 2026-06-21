@@ -1925,13 +1925,14 @@ def checkout_complete(request):
         try:
             quantity = int(line.get("quantity"))
             unit_price = Decimal(str(line.get("unit_price")))
+            tax_rate = Decimal(str(line.get("tax_rate") or 0))
         except (TypeError, ValueError, ArithmeticError):
-            return JsonResponse({"error": gettext("Invalid quantity or price.")}, status=400)
+            return JsonResponse({"error": gettext("Invalid quantity, price or tax rate.")}, status=400)
 
-        if quantity < 1 or unit_price < 0:
-            return JsonResponse({"error": gettext("Invalid quantity or price.")}, status=400)
+        if quantity < 1 or unit_price < 0 or tax_rate < 0 or tax_rate > 100:
+            return JsonResponse({"error": gettext("Invalid quantity, price or tax rate.")}, status=400)
 
-        parsed_lines.append((line.get("book_id"), quantity, unit_price))
+        parsed_lines.append((line.get("book_id"), quantity, unit_price, tax_rate))
 
     today = timezone.now().date()
     receipt_attempts = 0
@@ -1949,7 +1950,7 @@ def checkout_complete(request):
                     receipt_number=_next_receipt_number(request.account),
                 )
 
-                for book_id, quantity, unit_price in parsed_lines:
+                for book_id, quantity, unit_price, tax_rate in parsed_lines:
                     book = Book.objects.select_for_update().get(id=book_id, account=request.account)
                     if book.stock_on_hand < quantity:
                         raise _CheckoutError(
@@ -1964,6 +1965,7 @@ def checkout_complete(request):
                         book=book,
                         quantity=quantity,
                         unit_price=unit_price,
+                        tax_rate=tax_rate,
                         currency=currency,
                         sale_date=today,
                         transaction=sale_transaction,

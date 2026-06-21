@@ -404,6 +404,25 @@ class CheckoutTests(TestCase):
         self.assertEqual(sale_tx.line_items.count(), 1)
         self.assertTrue(sale_tx.receipt_number.startswith("RCT-"))
 
+    def test_checkout_applies_per_line_tax_rate(self):
+        response = self._checkout([
+            {"book_id": self.book_a.id, "quantity": 2, "unit_price": "20.00", "tax_rate": "10"},
+        ])
+        self.assertEqual(response.status_code, 200)
+
+        sale_tx = SaleTransaction.objects.get(account=self.account)
+        sale = sale_tx.line_items.get()
+        self.assertEqual(sale.tax_rate, Decimal("10"))
+        self.assertEqual(sale.tax_amount, Decimal("4.00"))
+        self.assertEqual(sale_tx.tax_total, Decimal("4.00"))
+        self.assertEqual(sale_tx.total, Decimal("44.00"))
+
+    def test_checkout_rejects_invalid_tax_rate(self):
+        response = self._checkout([
+            {"book_id": self.book_a.id, "quantity": 1, "unit_price": "20.00", "tax_rate": "150"},
+        ])
+        self.assertEqual(response.status_code, 400)
+
     def test_multi_line_checkout_deducts_stock_for_each_book(self):
         response = self._checkout([
             {"book_id": self.book_a.id, "quantity": 1, "unit_price": "20.00"},

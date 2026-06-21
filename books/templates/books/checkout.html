@@ -42,14 +42,15 @@
 <thead>
 <tr>
 <th>{% translate "Title" %}</th>
-<th style="width:90px;">{% translate "Qty" %}</th>
-<th style="width:110px;">{% translate "Price" %}</th>
+<th style="width:80px;">{% translate "Qty" %}</th>
+<th style="width:100px;">{% translate "Price" %}</th>
+<th style="width:80px;">{% translate "Tax %" %}</th>
 <th style="width:110px;">{% translate "Subtotal" %}</th>
 <th style="width:40px;"></th>
 </tr>
 </thead>
 <tbody id="cartBody">
-<tr id="cartEmptyRow"><td colspan="5" class="muted-text">{% translate "Cart is empty." %}</td></tr>
+<tr id="cartEmptyRow"><td colspan="6" class="muted-text">{% translate "Cart is empty." %}</td></tr>
 </tbody>
 </table>
 </div>
@@ -162,10 +163,13 @@
         }
 
         let subtotal = 0;
+        let taxTotal = 0;
 
         cart.forEach(function(line, index){
             const lineSubtotal = line.quantity * line.unit_price;
+            const lineTax = lineSubtotal * (line.tax_rate / 100);
             subtotal += lineSubtotal;
+            taxTotal += lineTax;
 
             const row = document.createElement('tr');
 
@@ -203,8 +207,24 @@
             priceCell.appendChild(priceInput);
             row.appendChild(priceCell);
 
+            const taxCell = document.createElement('td');
+            const taxInput = document.createElement('input');
+            taxInput.type = 'number';
+            taxInput.step = '0.01';
+            taxInput.min = '0';
+            taxInput.max = '100';
+            taxInput.value = line.tax_rate;
+            taxInput.className = 'form-control form-control-sm';
+            taxInput.addEventListener('change', function(){
+                const value = parseFloat(taxInput.value);
+                line.tax_rate = (value >= 0 && value <= 100) ? value : line.tax_rate;
+                renderCart();
+            });
+            taxCell.appendChild(taxInput);
+            row.appendChild(taxCell);
+
             const subtotalCell = document.createElement('td');
-            subtotalCell.textContent = money(lineSubtotal);
+            subtotalCell.textContent = money(lineSubtotal + lineTax);
             row.appendChild(subtotalCell);
 
             const removeCell = document.createElement('td');
@@ -223,8 +243,8 @@
         });
 
         cartSubtotal.textContent = money(subtotal);
-        cartTax.textContent = '0.00';
-        cartTotal.textContent = money(subtotal);
+        cartTax.textContent = money(taxTotal);
+        cartTotal.textContent = money(subtotal + taxTotal);
     }
 
     function addToCart(book){
@@ -239,6 +259,7 @@
                 title: book.title,
                 quantity: 1,
                 unit_price: parseFloat(book.list_price || 0),
+                tax_rate: 0,
                 stock_on_hand: book.stock_on_hand,
             });
         }
@@ -341,6 +362,7 @@
                     book_id: line.book_id,
                     quantity: line.quantity,
                     unit_price: line.unit_price,
+                    tax_rate: line.tax_rate,
                 };
             }),
         };

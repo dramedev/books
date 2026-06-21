@@ -1361,7 +1361,7 @@ msgid "Qty"
 msgstr "Qté"
 
 msgid "Tax %"
-msgstr "TVA %"
+msgstr "Taxe %"
 
 msgid "Subtotal"
 msgstr "Sous-total"
@@ -1983,4 +1983,22 @@ msgstr "Espèces"
 
 msgid "Card"
 msgstr "Carte"
+
+msgid "Invalid quantity, price or tax rate."
+msgstr "Quantité, prix ou taux de taxe invalide."
+
+msgid "Invalid request."
+msgstr "Requête invalide."
+
+msgid "Invalid payment method."
+msgstr "Mode de paiement invalide."
+
+msgid "Invalid currency."
+msgstr "Devise invalide."
+
+msgid "One of the books in the cart could not be found."
+msgstr "L'un des livres du panier n'a pas pu être trouvé."
+
+msgid "Not enough stock for '%(title)s' (available: %(n)s)."
+msgstr "Stock insuffisant pour « %(title)s » (disponible : %(n)s)."
 

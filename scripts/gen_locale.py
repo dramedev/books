@@ -808,6 +808,14 @@ FR = {
     "Cash": "Espèces",
     "Card": "Carte",
     "Other": "Autre",
+    "Tax %": "Taxe %",
+    "Invalid quantity, price or tax rate.": "Quantité, prix ou taux de taxe invalide.",
+    "Invalid request.": "Requête invalide.",
+    "Invalid payment method.": "Mode de paiement invalide.",
+    "Invalid currency.": "Devise invalide.",
+    "One of the books in the cart could not be found.": "L'un des livres du panier n'a pas pu être trouvé.",
+    "Not enough stock for '%(title)s' (available: %(n)s).":
+        "Stock insuffisant pour « %(title)s » (disponible : %(n)s).",
 }
 
 # ---------------------------------------------------------------------------
@@ -1596,6 +1604,14 @@ AR = {
     "Cash": "نقدًا",
     "Card": "بطاقة",
     "Other": "أخرى",
+    "Tax %": "الضريبة %",
+    "Invalid quantity, price or tax rate.": "كمية أو سعر أو معدل ضريبة غير صالح.",
+    "Invalid request.": "طلب غير صالح.",
+    "Invalid payment method.": "طريقة دفع غير صالحة.",
+    "Invalid currency.": "عملة غير صالحة.",
+    "One of the books in the cart could not be found.": "لم يتم العثور على أحد الكتب في السلة.",
+    "Not enough stock for '%(title)s' (available: %(n)s).":
+        "لا يوجد مخزون كافٍ لـ «%(title)s» (المتوفر: %(n)s).",
 }
 
 

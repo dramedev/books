@@ -1352,7 +1352,7 @@ msgid "Qty"
 msgstr "الكمية"
 
 msgid "Tax %"
-msgstr "ضريبة %"
+msgstr "الضريبة %"
 
 msgid "Subtotal"
 msgstr "الإجمالي الفرعي"
@@ -1983,4 +1983,22 @@ msgstr "نقدًا"
 
 msgid "Card"
 msgstr "بطاقة"
+
+msgid "Invalid quantity, price or tax rate."
+msgstr "كمية أو سعر أو معدل ضريبة غير صالح."
+
+msgid "Invalid request."
+msgstr "طلب غير صالح."
+
+msgid "Invalid payment method."
+msgstr "طريقة دفع غير صالحة."
+
+msgid "Invalid currency."
+msgstr "عملة غير صالحة."
+
+msgid "One of the books in the cart could not be found."
+msgstr "لم يتم العثور على أحد الكتب في السلة."
+
+msgid "Not enough stock for '%(title)s' (available: %(n)s)."
+msgstr "لا يوجد مخزون كافٍ لـ «%(title)s» (المتوفر: %(n)s)."
 
