@@ -133,6 +133,27 @@ msgstr "Ajouter une catégorie"
 msgid "Add Book"
 msgstr "Ajouter un livre"
 
+msgid "Scan"
+msgstr "Scanner"
+
+msgid "Scan barcode"
+msgstr "Scanner le code-barres"
+
+msgid "Stop scanning"
+msgstr "Arrêter le scan"
+
+msgid "Could not load the barcode scanner. Check your connection and try again."
+msgstr "Impossible de charger le scanner de codes-barres. Vérifiez votre connexion et réessayez."
+
+msgid "Scanning — point camera at barcode..."
+msgstr "Numérisation — pointez la caméra vers le code-barres..."
+
+msgid "Detected:"
+msgstr "Détecté :"
+
+msgid "Camera access denied or unavailable."
+msgstr "Accès à la caméra refusé ou indisponible."
+
 msgid "Add Sale"
 msgstr "Ajouter une vente"
 

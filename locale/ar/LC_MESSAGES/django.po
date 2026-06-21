@@ -133,6 +133,27 @@ msgstr "إضافة تصنيف"
 msgid "Add Book"
 msgstr "إضافة كتاب"
 
+msgid "Scan"
+msgstr "مسح"
+
+msgid "Scan barcode"
+msgstr "مسح الرمز الشريطي"
+
+msgid "Stop scanning"
+msgstr "إيقاف المسح"
+
+msgid "Could not load the barcode scanner. Check your connection and try again."
+msgstr "تعذّر تحميل قارئ الرمز الشريطي. تحقق من اتصالك وحاول مرة أخرى."
+
+msgid "Scanning — point camera at barcode..."
+msgstr "جارٍ المسح — وجّه الكاميرا نحو الرمز الشريطي..."
+
+msgid "Detected:"
+msgstr "تم الكشف عن:"
+
+msgid "Camera access denied or unavailable."
+msgstr "تم رفض الوصول إلى الكاميرا أو أنه غير متاح."
+
 msgid "Add Sale"
 msgstr "إضافة عملية بيع"
 

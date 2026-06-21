@@ -56,6 +56,7 @@
 </div>
 
 
+<script src="https://unpkg.com/@zxing/library@latest/umd/index.min.js"></script>
 <script>
 (function(){
     const scanBtn = document.getElementById('scanBtn');
@@ -66,13 +67,10 @@
     const scanStatus = document.getElementById('scanStatus');
     const scanStop = document.getElementById('scanStop');
     const isbnField = document.getElementById('id_isbn');
-    let stream = null;
-    let scanning = false;
+    let reader = null;
 
     function stopScan(){
-        scanning = false;
-        if(stream){ stream.getTracks().forEach(function(t){ t.stop(); }); stream = null; }
-        scanVideo.srcObject = null;
+        if(reader){ reader.reset(); reader = null; }
         scanBox.style.display = 'none';
         scanStatus.textContent = '';
     }
@@ -80,40 +78,30 @@
     scanStop.addEventListener('click', stopScan);
 
     scanBtn.addEventListener('click', async function(){
-        if(!('BarcodeDetector' in window)){
+        if(typeof ZXing === 'undefined'){
             scanBox.style.display = 'block';
-            scanStatus.textContent = "{% translate 'Barcode scanning requires Chrome or Edge. You can still type the ISBN directly.' %}";
+            scanStatus.textContent = "{% translate 'Could not load the barcode scanner. Check your connection and try again.' %}";
             return;
         }
 
+        scanBox.style.display = 'block';
+        scanStatus.textContent = "{% translate 'Scanning — point camera at barcode...' %}";
+
+        reader = new ZXing.BrowserMultiFormatReader();
+
         try{
-            stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
-            scanVideo.srcObject = stream;
-            scanVideo.play();
-            scanBox.style.display = 'block';
-            scanStatus.textContent = "{% translate 'Scanning — point camera at barcode...' %}";
-            scanning = true;
-
-            const detector = new BarcodeDetector({ formats: ['ean_13', 'ean_8', 'code_128', 'isbn'] });
-
-            async function tick(){
-                if(!scanning) return;
-                try{
-                    const results = await detector.detect(scanVideo);
-                    if(results.length > 0){
-                        isbnField.value = results[0].rawValue;
-                        scanStatus.textContent = "{% translate 'Detected:' %} " + results[0].rawValue;
+            await reader.decodeFromConstraints(
+                { video: { facingMode: 'environment' } },
+                scanVideo,
+                function(result, err){
+                    if(result){
+                        isbnField.value = result.getText();
+                        scanStatus.textContent = "{% translate 'Detected:' %} " + result.getText();
                         stopScan();
-                        return;
                     }
-                } catch(e){}
-                if(scanning) requestAnimationFrame(tick);
-            }
-
-            scanVideo.addEventListener('playing', function(){ requestAnimationFrame(tick); }, { once: true });
-
+                }
+            );
         } catch(e){
-            scanBox.style.display = 'block';
             scanStatus.textContent = "{% translate 'Camera access denied or unavailable.' %}";
         }
     });
