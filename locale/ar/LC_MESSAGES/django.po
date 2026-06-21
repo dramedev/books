@@ -2002,3 +2002,21 @@ msgstr "لم يتم العثور على أحد الكتب في السلة."
 msgid "Not enough stock for '%(title)s' (available: %(n)s)."
 msgstr "لا يوجد مخزون كافٍ لـ «%(title)s» (المتوفر: %(n)s)."
 
+msgid "Transaction history"
+msgstr "سجل المعاملات"
+
+msgid "Past checkout receipts."
+msgstr "إيصالات الدفع السابقة."
+
+msgid "View receipt"
+msgstr "عرض الإيصال"
+
+msgid "No transactions match the current filters."
+msgstr "لا توجد معاملات مطابقة للفلاتر الحالية."
+
+msgid "No checkout transactions yet."
+msgstr "لا توجد معاملات دفع حتى الآن."
+
+msgid "%(count)s transaction(s) found"
+msgstr "تم العثور على %(count)s معاملة"
+

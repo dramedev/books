@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+
+{% block content %}
+
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+<div>
+<h1 class="mb-1">{% translate "Transaction history" %}</h1>
+<p class="muted-text mb-0">
+{% translate "Past checkout receipts." %}
+</p>
+</div>
+
+{% if perms.books.add_sale %}
+<a class="btn btn-success" href="{% url 'checkout' %}">
+<i class="bi bi-plus-lg"></i> {% translate "New sale" %}
+</a>
+{% endif %}
+</div>
+
+
+<form class="filter-panel mb-3" method="get">
+<div class="row g-3 align-items-end">
+
+<div class="col-md-3">
+<label class="form-label">{% translate "From" %}</label>
+<input type="date" name="start_date" class="form-control" value="{{ filters.start_date }}">
+</div>
+
+<div class="col-md-3">
+<label class="form-label">{% translate "To" %}</label>
+<input type="date" name="end_date" class="form-control" value="{{ filters.end_date }}">
+</div>
+
+<div class="col-md-auto d-flex gap-2 align-items-end">
+<button class="btn btn-success" type="submit">{% translate "Apply" %}</button>
+<a class="btn btn-outline-light" href="{% url 'checkout_history' %}">{% translate "Reset" %}</a>
+</div>
+
+</div>
+</form>
+
+<div class="mb-3">
+<span class="muted-text small">{{ result_count_text }}</span>
+</div>
+
+<div class="table-responsive">
+<table class="table table-striped align-middle">
+<thead>
+<tr>
+<th>{% translate "Receipt" %}</th>
+<th>{% translate "Date" %}</th>
+<th>{% translate "Customer" %}</th>
+<th>{% translate "Location" %}</th>
+<th>{% translate "Payment method" %}</th>
+<th>{% translate "Total" %}</th>
+<th>{% translate "Actions" %}</th>
+</tr>
+</thead>
+<tbody>
+{% for transaction in transactions %}
+<tr>
+<td>{{ transaction.receipt_number|default:"-" }}</td>
+<td>{{ transaction.created_at }}</td>
+<td>{{ transaction.customer.name|default:"-" }}</td>
+<td>{{ transaction.location.name|default:"-" }}</td>
+<td>{{ transaction.get_payment_method_display }}</td>
+<td>{{ transaction.total }}</td>
+<td>
+<a class="btn btn-outline-light btn-sm" href="{% url 'checkout_receipt' transaction.id %}" title="{% translate 'View receipt' %}">
+<i class="bi bi-receipt"></i>
+</a>
+</td>
+</tr>
+
+{% empty %}
+<tr>
+<td colspan="7" class="text-center muted-text py-4">
+{% if has_any_transactions %}
+{% translate "No transactions match the current filters." %}
+{% else %}
+{% translate "No checkout transactions yet." %}
+{% endif %}
+</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+
+
+{% include "books/_pagination.html" with extra_qs=query_string %}
+
+
+{% endblock %}

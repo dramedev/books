@@ -595,8 +595,14 @@ html[dir="rtl"] .chat-panel{
 <div class="sidebar-section">{% translate "Sales" %}</div>
 
 {% if perms.books.add_sale %}
-<a class="sidebar-link {% if url_name == 'checkout' or url_name == 'checkout_receipt' %}active{% endif %}" href="{% url 'checkout' %}">
+<a class="sidebar-link {% if url_name == 'checkout' %}active{% endif %}" href="{% url 'checkout' %}">
 <i class="bi bi-receipt-cutoff"></i> {% translate "Checkout" %}
+</a>
+{% endif %}
+
+{% if perms.books.view_saletransaction %}
+<a class="sidebar-link {% if url_name == 'checkout_history' or url_name == 'checkout_receipt' %}active{% endif %}" href="{% url 'checkout_history' %}">
+<i class="bi bi-clock-history"></i> {% translate "Transaction history" %}
 </a>
 {% endif %}
 

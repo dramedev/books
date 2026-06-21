@@ -492,6 +492,33 @@ class CheckoutTests(TestCase):
         response = self.client.get(reverse("checkout_receipt", args=[sale_tx.id]))
         self.assertEqual(response.status_code, 404)
 
+    def test_history_lists_transactions_scoped_to_account(self):
+        self._checkout([{"book_id": self.book_a.id, "quantity": 1, "unit_price": "20.00"}])
+        sale_tx = SaleTransaction.objects.get(account=self.account)
+
+        other_user = get_user_model().objects.create_user(username="other_acct4", password="pass1234")
+        other_account = get_or_create_account_for_user(other_user)
+        SaleTransaction.objects.create(owner=other_user, account=other_account, receipt_number="RCT-OTHER-0001")
+
+        response = self.client.get(reverse("checkout_history"))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, sale_tx.receipt_number)
+        self.assertNotContains(response, "RCT-OTHER-0001")
+
+    def test_history_requires_permission(self):
+        other = get_user_model().objects.create_user(username="nopower2", password="pass1234")
+        self.client.force_login(other)
+        response = self.client.get(reverse("checkout_history"))
+        self.assertEqual(response.status_code, 403)
+
+    def test_history_date_filter(self):
+        self._checkout([{"book_id": self.book_a.id, "quantity": 1, "unit_price": "20.00"}])
+        sale_tx = SaleTransaction.objects.get(account=self.account)
+
+        future = (timezone.now() + timedelta(days=1)).date().isoformat()
+        response = self.client.get(reverse("checkout_history"), {"start_date": future})
+        self.assertNotContains(response, sale_tx.receipt_number)
+
     def test_duplicate_receipt_number_same_account_rejected_at_db_level(self):
         SaleTransaction.objects.create(
             owner=self.user, account=self.account, receipt_number="RCT-DUPETEST-0001",

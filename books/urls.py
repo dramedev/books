@@ -47,6 +47,7 @@ urlpatterns = [
     path("checkout/", views.checkout, name="checkout"),
     path("checkout/lookup/", views.checkout_book_lookup, name="checkout_book_lookup"),
     path("checkout/complete/", views.checkout_complete, name="checkout_complete"),
+    path("checkout/history/", views.checkout_history, name="checkout_history"),
     path("checkout/<int:id>/receipt/", views.checkout_receipt, name="checkout_receipt"),
     path("report/", views.report, name="report"),
     path("about/", views.about, name="about"),

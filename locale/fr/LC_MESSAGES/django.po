@@ -2002,3 +2002,21 @@ msgstr "L'un des livres du panier n'a pas pu être trouvé."
 msgid "Not enough stock for '%(title)s' (available: %(n)s)."
 msgstr "Stock insuffisant pour « %(title)s » (disponible : %(n)s)."
 
+msgid "Transaction history"
+msgstr "Historique des transactions"
+
+msgid "Past checkout receipts."
+msgstr "Reçus de caisse passés."
+
+msgid "View receipt"
+msgstr "Voir le reçu"
+
+msgid "No transactions match the current filters."
+msgstr "Aucune transaction ne correspond aux filtres actuels."
+
+msgid "No checkout transactions yet."
+msgstr "Aucune transaction de caisse pour le moment."
+
+msgid "%(count)s transaction(s) found"
+msgstr "%(count)s transaction(s) trouvée(s)"
+

@@ -12,6 +12,9 @@
 </div>
 
 <div class="d-flex gap-2 no-print">
+<a class="btn btn-outline-light" href="{% url 'checkout_history' %}">
+<i class="bi bi-clock-history"></i> {% translate "Transaction history" %}
+</a>
 <button type="button" class="btn btn-outline-light" onclick="window.print()">
 <i class="bi bi-printer"></i> {% translate "Print" %}
 </button>

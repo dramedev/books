@@ -1997,6 +1997,40 @@ def checkout_receipt(request, id):
 
 
 @login_required
+@permission_required("books.view_saletransaction", raise_exception=True)
+def checkout_history(request):
+    transactions = (
+        SaleTransaction.objects.filter(account=request.account)
+        .select_related("customer", "location")
+        .prefetch_related("line_items")
+    )
+
+    start_date = request.GET.get("start_date", "").strip()
+    end_date = request.GET.get("end_date", "").strip()
+
+    if start_date:
+        transactions = transactions.filter(created_at__date__gte=start_date)
+    if end_date:
+        transactions = transactions.filter(created_at__date__lte=end_date)
+
+    query_params = request.GET.copy()
+    query_params.pop("page", None)
+    query_string = query_params.urlencode()
+
+    paginator = Paginator(transactions, 15)
+    page_obj = paginator.get_page(request.GET.get("page"))
+
+    return render(request, "books/checkout_history.html", {
+        "transactions": page_obj.object_list,
+        "page_obj": page_obj,
+        "filters": request.GET,
+        "query_string": query_string,
+        "result_count_text": gettext("%(count)s transaction(s) found") % {"count": paginator.count},
+        "has_any_transactions": SaleTransaction.objects.filter(account=request.account).exists(),
+    })
+
+
+@login_required
 @permission_required("books.view_return", raise_exception=True)
 def return_list(request):
     returns = Return.objects.filter(account=request.account).select_related("sale", "sale__book")

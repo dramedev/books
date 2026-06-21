@@ -816,6 +816,13 @@ FR = {
     "One of the books in the cart could not be found.": "L'un des livres du panier n'a pas pu être trouvé.",
     "Not enough stock for '%(title)s' (available: %(n)s).":
         "Stock insuffisant pour « %(title)s » (disponible : %(n)s).",
+    "Transaction history": "Historique des transactions",
+    "Past checkout receipts.": "Reçus de caisse passés.",
+    "Customer": "Client",
+    "View receipt": "Voir le reçu",
+    "No transactions match the current filters.": "Aucune transaction ne correspond aux filtres actuels.",
+    "No checkout transactions yet.": "Aucune transaction de caisse pour le moment.",
+    "%(count)s transaction(s) found": "%(count)s transaction(s) trouvée(s)",
 }
 
 # ---------------------------------------------------------------------------
@@ -1612,6 +1619,13 @@ AR = {
     "One of the books in the cart could not be found.": "لم يتم العثور على أحد الكتب في السلة.",
     "Not enough stock for '%(title)s' (available: %(n)s).":
         "لا يوجد مخزون كافٍ لـ «%(title)s» (المتوفر: %(n)s).",
+    "Transaction history": "سجل المعاملات",
+    "Past checkout receipts.": "إيصالات الدفع السابقة.",
+    "Customer": "العميل",
+    "View receipt": "عرض الإيصال",
+    "No transactions match the current filters.": "لا توجد معاملات مطابقة للفلاتر الحالية.",
+    "No checkout transactions yet.": "لا توجد معاملات دفع حتى الآن.",
+    "%(count)s transaction(s) found": "تم العثور على %(count)s معاملة",
 }
 
 
