@@ -838,6 +838,7 @@ FR = {
         "Pré-remplit le taux de taxe sur chaque nouvelle ligne du panier de caisse.",
     "Account settings updated.": "Paramètres du compte mis à jour.",
     "Receipt # or customer…": "N° de reçu ou client…",
+    "Download PDF": "Télécharger le PDF",
 }
 
 # ---------------------------------------------------------------------------
@@ -1656,6 +1657,7 @@ AR = {
         "يعبئ معدل الضريبة مسبقًا في كل سطر جديد من سلة الدفع.",
     "Account settings updated.": "تم تحديث إعدادات الحساب.",
     "Receipt # or customer…": "رقم الإيصال أو العميل…",
+    "Download PDF": "تنزيل PDF",
 }
 
 

@@ -1998,6 +1998,106 @@ def checkout_receipt(request, id):
     return render(request, "books/checkout_receipt.html", {"transaction": sale_transaction})
 
 
+def _checkout_receipt_pdf_response(sale_transaction):
+    from reportlab.lib import colors
+    from reportlab.lib.pagesizes import letter
+    from reportlab.lib.styles import getSampleStyleSheet
+    from reportlab.lib.units import inch
+    from reportlab.platypus import Image, Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
+
+    _register_pdf_fonts()
+    body_font, bold_font = _pdf_fonts()
+
+    items = sale_transaction.line_items.all()
+
+    buffer = BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=letter, leftMargin=48, rightMargin=48, topMargin=48, bottomMargin=48)
+    styles = getSampleStyleSheet()
+    styles["Title"].fontName = bold_font
+    styles["Normal"].fontName = body_font
+
+    elements = []
+
+    logo_path = settings.BASE_DIR / "books" / "static" / "books" / "img" / "icon-512.png"
+    if logo_path.exists():
+        elements.append(Image(str(logo_path), width=0.6 * inch, height=0.6 * inch))
+        elements.append(Spacer(1, 6))
+
+    elements += [
+        Paragraph(_pdf_text("Rumi Press"), styles["Title"]),
+        Spacer(1, 4),
+        Paragraph(_pdf_text(f"{gettext('Receipt')} {sale_transaction.receipt_number}"), styles["Normal"]),
+        Paragraph(_pdf_text(str(sale_transaction.created_at)), styles["Normal"]),
+    ]
+
+    if sale_transaction.customer:
+        elements.append(Paragraph(_pdf_text(f"{gettext('Customer')}: {sale_transaction.customer.name}"), styles["Normal"]))
+    if sale_transaction.location:
+        elements.append(Paragraph(_pdf_text(f"{gettext('Location')}: {sale_transaction.location.name}"), styles["Normal"]))
+    elements.append(Paragraph(
+        _pdf_text(f"{gettext('Payment method')}: {sale_transaction.get_payment_method_display()}"), styles["Normal"],
+    ))
+    elements.append(Spacer(1, 12))
+
+    rows = [[
+        _pdf_text(gettext("Title")),
+        _pdf_text(gettext("Qty")),
+        _pdf_text(gettext("Price")),
+        _pdf_text(gettext("Subtotal")),
+        _pdf_text(gettext("Status")),
+    ]]
+    for item in items:
+        if item.quantity == 0:
+            status = gettext("Refunded")
+        elif item.returned_quantity > 0:
+            status = gettext("Partially refunded")
+        else:
+            status = ""
+
+        rows.append([
+            _pdf_text(item.book.title),
+            str(item.original_quantity),
+            str(item.unit_price),
+            str(item.original_revenue),
+            _pdf_text(status),
+        ])
+
+    table = Table(rows, repeatRows=1, colWidths=[220, 50, 70, 80, 90])
+    table.setStyle(TableStyle([
+        ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#1f1f1f")),
+        ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+        ("FONTNAME", (0, 0), (-1, 0), bold_font),
+        ("FONTNAME", (0, 1), (-1, -1), body_font),
+        ("FONTSIZE", (0, 0), (-1, -1), 8),
+        ("GRID", (0, 0), (-1, -1), 0.5, colors.grey),
+    ]))
+    elements.append(table)
+    elements.append(Spacer(1, 12))
+
+    elements.append(Paragraph(_pdf_text(f"{gettext('Subtotal')}: {sale_transaction.subtotal}"), styles["Normal"]))
+    elements.append(Paragraph(_pdf_text(f"{gettext('Tax')}: {sale_transaction.tax_total}"), styles["Normal"]))
+    elements.append(Paragraph(_pdf_text(f"{gettext('Total')}: {sale_transaction.total}"), styles["Normal"]))
+    elements.append(Spacer(1, 24))
+
+    quote_style = styles["Normal"]
+    elements.append(Paragraph(_pdf_text(str(random.choice(LEARNING_QUOTES))), quote_style))
+
+    doc.build(elements)
+    buffer.seek(0)
+
+    response = HttpResponse(buffer.getvalue(), content_type="application/pdf")
+    response["Content-Disposition"] = f'attachment; filename="receipt-{sale_transaction.receipt_number or sale_transaction.id}.pdf"'
+
+    return response
+
+
+@login_required
+@permission_required("books.view_saletransaction", raise_exception=True)
+def checkout_receipt_pdf(request, id):
+    sale_transaction = get_object_or_404(SaleTransaction, id=id, account=request.account)
+    return _checkout_receipt_pdf_response(sale_transaction)
+
+
 def _transaction_filters(request):
     transactions = (
         SaleTransaction.objects.filter(account=request.account)

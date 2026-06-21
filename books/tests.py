@@ -543,6 +543,27 @@ class CheckoutTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response["Content-Type"], "application/pdf")
 
+    def test_receipt_pdf_renders(self):
+        self._checkout([{"book_id": self.book_a.id, "quantity": 1, "unit_price": "20.00"}])
+        sale_tx = SaleTransaction.objects.get(account=self.account)
+
+        response = self.client.get(reverse("checkout_receipt_pdf", args=[sale_tx.id]))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response["Content-Type"], "application/pdf")
+        self.assertTrue(response.content.startswith(b"%PDF"))
+
+    def test_receipt_pdf_scoped_to_account(self):
+        self._checkout([{"book_id": self.book_a.id, "quantity": 1, "unit_price": "20.00"}])
+        sale_tx = SaleTransaction.objects.get(account=self.account)
+
+        other_user = get_user_model().objects.create_user(username="other_acct6", password="pass1234")
+        get_or_create_account_for_user(other_user)
+        grant(other_user, "view_saletransaction")
+        self.client.force_login(other_user)
+
+        response = self.client.get(reverse("checkout_receipt_pdf", args=[sale_tx.id]))
+        self.assertEqual(response.status_code, 404)
+
     def test_checkout_uses_account_default_tax_rate(self):
         self.account.default_tax_rate = Decimal("7.00")
         self.account.save(update_fields=["default_tax_rate"])

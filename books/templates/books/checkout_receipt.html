@@ -18,6 +18,9 @@
 <button type="button" class="btn btn-outline-light" onclick="window.print()">
 <i class="bi bi-printer"></i> {% translate "Print" %}
 </button>
+<a class="btn btn-outline-light" href="{% url 'checkout_receipt_pdf' transaction.id %}">
+<i class="bi bi-file-earmark-pdf"></i> {% translate "Download PDF" %}
+</a>
 {% if perms.books.add_return and not transaction.is_fully_refunded %}
 <form method="post" action="{% url 'checkout_void' transaction.id %}" onsubmit="return confirm('{% translate "Void this transaction and restore stock for every item?" %}');">
 {% csrf_token %}

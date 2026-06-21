@@ -52,6 +52,7 @@ urlpatterns = [
     path("checkout/history/export/excel/", views.export_checkout_history_excel, name="export_checkout_history_excel"),
     path("checkout/history/export/pdf/", views.export_checkout_history_pdf, name="export_checkout_history_pdf"),
     path("checkout/<int:id>/receipt/", views.checkout_receipt, name="checkout_receipt"),
+    path("checkout/<int:id>/receipt/pdf/", views.checkout_receipt_pdf, name="checkout_receipt_pdf"),
     path("checkout/<int:id>/void/", views.checkout_void, name="checkout_void"),
     path("report/", views.report, name="report"),
     path("about/", views.about, name="about"),
