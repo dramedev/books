@@ -20,7 +20,7 @@ from django.utils import timezone
 
 from . import ai_chat, iyzico_client
 from .models import (
-    AccessCode, AVATAR_MAX_SIZE_BYTES, Account, AccountMembership, Author, Book, Category,
+    AccessCode, AVATAR_MAX_SIZE_BYTES, Account, AccountInvitation, AccountMembership, Author, Book, Category,
     Customer, CustomerLoginToken, get_or_create_account_for_user,
     Integration, Invoice, InvoiceItem, Location, PrintRun, Profile, Reorder, RoyaltyPayment,
     Sale, StockAdjustment, Subscription, Supplier, validate_avatar_size,
@@ -2736,3 +2736,135 @@ class PlatformWebhookTests(TestCase):
     def test_get_request_returns_405(self):
         response = self.client.get(reverse("platform_webhook"))
         self.assertEqual(response.status_code, 405)
+
+
+class TeamInviteTests(TestCase):
+
+    def setUp(self):
+        User = get_user_model()
+        self.admin = User.objects.create_user(username="team_admin", password="pass1234", email="admin@example.com")
+        self.account = get_or_create_account_for_user(self.admin)
+        self.membership = AccountMembership.objects.get(user=self.admin)
+
+    def test_non_admin_cannot_access_team_page(self):
+        staff = get_user_model().objects.create_user(username="team_staff", password="pass1234")
+        AccountMembership.objects.create(account=self.account, user=staff, role=AccountMembership.ROLE_STAFF)
+
+        self.client.force_login(staff)
+        response = self.client.get(reverse("team_members"))
+        self.assertEqual(response.status_code, 403)
+
+    def test_admin_can_view_team_page(self):
+        self.client.force_login(self.admin)
+        response = self.client.get(reverse("team_members"))
+        self.assertEqual(response.status_code, 200)
+
+    def test_admin_can_send_invite(self):
+        self.client.force_login(self.admin)
+        response = self.client.post(reverse("team_members"), {"email": "invitee@example.com", "role": "Staff"})
+        self.assertRedirects(response, reverse("team_members"))
+
+        invitation = AccountInvitation.objects.get(email="invitee@example.com")
+        self.assertEqual(invitation.account, self.account)
+        self.assertEqual(invitation.role, "Staff")
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertIn(invitation.token, mail.outbox[0].body)
+
+    def test_accept_invite_creates_membership_and_syncs_groups(self):
+        invitation = AccountInvitation.objects.create(
+            account=self.account,
+            email="invitee@example.com",
+            role=AccountMembership.ROLE_STAFF,
+            token="test-token-123",
+            expires_at=timezone.now() + timedelta(days=7),
+        )
+
+        response = self.client.post(
+            reverse("team_accept_invite", args=[invitation.token]),
+            {"username": "newstaffer", "password1": "S3curePass!!", "password2": "S3curePass!!"},
+        )
+        self.assertRedirects(response, reverse("dashboard"))
+
+        new_user = get_user_model().objects.get(username="newstaffer")
+        membership = AccountMembership.objects.get(user=new_user)
+        self.assertEqual(membership.account, self.account)
+        self.assertEqual(membership.role, AccountMembership.ROLE_STAFF)
+        self.assertEqual(list(new_user.groups.values_list("name", flat=True)), ["Staff"])
+
+        invitation.refresh_from_db()
+        self.assertIsNotNone(invitation.accepted_at)
+
+    def test_accept_invite_rejects_expired(self):
+        invitation = AccountInvitation.objects.create(
+            account=self.account,
+            email="invitee@example.com",
+            role=AccountMembership.ROLE_STAFF,
+            token="expired-token",
+            expires_at=timezone.now() - timedelta(days=1),
+        )
+        response = self.client.get(reverse("team_accept_invite", args=[invitation.token]))
+        self.assertEqual(response.status_code, 410)
+
+    def test_accept_invite_rejects_already_accepted(self):
+        invitation = AccountInvitation.objects.create(
+            account=self.account,
+            email="invitee@example.com",
+            role=AccountMembership.ROLE_STAFF,
+            token="used-token",
+            expires_at=timezone.now() + timedelta(days=7),
+            accepted_at=timezone.now(),
+        )
+        response = self.client.get(reverse("team_accept_invite", args=[invitation.token]))
+        self.assertEqual(response.status_code, 410)
+
+    def test_accept_invite_rejects_email_with_existing_account(self):
+        get_user_model().objects.create_user(username="already_exists", password="pass1234", email="invitee@example.com")
+        invitation = AccountInvitation.objects.create(
+            account=self.account,
+            email="invitee@example.com",
+            role=AccountMembership.ROLE_STAFF,
+            token="dup-email-token",
+            expires_at=timezone.now() + timedelta(days=7),
+        )
+        response = self.client.get(reverse("team_accept_invite", args=[invitation.token]))
+        self.assertEqual(response.status_code, 409)
+
+    def test_cannot_remove_last_admin(self):
+        self.client.force_login(self.admin)
+        response = self.client.post(reverse("team_member_remove", args=[self.membership.id]))
+        self.assertRedirects(response, reverse("team_members"))
+        self.assertTrue(AccountMembership.objects.filter(id=self.membership.id).exists())
+
+    def test_cannot_demote_last_admin(self):
+        self.client.force_login(self.admin)
+        response = self.client.post(
+            reverse("team_member_update_role", args=[self.membership.id]), {"role": "Staff"},
+        )
+        self.assertRedirects(response, reverse("team_members"))
+        self.membership.refresh_from_db()
+        self.assertEqual(self.membership.role, AccountMembership.ROLE_ADMIN)
+
+    def test_can_remove_non_last_admin_member(self):
+        staff_user = get_user_model().objects.create_user(username="removable_staff", password="pass1234")
+        staff_membership = AccountMembership.objects.create(
+            account=self.account, user=staff_user, role=AccountMembership.ROLE_STAFF,
+        )
+
+        self.client.force_login(self.admin)
+        response = self.client.post(reverse("team_member_remove", args=[staff_membership.id]))
+        self.assertRedirects(response, reverse("team_members"))
+        self.assertFalse(AccountMembership.objects.filter(id=staff_membership.id).exists())
+
+    def test_admin_can_cancel_pending_invitation(self):
+        invitation = AccountInvitation.objects.create(
+            account=self.account,
+            email="cancel-me@example.com",
+            role=AccountMembership.ROLE_STAFF,
+            token="cancel-token",
+            expires_at=timezone.now() + timedelta(days=7),
+        )
+
+        self.client.force_login(self.admin)
+        response = self.client.post(reverse("team_invite_cancel", args=[invitation.id]))
+        self.assertRedirects(response, reverse("team_members"))
+        self.assertFalse(AccountInvitation.objects.filter(id=invitation.id).exists())
