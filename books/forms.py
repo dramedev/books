@@ -3,7 +3,7 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.password_validation import validate_password
 from django.utils.translation import gettext_lazy as _
 
-from .models import Author, Book, Category, Customer, Integration, Invoice, InvoiceItem, Location, PrintRun, Profile, Reorder, Return, RoyaltyPayment, RoyaltyRate, Sale, StockAdjustment, Supplier
+from .models import AccountMembership, Author, Book, Category, Customer, Integration, Invoice, InvoiceItem, Location, PrintRun, Profile, Reorder, Return, RoyaltyPayment, RoyaltyRate, Sale, StockAdjustment, Supplier
 
 
 class BookForm(forms.ModelForm):
@@ -428,6 +428,62 @@ class RedeemAccessCodeForm(forms.Form):
         label=_("Access code"),
         widget=forms.TextInput(attrs={"class": "form-control", "autofocus": True}),
     )
+
+
+
+class InviteUserForm(forms.Form):
+
+    email = forms.EmailField(
+        label=_("Email"),
+        widget=forms.EmailInput(attrs={"class": "form-control"}),
+    )
+
+    role = forms.ChoiceField(
+        choices=AccountMembership.ROLE_CHOICES,
+        label=_("Role"),
+        widget=forms.Select(attrs={"class": "form-select"}),
+    )
+
+
+
+class AcceptInviteForm(forms.Form):
+
+    username = forms.CharField(
+        max_length=150,
+        label=_("Username"),
+        widget=forms.TextInput(attrs={"class": "form-control", "autofocus": True}),
+    )
+
+    password1 = forms.CharField(
+        label=_("Password"),
+        widget=forms.PasswordInput(attrs={"class": "form-control"}),
+    )
+
+    password2 = forms.CharField(
+        label=_("Confirm password"),
+        widget=forms.PasswordInput(attrs={"class": "form-control"}),
+    )
+
+    def clean_username(self):
+        username = self.cleaned_data["username"]
+
+        if get_user_model().objects.filter(username__iexact=username).exists():
+            raise forms.ValidationError(_("That username is already taken."))
+
+        return username
+
+    def clean(self):
+        cleaned_data = super().clean()
+        password1 = cleaned_data.get("password1")
+        password2 = cleaned_data.get("password2")
+
+        if password1 and password2 and password1 != password2:
+            raise forms.ValidationError(_("The two password fields didn't match."))
+
+        if password1:
+            validate_password(password1)
+
+        return cleaned_data
 
 
 

@@ -1,11 +1,12 @@
 from django.shortcuts import redirect
 from django.urls import reverse
 
-from .models import Subscription, get_or_create_account_for_user
+from .models import AccountMembership, Subscription, get_or_create_account_for_user
 
 
 class AccountContextMiddleware:
-    """Resolves request.account, the tenant for all account-scoped queries."""
+    """Resolves request.account/request.is_account_admin, the tenant context
+    for all account-scoped queries and the "Team" nav link's admin gating."""
 
     def __init__(self, get_response):
         self.get_response = get_response
@@ -13,8 +14,12 @@ class AccountContextMiddleware:
     def __call__(self, request):
         if request.user.is_authenticated:
             request.account = get_or_create_account_for_user(request.user)
+            request.is_account_admin = AccountMembership.objects.filter(
+                account=request.account, user=request.user, role=AccountMembership.ROLE_ADMIN,
+            ).exists()
         else:
             request.account = None
+            request.is_account_admin = False
 
         return self.get_response(request)
 

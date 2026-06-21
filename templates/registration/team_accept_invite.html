@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block content %}
+
+<div class="row justify-content-center">
+<div class="col-md-5">
+<div class="page-panel">
+<h1 class="mb-3">{% translate "Join the team" %}</h1>
+
+<p class="muted-text">
+{% blocktranslate with email=invitation.email role=invitation.role %}You've been invited to join as {{ role }}, using {{ email }}. Choose a username and password to continue.{% endblocktranslate %}
+</p>
+
+{% if form.non_field_errors %}
+<div class="alert alert-danger">
+{% for error in form.non_field_errors %}
+{{ error }}
+{% endfor %}
+</div>
+{% endif %}
+
+<form method="post">
+{% csrf_token %}
+
+<div class="mb-3">
+<label class="form-label" for="{{ form.username.id_for_label }}">
+{% translate "Username" %}
+</label>
+{{ form.username }}
+{% for error in form.username.errors %}
+<div class="text-danger small">{{ error }}</div>
+{% endfor %}
+</div>
+
+<div class="mb-3">
+<label class="form-label" for="{{ form.password1.id_for_label }}">
+{% translate "Password" %}
+</label>
+{{ form.password1 }}
+{% for error in form.password1.errors %}
+<div class="text-danger small">{{ error }}</div>
+{% endfor %}
+</div>
+
+<div class="mb-3">
+<label class="form-label" for="{{ form.password2.id_for_label }}">
+{% translate "Confirm password" %}
+</label>
+{{ form.password2 }}
+{% for error in form.password2.errors %}
+<div class="text-danger small">{{ error }}</div>
+{% endfor %}
+</div>
+
+<button class="btn btn-primary">
+{% translate "Join" %}
+</button>
+</form>
+</div>
+</div>
+</div>
+
+{% endblock %}

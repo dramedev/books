@@ -644,6 +644,13 @@ html[dir="rtl"] .chat-panel{
 {% endif %}
 {% endif %}
 
+{% if request.is_account_admin %}
+<div class="sidebar-section">{% translate "Account" %}</div>
+<a class="sidebar-link {% if url_name == 'team_members' %}active{% endif %}" href="{% url 'team_members' %}">
+<i class="bi bi-person-gear"></i> {% translate "Team" %}
+</a>
+{% endif %}
+
 <div class="sidebar-section">{% translate "Help" %}</div>
 
 <a class="sidebar-link {% if url_name == 'about' %}active{% endif %}" href="{% url 'about' %}">

@@ -19,6 +19,7 @@ from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib.auth.forms import PasswordChangeForm
 from django.contrib.auth.models import User
 from django.core.cache import cache
+from django.core.exceptions import PermissionDenied
 from django.core.mail import send_mail
 from django.core.paginator import Paginator
 from django.db import models
@@ -34,11 +35,13 @@ from django.views.decorators.http import require_POST
 
 from . import ai_chat, iyzico_client
 from .forms import (
+    AcceptInviteForm,
     AuthorForm,
     BookForm,
     CategoryForm,
     CustomerForm,
     IntegrationForm,
+    InviteUserForm,
     InvoiceForm,
     InvoiceItemForm,
     IyzicoCustomerForm,
@@ -60,13 +63,13 @@ from .forms import (
 )
 from .models import (
     CURRENCY_CHOICES,
-    AccessCode, Account, AccountMembership, Author, Book, Category, Customer, CustomerLoginToken,
+    AccessCode, Account, AccountInvitation, AccountMembership, Author, Book, Category, Customer, CustomerLoginToken,
     Integration, Invoice, InvoiceItem,
     Location, PrintRun, Profile,
     Reorder, Return, RoyaltyPayment, RoyaltyRate,
     Sale, StockAdjustment, StockLevel, Subscription, Supplier,
 )
-from .permissions import ensure_roles
+from .permissions import ensure_roles, sync_user_groups_for_role
 
 
 def _book_export_headers():
@@ -4002,6 +4005,189 @@ def redeem_access_code(request):
                 return redirect("billing_start")
 
     return render(request, "registration/redeem_access_code.html", {"form": form})
+
+
+# ---------------------------------------------------------------------------
+# Team management (invite Staff/Viewer users into the current Account)
+# ---------------------------------------------------------------------------
+
+INVITE_TTL_DAYS = 7
+
+
+def _require_account_admin(request):
+    membership = AccountMembership.objects.filter(
+        account=request.account, user=request.user,
+    ).first()
+    if membership is None or membership.role != AccountMembership.ROLE_ADMIN:
+        raise PermissionDenied
+
+
+def _send_invite_email(invitation, account_name, accept_url):
+    send_mail(
+        subject="You've been invited to RumiPress",
+        message=(
+            f"You've been invited to join {account_name or 'a RumiPress account'} "
+            f"as {invitation.role}.\n\n"
+            f"Click the link below to accept:\n{accept_url}\n\n"
+            f"This invite expires in {INVITE_TTL_DAYS} days.\n\n"
+            "If you weren't expecting this, you can ignore this email."
+        ),
+        from_email=settings.DEFAULT_FROM_EMAIL,
+        recipient_list=[invitation.email],
+        fail_silently=True,
+    )
+
+
+@login_required
+def team_members(request):
+    _require_account_admin(request)
+
+    if request.method == "POST":
+        form = InviteUserForm(request.POST)
+
+        if form.is_valid():
+            email = form.cleaned_data["email"]
+            role = form.cleaned_data["role"]
+
+            invitation = AccountInvitation.objects.create(
+                account=request.account,
+                email=email,
+                role=role,
+                token=secrets.token_urlsafe(32),
+                invited_by=request.user,
+                expires_at=timezone.now() + timedelta(days=INVITE_TTL_DAYS),
+            )
+            accept_url = request.build_absolute_uri(
+                reverse("team_accept_invite", args=[invitation.token])
+            )
+            _send_invite_email(invitation, request.account.name, accept_url)
+
+            messages.success(request, gettext("Invitation sent to %(email)s.") % {"email": email})
+            return redirect("team_members")
+    else:
+        form = InviteUserForm()
+
+    memberships = (
+        AccountMembership.objects.filter(account=request.account)
+        .select_related("user")
+        .order_by("user__username")
+    )
+    pending_invitations = AccountInvitation.objects.filter(
+        account=request.account, accepted_at__isnull=True,
+    ).order_by("-created_at")
+
+    return render(request, "books/team_members.html", {
+        "form": form,
+        "memberships": memberships,
+        "pending_invitations": pending_invitations,
+    })
+
+
+@login_required
+@require_POST
+def team_member_update_role(request, id):
+    _require_account_admin(request)
+
+    membership = get_object_or_404(AccountMembership, id=id, account=request.account)
+    role = request.POST.get("role")
+
+    if role not in dict(AccountMembership.ROLE_CHOICES):
+        messages.error(request, gettext("Invalid role."))
+        return redirect("team_members")
+
+    if (
+        membership.role == AccountMembership.ROLE_ADMIN
+        and role != AccountMembership.ROLE_ADMIN
+        and not AccountMembership.objects.filter(
+            account=request.account, role=AccountMembership.ROLE_ADMIN,
+        ).exclude(id=membership.id).exists()
+    ):
+        messages.error(request, gettext("An account must keep at least one Admin."))
+        return redirect("team_members")
+
+    membership.role = role
+    membership.save(update_fields=["role"])
+    sync_user_groups_for_role(membership.user, role)
+
+    messages.success(request, gettext("Role updated."))
+    return redirect("team_members")
+
+
+@login_required
+@require_POST
+def team_member_remove(request, id):
+    _require_account_admin(request)
+
+    membership = get_object_or_404(AccountMembership, id=id, account=request.account)
+
+    if (
+        membership.role == AccountMembership.ROLE_ADMIN
+        and not AccountMembership.objects.filter(
+            account=request.account, role=AccountMembership.ROLE_ADMIN,
+        ).exclude(id=membership.id).exists()
+    ):
+        messages.error(request, gettext("An account must keep at least one Admin."))
+        return redirect("team_members")
+
+    membership.delete()
+    messages.success(request, gettext("Member removed."))
+    return redirect("team_members")
+
+
+@login_required
+@require_POST
+def team_invite_cancel(request, id):
+    _require_account_admin(request)
+
+    invitation = get_object_or_404(
+        AccountInvitation, id=id, account=request.account, accepted_at__isnull=True,
+    )
+    invitation.delete()
+    messages.success(request, gettext("Invitation cancelled."))
+    return redirect("team_members")
+
+
+def team_accept_invite(request, token):
+    if request.user.is_authenticated:
+        return redirect("dashboard")
+
+    invitation = get_object_or_404(AccountInvitation, token=token)
+
+    if invitation.accepted_at is not None or invitation.expires_at < timezone.now():
+        return render(request, "registration/team_invite_invalid.html", status=410)
+
+    if User.objects.filter(email__iexact=invitation.email).exists():
+        return render(request, "registration/team_invite_invalid.html", {
+            "already_has_account": True,
+        }, status=409)
+
+    form = AcceptInviteForm()
+
+    if request.method == "POST":
+        form = AcceptInviteForm(request.POST)
+
+        if form.is_valid():
+            user = User.objects.create_user(
+                username=form.cleaned_data["username"],
+                email=invitation.email,
+                password=form.cleaned_data["password1"],
+            )
+            Profile.objects.get_or_create(user=user, defaults={"email_verified": True})
+            AccountMembership.objects.create(
+                account=invitation.account, user=user, role=invitation.role,
+            )
+            sync_user_groups_for_role(user, invitation.role)
+
+            invitation.accepted_at = timezone.now()
+            invitation.save(update_fields=["accepted_at"])
+
+            login(request, user, backend="django.contrib.auth.backends.ModelBackend")
+            messages.success(request, gettext("Welcome! Your account is ready."))
+            return redirect("dashboard")
+
+    return render(request, "registration/team_accept_invite.html", {
+        "form": form, "invitation": invitation,
+    })
 
 
 # ---------------------------------------------------------------------------

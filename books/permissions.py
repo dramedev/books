@@ -65,3 +65,16 @@ def ensure_roles():
         groups[role] = group
 
     return groups
+
+
+def sync_user_groups_for_role(user, role):
+    """Make the user's Django Group membership match their account role.
+
+    Under the v1 one-account-per-user constraint, a user's Group membership
+    *is* their permission set, so this is the only place role changes need
+    to take effect - every @permission_required / {% if perms.x %} check
+    elsewhere keeps working unmodified.
+    """
+    groups = ensure_roles()
+    target_group = groups.get(role)
+    user.groups.set([target_group] if target_group else [])

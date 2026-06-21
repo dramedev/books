@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block content %}
+
+<div class="row justify-content-center">
+<div class="col-md-5">
+<div class="page-panel">
+<h1 class="mb-3">{% translate "Invitation unavailable" %}</h1>
+
+{% if already_has_account %}
+<p class="muted-text">
+{% translate "An account with this email already exists. Joining a second team isn't supported yet — ask the account owner to invite a different email, or contact support." %}
+</p>
+{% else %}
+<p class="muted-text">
+{% translate "This invitation link is invalid, has already been used, or has expired. Ask the account owner to send a new one." %}
+</p>
+{% endif %}
+
+<a class="btn btn-primary" href="{% url 'login' %}">{% translate "Go to login" %}</a>
+</div>
+</div>
+</div>
+
+{% endblock %}

@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block content %}
+
+<div class="mb-3">
+<h1 class="mb-1">{% translate "Team" %}</h1>
+<p class="muted-text mb-0">{% translate "Invite people to manage this account alongside you." %}</p>
+</div>
+
+<div class="page-panel mb-4">
+<h2 class="mb-3">{% translate "Invite someone" %}</h2>
+
+{% if form.non_field_errors %}
+<div class="alert alert-danger">
+{% for error in form.non_field_errors %}
+{{ error }}
+{% endfor %}
+</div>
+{% endif %}
+
+<form method="post" class="row g-3 align-items-end">
+{% csrf_token %}
+<div class="col-md-5">
+<label class="form-label" for="{{ form.email.id_for_label }}">{% translate "Email" %}</label>
+{{ form.email }}
+{% for error in form.email.errors %}
+<div class="text-danger small">{{ error }}</div>
+{% endfor %}
+</div>
+<div class="col-md-3">
+<label class="form-label" for="{{ form.role.id_for_label }}">{% translate "Role" %}</label>
+{{ form.role }}
+{% for error in form.role.errors %}
+<div class="text-danger small">{{ error }}</div>
+{% endfor %}
+</div>
+<div class="col-md-3">
+<button class="btn btn-primary" type="submit">{% translate "Send invite" %}</button>
+</div>
+</form>
+</div>
+
+<div class="page-panel mb-4">
+<h2 class="mb-3">{% translate "Members" %}</h2>
+<div class="table-responsive">
+<table class="table table-striped align-middle mb-0">
+<thead>
+<tr>
+<th>{% translate "User" %}</th>
+<th>{% translate "Role" %}</th>
+<th>{% translate "Actions" %}</th>
+</tr>
+</thead>
+<tbody>
+{% for membership in memberships %}
+<tr>
+<td>{{ membership.user.username }} <span class="muted-text small">{{ membership.user.email }}</span></td>
+<td>
+<form method="post" action="{% url 'team_member_update_role' membership.id %}" class="d-flex gap-2">
+{% csrf_token %}
+<select name="role" class="form-select form-select-sm" onchange="this.form.submit()">
+{% for value, label in membership.ROLE_CHOICES %}
+<option value="{{ value }}" {% if value == membership.role %}selected{% endif %}>{{ label }}</option>
+{% endfor %}
+</select>
+</form>
+</td>
+<td>
+<form method="post" action="{% url 'team_member_remove' membership.id %}">
+{% csrf_token %}
+<button class="btn btn-outline-danger btn-sm" type="submit">{% translate "Remove" %}</button>
+</form>
+</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+</div>
+
+{% if pending_invitations %}
+<div class="page-panel">
+<h2 class="mb-3">{% translate "Pending invitations" %}</h2>
+<div class="table-responsive">
+<table class="table table-striped align-middle mb-0">
+<thead>
+<tr>
+<th>{% translate "Email" %}</th>
+<th>{% translate "Role" %}</th>
+<th>{% translate "Expires" %}</th>
+<th>{% translate "Actions" %}</th>
+</tr>
+</thead>
+<tbody>
+{% for invitation in pending_invitations %}
+<tr>
+<td>{{ invitation.email }}</td>
+<td>{{ invitation.get_role_display }}</td>
+<td>{{ invitation.expires_at }}</td>
+<td>
+<form method="post" action="{% url 'team_invite_cancel' invitation.id %}">
+{% csrf_token %}
+<button class="btn btn-outline-danger btn-sm" type="submit">{% translate "Cancel" %}</button>
+</form>
+</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+</div>
+{% endif %}
+
+{% endblock %}
