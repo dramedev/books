@@ -22,7 +22,7 @@ from . import ai_chat, iyzico_client
 from .models import (
     AccessCode, AVATAR_MAX_SIZE_BYTES, Account, AccountInvitation, AccountMembership, Author, Book, Category,
     Customer, CustomerLoginToken, get_or_create_account_for_user,
-    Integration, Invoice, InvoiceItem, Location, PrintRun, Profile, Reorder, RoyaltyPayment,
+    Integration, Invoice, InvoiceItem, Location, PrintRun, Profile, Reorder, RoyaltyPayment, RoyaltyRate,
     Sale, StockAdjustment, Subscription, Supplier, validate_avatar_size,
 )
 from .views import _adjust_stock, _invoice_aging_data, _pl_data, _safe_json
@@ -571,6 +571,9 @@ class AiChatToolTests(TestCase):
         self.assertNotIn("get_reorder_suggestions", tool_names)
         self.assertNotIn("get_slow_moving_books", tool_names)
         self.assertNotIn("draft_supplier_email", tool_names)
+        self.assertNotIn("get_overdue_invoices", tool_names)
+        self.assertNotIn("get_customer_balance", tool_names)
+        self.assertNotIn("get_royalty_summary", tool_names)
 
     def test_list_books_returns_everything(self):
         result = ai_chat.list_books({}, self.account)
@@ -752,6 +755,92 @@ class AiChatToolTests(TestCase):
             self.account,
         )
         self.assertIn("error", result)
+
+    def test_get_overdue_invoices_returns_only_overdue(self):
+        overdue = Invoice.objects.create(
+            owner=self.user, account=self.account, customer_name="Late Customer",
+            invoice_number="INV-1", invoice_date=date(2024, 1, 1),
+            due_date=date(2024, 1, 10), currency="USD", status=Invoice.STATUS_SENT,
+        )
+        InvoiceItem.objects.create(invoice=overdue, description="Book", quantity=1, unit_price=Decimal("50.00"))
+
+        not_due_yet = Invoice.objects.create(
+            owner=self.user, account=self.account, customer_name="Future Customer",
+            invoice_number="INV-2", invoice_date=date.today(),
+            due_date=date.today() + timedelta(days=30), currency="USD", status=Invoice.STATUS_SENT,
+        )
+        InvoiceItem.objects.create(invoice=not_due_yet, description="Book", quantity=1, unit_price=Decimal("20.00"))
+
+        paid = Invoice.objects.create(
+            owner=self.user, account=self.account, customer_name="Paid Customer",
+            invoice_number="INV-3", invoice_date=date(2024, 1, 1),
+            due_date=date(2024, 1, 10), currency="USD", status=Invoice.STATUS_PAID,
+        )
+        InvoiceItem.objects.create(invoice=paid, description="Book", quantity=1, unit_price=Decimal("30.00"))
+
+        result = ai_chat.get_overdue_invoices({}, self.account)
+        names = {item["customer_name"] for item in result["invoices"]}
+        self.assertEqual(names, {"Late Customer"})
+        self.assertEqual(result["invoices"][0]["grand_total"], "50.00")
+
+    def test_get_customer_balance_returns_billed_and_outstanding(self):
+        customer = Customer.objects.create(owner=self.user, account=self.account, name="Acme Books Co")
+
+        paid_invoice = Invoice.objects.create(
+            owner=self.user, account=self.account, customer=customer, customer_name=customer.name,
+            invoice_date=date.today(), currency="USD", status=Invoice.STATUS_PAID,
+        )
+        InvoiceItem.objects.create(invoice=paid_invoice, description="Book", quantity=1, unit_price=Decimal("40.00"))
+
+        overdue_invoice = Invoice.objects.create(
+            owner=self.user, account=self.account, customer=customer, customer_name=customer.name,
+            invoice_date=date(2024, 1, 1), due_date=date(2024, 1, 10),
+            currency="USD", status=Invoice.STATUS_SENT,
+        )
+        InvoiceItem.objects.create(invoice=overdue_invoice, description="Book", quantity=1, unit_price=Decimal("60.00"))
+
+        result = ai_chat.get_customer_balance({"customer_name": "Acme"}, self.account)
+        self.assertEqual(result["customer_name"], "Acme Books Co")
+        self.assertEqual(result["billed_by_currency"], {"USD": "100.00"})
+        self.assertEqual(result["outstanding_by_currency"], {"USD": "60.00"})
+        self.assertEqual(result["overdue_count"], 1)
+
+    def test_get_customer_balance_unknown_customer_returns_error(self):
+        result = ai_chat.get_customer_balance({"customer_name": "Nobody"}, self.account)
+        self.assertIn("error", result)
+
+    def test_get_customer_balance_missing_name_returns_error(self):
+        result = ai_chat.get_customer_balance({}, self.account)
+        self.assertIn("error", result)
+
+    def test_get_royalty_summary_computes_outstanding(self):
+        RoyaltyRate.objects.create(
+            owner=self.user, account=self.account, book=self.low_book, author=self.author,
+            rate=Decimal("10.00"), effective_from=date(2024, 1, 1),
+        )
+        RoyaltyPayment.objects.create(
+            owner=self.user, account=self.account, author=self.author,
+            amount=Decimal("1.00"), currency="USD", payment_date=date(2024, 2, 1),
+        )
+
+        result = ai_chat.get_royalty_summary({}, self.account)
+        self.assertEqual(len(result["authors"]), 1)
+        entry = result["authors"][0]
+        self.assertEqual(entry["author"], "Jane Doe")
+        self.assertEqual(entry["total_earned"], "3.00")
+        self.assertEqual(entry["total_paid"], "1.00")
+        self.assertEqual(entry["outstanding"], "2.00")
+
+    def test_get_royalty_summary_filters_by_author(self):
+        other_author = Author.objects.create(owner=self.user, account=self.account, name="Other Author")
+        RoyaltyRate.objects.create(
+            owner=self.user, account=self.account, book=self.ok_book, author=other_author,
+            rate=Decimal("5.00"), effective_from=date(2024, 1, 1),
+        )
+
+        result = ai_chat.get_royalty_summary({"author_name": "Other"}, self.account)
+        names = {entry["author"] for entry in result["authors"]}
+        self.assertEqual(names, {"Other Author"})
 
 
 class SetupRolesCommandTests(TestCase):

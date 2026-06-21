@@ -1,12 +1,13 @@
 import json
 from datetime import timedelta
+from decimal import Decimal, ROUND_HALF_UP
 
 from django.conf import settings
 from django.db.models import IntegerField, OuterRef, Q, Subquery, Sum, Value
 from django.db.models.functions import Coalesce
 from django.utils import timezone
 
-from .models import Book, Category, Sale, Supplier
+from .models import Book, Category, Customer, Invoice, RoyaltyPayment, RoyaltyRate, Sale, Supplier
 from .reorder_logic import (
     REORDER_COVER_DAYS, REORDER_VELOCITY_WINDOW_DAYS, suggested_reorder_quantity,
 )
@@ -37,6 +38,13 @@ controlled by permissions.
 - Reorders: tracks purchase orders to suppliers (pending/ordered/received), \
 with reorder suggestions based on stock and recent sales velocity.
 - Suppliers: name, contact, email and phone for each supplier used on reorders.
+- Customers: saved billing contacts, each with their own invoice history and \
+running balance.
+- Invoices: draft/sent/paid billing documents per customer, with a due date; \
+unpaid invoices past their due date are "overdue".
+- Royalties: a per-book, per-author royalty rate (% of revenue); royalty \
+payments record what's actually been paid out, so an author can be owed \
+money even with no unpaid invoices involved.
 
 For general questions about how the app works, answer directly from this \
 description. For questions about the user's actual books, stock or sales, \
@@ -50,7 +58,11 @@ supplier (draft_supplier_email - call get_reorder_suggestions first to pick \
 which books/quantities to include). You never create a reorder or send an \
 email yourself - always hand off to the user to take the actual action. When \
 a tool result includes a "reorder_url", mention the action as a markdown \
-link, e.g. [Create reorder](/reorders/add/3/), so the user can click through."""
+link, e.g. [Create reorder](/reorders/add/3/), so the user can click through.
+
+If a request is ambiguous - a customer/supplier/author name you weren't \
+given, or one that matches nothing - ask a short clarifying question instead \
+of guessing or calling a tool with empty/made-up input."""
 
 
 TOOL_SPECS = [
@@ -260,6 +272,66 @@ TOOL_SPECS = [
             "required": ["supplier_name", "items"],
         },
         "permission": "books.view_supplier",
+    },
+    {
+        "name": "get_overdue_invoices",
+        "description": (
+            "List unpaid invoices that are past their due date, with "
+            "customer name, invoice number, due date, amount and how many "
+            "days overdue, sorted most-overdue first. Use this for "
+            "questions like 'what invoices are overdue' or 'who owes me "
+            "money that's late'."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "limit": {
+                    "type": "integer",
+                    "description": "Maximum number of invoices to return (optional).",
+                },
+            },
+        },
+        "permission": "books.view_invoice",
+    },
+    {
+        "name": "get_customer_balance",
+        "description": (
+            "Get a customer's billing summary: total billed, outstanding "
+            "(unpaid) balance per currency, and how many of their invoices "
+            "are overdue. Use this for questions like 'how much does X owe "
+            "me' or 'what's the balance for customer X'."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "customer_name": {
+                    "type": "string",
+                    "description": "Name (or partial name) of the customer.",
+                },
+            },
+            "required": ["customer_name"],
+        },
+        "permission": "books.view_customer",
+    },
+    {
+        "name": "get_royalty_summary",
+        "description": (
+            "Get royalty totals per author: how much they've earned (based "
+            "on their royalty rate and book revenue), how much has actually "
+            "been paid out, and the outstanding amount still owed. Use this "
+            "for questions like 'what do I owe in royalties' or 'how much "
+            "does author X still owe/earn'."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "author_name": {
+                    "type": "string",
+                    "description": "Only include this author (optional - omit for all authors with a royalty rate).",
+                },
+            },
+        },
+        "permission": "books.view_royaltyrate",
     },
 ]
 
@@ -528,6 +600,108 @@ def draft_supplier_email(tool_input, account):
     }
 
 
+def get_overdue_invoices(tool_input, account):
+    invoices = Invoice.objects.filter(account=account).exclude(status=Invoice.STATUS_PAID)
+    today = timezone.now().date()
+
+    overdue = []
+    for invoice in invoices:
+        if not invoice.is_overdue:
+            continue
+        overdue.append({
+            "customer_name": invoice.customer_name,
+            "invoice_number": invoice.invoice_number,
+            "due_date": invoice.due_date.isoformat(),
+            "days_overdue": (today - invoice.due_date).days,
+            "grand_total": str(invoice.grand_total),
+            "currency": invoice.currency,
+        })
+
+    overdue.sort(key=lambda item: item["days_overdue"], reverse=True)
+
+    limit = tool_input.get("limit")
+    if limit:
+        overdue = overdue[:limit]
+
+    return {"invoices": overdue}
+
+
+def get_customer_balance(tool_input, account):
+    customer_name = (tool_input.get("customer_name") or "").strip()
+    if not customer_name:
+        return {"error": "customer_name is required."}
+
+    customer = Customer.objects.filter(account=account, name__icontains=customer_name).first()
+    if customer is None:
+        return {"error": f"No customer found matching '{customer_name}'."}
+
+    billed_by_currency = {}
+    outstanding_by_currency = {}
+    overdue_count = 0
+
+    for invoice in customer.invoices.filter(account=account):
+        billed_by_currency[invoice.currency] = (
+            billed_by_currency.get(invoice.currency, 0) + invoice.grand_total
+        )
+        if invoice.status != Invoice.STATUS_PAID:
+            outstanding_by_currency[invoice.currency] = (
+                outstanding_by_currency.get(invoice.currency, 0) + invoice.grand_total
+            )
+        if invoice.is_overdue:
+            overdue_count += 1
+
+    return {
+        "customer_name": customer.name,
+        "billed_by_currency": {k: str(v) for k, v in billed_by_currency.items()},
+        "outstanding_by_currency": {k: str(v) for k, v in outstanding_by_currency.items()},
+        "overdue_count": overdue_count,
+    }
+
+
+def get_royalty_summary(tool_input, account):
+    author_name = (tool_input.get("author_name") or "").strip()
+
+    rates = RoyaltyRate.objects.filter(account=account).select_related("book", "author")
+    if author_name:
+        rates = rates.filter(author__name__icontains=author_name)
+
+    sales = Sale.objects.filter(account=account)
+    revenue_by_book = {}
+    for sale in sales:
+        revenue_by_book[sale.book_id] = revenue_by_book.get(sale.book_id, 0) + sale.revenue
+
+    earned_by_author = {}
+    for rate in rates:
+        revenue = revenue_by_book.get(rate.book_id, 0)
+        earned_by_author[rate.author.name] = (
+            earned_by_author.get(rate.author.name, 0) + revenue * rate.rate / 100
+        )
+
+    payments = RoyaltyPayment.objects.filter(account=account)
+    if author_name:
+        payments = payments.filter(author__name__icontains=author_name)
+    paid_by_author = {}
+    for payment in payments:
+        paid_by_author[payment.author.name] = (
+            paid_by_author.get(payment.author.name, 0) + payment.amount
+        )
+
+    cents = Decimal("0.01")
+    authors = sorted(set(earned_by_author) | set(paid_by_author))
+    summary = []
+    for author in authors:
+        earned = Decimal(earned_by_author.get(author, 0)).quantize(cents, rounding=ROUND_HALF_UP)
+        paid = Decimal(paid_by_author.get(author, 0)).quantize(cents, rounding=ROUND_HALF_UP)
+        summary.append({
+            "author": author,
+            "total_earned": str(earned),
+            "total_paid": str(paid),
+            "outstanding": str(earned - paid),
+        })
+
+    return {"authors": summary}
+
+
 TOOL_FUNCTIONS = {
     "get_dashboard_overview": get_dashboard_overview,
     "list_books": list_books,
@@ -539,6 +713,9 @@ TOOL_FUNCTIONS = {
     "get_reorder_suggestions": get_reorder_suggestions,
     "get_slow_moving_books": get_slow_moving_books,
     "draft_supplier_email": draft_supplier_email,
+    "get_overdue_invoices": get_overdue_invoices,
+    "get_customer_balance": get_customer_balance,
+    "get_royalty_summary": get_royalty_summary,
 }
 
 
