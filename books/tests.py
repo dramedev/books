@@ -2,6 +2,7 @@ import base64
 import hashlib
 import hmac
 import json
+import re
 import requests
 import stripe
 from datetime import date, timedelta
@@ -18,6 +19,8 @@ from django.core.management import call_command
 from django.test import TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
+from django.utils.encoding import force_bytes
+from django.utils.http import urlsafe_base64_encode
 
 from . import ai_chat, iyzico_client
 from .isbn_lookup import IsbnLookupError, lookup_isbn
@@ -3393,3 +3396,62 @@ class BookCoverUrlFormTests(TestCase):
         )
         book.refresh_from_db()
         self.assertEqual(book.cover_url, "https://covers.example/updated.jpg")
+
+
+class PasswordResetFlowTests(TestCase):
+    """End-to-end: the feature was wired (django.contrib.auth.urls) and
+    templates existed, but nothing exercised the real request/email/token/
+    set-new-password round trip."""
+
+    def setUp(self):
+        User = get_user_model()
+        self.user = User.objects.create_user(
+            username="reset_user", password="OldPass123!", email="reset_user@example.com",
+        )
+
+    def test_full_reset_round_trip(self):
+        response = self.client.post(reverse("password_reset"), {"email": "reset_user@example.com"})
+        self.assertRedirects(response, reverse("password_reset_done"))
+        self.assertEqual(len(mail.outbox), 1)
+
+        match = re.search(r"/accounts/reset/(?P<uidb64>[^/]+)/(?P<token>[^/\s]+)/", mail.outbox[0].body)
+        self.assertIsNotNone(match)
+        confirm_url = match.group(0)
+
+        # First GET validates the token and redirects to a session-backed
+        # "set-password" URL (Django swaps the token out of the URL so it
+        # can't be reused/bookmarked).
+        response = self.client.get(confirm_url, follow=True)
+        self.assertEqual(response.status_code, 200)
+        set_password_url = response.redirect_chain[-1][0]
+        self.assertIn("set-password", set_password_url)
+
+        response = self.client.post(set_password_url, {
+            "new_password1": "BrandNewPass456!",
+            "new_password2": "BrandNewPass456!",
+        })
+        self.assertRedirects(response, reverse("password_reset_complete"))
+
+        old_password_login = self.client.post(reverse("login"), {
+            "username": "reset_user", "password": "OldPass123!",
+        })
+        self.assertFalse(old_password_login.wsgi_request.user.is_authenticated)
+
+        new_password_login = self.client.post(reverse("login"), {
+            "username": "reset_user", "password": "BrandNewPass456!",
+        })
+        self.assertEqual(new_password_login.status_code, 302)
+        self.assertTrue(self.client.session.get("_auth_user_id"))
+
+    def test_unknown_email_does_not_reveal_account_existence(self):
+        response = self.client.post(reverse("password_reset"), {"email": "nobody@example.com"})
+        self.assertRedirects(response, reverse("password_reset_done"))
+        self.assertEqual(len(mail.outbox), 0)
+
+    def test_invalid_token_is_rejected(self):
+        uid = urlsafe_base64_encode(force_bytes(self.user.pk))
+        response = self.client.get(
+            reverse("password_reset_confirm", kwargs={"uidb64": uid, "token": "bad-token"}),
+            follow=True,
+        )
+        self.assertContains(response, "invalid", status_code=200)
