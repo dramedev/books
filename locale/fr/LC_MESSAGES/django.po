@@ -1367,7 +1367,7 @@ msgid "Subtotal"
 msgstr "Sous-total"
 
 msgid "Tax"
-msgstr "TVA"
+msgstr "Taxe"
 
 msgid "Grand Total"
 msgstr "Total général"
@@ -1914,4 +1914,73 @@ msgstr "12 mois"
 
 msgid "Units"
 msgstr "Unités"
+
+msgid "Checkout"
+msgstr "Caisse"
+
+msgid "Scan or search for books, add them to the cart, then complete the sale."
+msgstr "Scannez ou recherchez des livres, ajoutez-les au panier, puis finalisez la vente."
+
+msgid "Search by title or ISBN"
+msgstr "Rechercher par titre ou ISBN"
+
+msgid "Type a title or ISBN…"
+msgstr "Saisissez un titre ou un ISBN…"
+
+msgid "Cart"
+msgstr "Panier"
+
+msgid "Price"
+msgstr "Prix"
+
+msgid "Cart is empty."
+msgstr "Le panier est vide."
+
+msgid "Complete sale"
+msgstr "Finaliser la vente"
+
+msgid "Customer (optional)"
+msgstr "Client (facultatif)"
+
+msgid "Walk-in customer"
+msgstr "Client de passage"
+
+msgid "Location"
+msgstr "Emplacement"
+
+msgid "Payment method"
+msgstr "Mode de paiement"
+
+msgid "in stock"
+msgstr "en stock"
+
+msgid "out of stock"
+msgstr "épuisé"
+
+msgid "Checkout failed."
+msgstr "Échec de la caisse."
+
+msgid "Checkout failed. Check your connection and try again."
+msgstr "Échec de la caisse. Vérifiez votre connexion et réessayez."
+
+msgid "Receipt"
+msgstr "Reçu"
+
+msgid "Print"
+msgstr "Imprimer"
+
+msgid "New sale"
+msgstr "Nouvelle vente"
+
+msgid "List price"
+msgstr "Prix public"
+
+msgid "Default retail price, used to pre-fill checkout and sale forms."
+msgstr "Prix de vente par défaut, utilisé pour pré-remplir la caisse et les formulaires de vente."
+
+msgid "Cash"
+msgstr "Espèces"
+
+msgid "Card"
+msgstr "Carte"
 

@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+
+{% block content %}
+
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+<div>
+<h1 class="mb-1">{% translate "Receipt" %} {{ transaction.receipt_number }}</h1>
+<p class="muted-text mb-0">{{ transaction.created_at }}</p>
+</div>
+
+<div class="d-flex gap-2">
+<button type="button" class="btn btn-outline-light" onclick="window.print()">
+<i class="bi bi-printer"></i> {% translate "Print" %}
+</button>
+<a class="btn btn-success" href="{% url 'checkout' %}">
+<i class="bi bi-plus-lg"></i> {% translate "New sale" %}
+</a>
+</div>
+</div>
+
+<div class="page-panel" style="max-width:480px;">
+{% if transaction.customer %}
+<p class="mb-1"><strong>{% translate "Customer" %}:</strong> {{ transaction.customer.name }}</p>
+{% endif %}
+{% if transaction.location %}
+<p class="mb-1"><strong>{% translate "Location" %}:</strong> {{ transaction.location.name }}</p>
+{% endif %}
+<p class="mb-3"><strong>{% translate "Payment method" %}:</strong> {{ transaction.get_payment_method_display }}</p>
+
+<table class="table table-striped align-middle small">
+<thead>
+<tr>
+<th>{% translate "Title" %}</th>
+<th>{% translate "Qty" %}</th>
+<th>{% translate "Price" %}</th>
+<th>{% translate "Subtotal" %}</th>
+</tr>
+</thead>
+<tbody>
+{% for item in transaction.line_items.all %}
+<tr>
+<td>{{ item.book.title }}</td>
+<td>{{ item.quantity }}</td>
+<td>{{ item.unit_price }}</td>
+<td>{{ item.revenue }}</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+
+<div class="d-flex justify-content-between mb-1">
+<span class="muted-text">{% translate "Subtotal" %}</span>
+<span>{{ transaction.subtotal }}</span>
+</div>
+<div class="d-flex justify-content-between mb-1">
+<span class="muted-text">{% translate "Tax" %}</span>
+<span>{{ transaction.tax_total }}</span>
+</div>
+<div class="d-flex justify-content-between fw-bold">
+<span>{% translate "Total" %}</span>
+<span>{{ transaction.total }}</span>
+</div>
+</div>
+
+{% endblock %}

@@ -77,7 +77,7 @@ from .models import (
     Integration, Invoice, InvoiceItem,
     Location, PrintRun, ProcessedShopifyOrder, Profile,
     Reorder, Return, RoyaltyPayment, RoyaltyRate,
-    Sale, StockAdjustment, StockLevel, Subscription, Supplier,
+    Sale, SaleTransaction, StockAdjustment, StockLevel, Subscription, Supplier,
 )
 from .permissions import ensure_roles, sync_user_groups_for_role
 
@@ -1821,6 +1821,149 @@ def sale_delete(request, id):
             "cancel_url": reverse("sale_list"),
         },
     )
+
+
+def _next_receipt_number(account):
+    from datetime import date as _date
+    year = _date.today().year
+    prefix = f"RCT-{year}-"
+    last = (
+        SaleTransaction.objects.filter(account=account, receipt_number__startswith=prefix)
+        .order_by("-receipt_number")
+        .values_list("receipt_number", flat=True)
+        .first()
+    )
+    seq = (int(last.split("-")[-1]) + 1) if last else 1
+    return f"{prefix}{seq:04d}"
+
+
+@login_required
+@permission_required("books.add_sale", raise_exception=True)
+def checkout(request):
+    customers = Customer.objects.filter(account=request.account).order_by("name")
+    locations = Location.objects.filter(account=request.account).order_by("name")
+    return render(request, "books/checkout.html", {
+        "customers": customers,
+        "locations": locations,
+        "payment_choices": SaleTransaction.PAYMENT_CHOICES,
+        "currency_choices": CURRENCY_CHOICES,
+    })
+
+
+@login_required
+@permission_required("books.add_sale", raise_exception=True)
+def checkout_book_lookup(request):
+    query = request.GET.get("q", "").strip()
+    if not query:
+        return JsonResponse({"results": []})
+
+    books = Book.objects.filter(account=request.account).filter(
+        models.Q(isbn__icontains=query) | models.Q(title__icontains=query)
+    )[:10]
+
+    return JsonResponse({
+        "results": [
+            {
+                "id": book.id,
+                "title": book.title,
+                "isbn": book.isbn or "",
+                "stock_on_hand": book.stock_on_hand,
+                "list_price": str(book.list_price) if book.list_price is not None else "",
+            }
+            for book in books
+        ]
+    })
+
+
+@login_required
+@permission_required("books.add_sale", raise_exception=True)
+@require_POST
+def checkout_complete(request):
+    try:
+        payload = json.loads(request.body)
+    except ValueError:
+        return JsonResponse({"error": gettext("Invalid request.")}, status=400)
+
+    lines = payload.get("lines") or []
+    if not lines:
+        return JsonResponse({"error": gettext("Cart is empty.")}, status=400)
+
+    customer_id = payload.get("customer_id")
+    location_id = payload.get("location_id")
+    payment_method = payload.get("payment_method") or SaleTransaction.PAYMENT_CASH
+    if payment_method not in dict(SaleTransaction.PAYMENT_CHOICES):
+        return JsonResponse({"error": gettext("Invalid payment method.")}, status=400)
+
+    currency = payload.get("currency") or "USD"
+    if currency not in dict(CURRENCY_CHOICES):
+        return JsonResponse({"error": gettext("Invalid currency.")}, status=400)
+
+    customer = None
+    if customer_id:
+        customer = Customer.objects.filter(id=customer_id, account=request.account).first()
+
+    location = None
+    if location_id:
+        location = Location.objects.filter(id=location_id, account=request.account).first()
+
+    parsed_lines = []
+    for line in lines:
+        book = Book.objects.filter(id=line.get("book_id"), account=request.account).first()
+        if book is None:
+            return JsonResponse({"error": gettext("One of the books in the cart could not be found.")}, status=400)
+
+        try:
+            quantity = int(line.get("quantity"))
+            unit_price = Decimal(str(line.get("unit_price")))
+        except (TypeError, ValueError, ArithmeticError):
+            return JsonResponse({"error": gettext("Invalid quantity or price.")}, status=400)
+
+        if quantity < 1 or unit_price < 0:
+            return JsonResponse({"error": gettext("Invalid quantity or price.")}, status=400)
+
+        if book.stock_on_hand < quantity:
+            return JsonResponse({
+                "error": gettext("Not enough stock for '%(title)s' (available: %(n)s).") % {
+                    "title": book.title, "n": book.stock_on_hand,
+                },
+            }, status=400)
+
+        parsed_lines.append((book, quantity, unit_price))
+
+    with transaction.atomic():
+        sale_transaction = SaleTransaction.objects.create(
+            owner=request.user,
+            account=request.account,
+            customer=customer,
+            location=location,
+            payment_method=payment_method,
+            receipt_number=_next_receipt_number(request.account),
+        )
+
+        today = timezone.now().date()
+        for book, quantity, unit_price in parsed_lines:
+            Sale.objects.create(
+                owner=request.user,
+                account=request.account,
+                book=book,
+                quantity=quantity,
+                unit_price=unit_price,
+                currency=currency,
+                sale_date=today,
+                transaction=sale_transaction,
+            )
+            _adjust_stock(book.id, -quantity, request.user, request.account, location=location)
+
+    return JsonResponse({
+        "receipt_url": reverse("checkout_receipt", args=[sale_transaction.id]),
+    })
+
+
+@login_required
+@permission_required("books.view_saletransaction", raise_exception=True)
+def checkout_receipt(request, id):
+    sale_transaction = get_object_or_404(SaleTransaction, id=id, account=request.account)
+    return render(request, "books/checkout_receipt.html", {"transaction": sale_transaction})
 
 
 @login_required

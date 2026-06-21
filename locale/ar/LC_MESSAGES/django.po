@@ -1355,7 +1355,7 @@ msgid "Tax %"
 msgstr "ضريبة %"
 
 msgid "Subtotal"
-msgstr "المجموع الجزئي"
+msgstr "الإجمالي الفرعي"
 
 msgid "Tax"
 msgstr "الضريبة"
@@ -1914,4 +1914,73 @@ msgstr "12 شهرًا"
 
 msgid "Units"
 msgstr "وحدات"
+
+msgid "Checkout"
+msgstr "الدفع"
+
+msgid "Scan or search for books, add them to the cart, then complete the sale."
+msgstr "امسح أو ابحث عن الكتب، أضفها إلى السلة، ثم أكمل عملية البيع."
+
+msgid "Search by title or ISBN"
+msgstr "البحث بالعنوان أو رقم ISBN"
+
+msgid "Type a title or ISBN…"
+msgstr "اكتب عنوانًا أو رقم ISBN…"
+
+msgid "Cart"
+msgstr "السلة"
+
+msgid "Price"
+msgstr "السعر"
+
+msgid "Cart is empty."
+msgstr "السلة فارغة."
+
+msgid "Complete sale"
+msgstr "إكمال البيع"
+
+msgid "Customer (optional)"
+msgstr "العميل (اختياري)"
+
+msgid "Walk-in customer"
+msgstr "عميل عابر"
+
+msgid "Location"
+msgstr "الموقع"
+
+msgid "Payment method"
+msgstr "طريقة الدفع"
+
+msgid "in stock"
+msgstr "متوفر"
+
+msgid "out of stock"
+msgstr "غير متوفر"
+
+msgid "Checkout failed."
+msgstr "فشلت عملية الدفع."
+
+msgid "Checkout failed. Check your connection and try again."
+msgstr "فشلت عملية الدفع. تحقق من اتصالك وحاول مرة أخرى."
+
+msgid "Receipt"
+msgstr "الإيصال"
+
+msgid "Print"
+msgstr "طباعة"
+
+msgid "New sale"
+msgstr "بيع جديد"
+
+msgid "List price"
+msgstr "السعر المعلن"
+
+msgid "Default retail price, used to pre-fill checkout and sale forms."
+msgstr "سعر التجزئة الافتراضي، يُستخدم لتعبئة نماذج الدفع والبيع مسبقًا."
+
+msgid "Cash"
+msgstr "نقدًا"
+
+msgid "Card"
+msgstr "بطاقة"
 

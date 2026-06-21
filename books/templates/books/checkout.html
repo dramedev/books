@@ -1,0 +1,379 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+
+{% block content %}
+
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+<div>
+<h1 class="mb-1">{% translate "Checkout" %}</h1>
+<p class="muted-text mb-0">
+{% translate "Scan or search for books, add them to the cart, then complete the sale." %}
+</p>
+</div>
+</div>
+
+<div id="checkoutError" class="alert alert-danger" style="display:none;"></div>
+
+<div class="row g-4">
+<div class="col-lg-7">
+
+<div class="page-panel mb-4">
+<label class="form-label">{% translate "Search by title or ISBN" %}</label>
+<div class="input-group mb-2">
+<input type="search" id="bookSearch" class="form-control" placeholder="{% translate 'Type a title or ISBN…' %}" autocomplete="off">
+<button type="button" class="btn btn-outline-light" id="scanBtn" title="{% translate 'Scan barcode' %}">
+<i class="bi bi-upc-scan"></i> {% translate "Scan" %}
+</button>
+</div>
+<div id="scanBox" style="display:none; margin-bottom:0.5rem;">
+<video id="scanVideo" playsinline style="width:100%; border-radius:8px; max-height:260px; background:#000;"></video>
+<p class="small muted-text mt-1 mb-1" id="scanStatus"></p>
+<button type="button" class="btn btn-sm btn-outline-light" id="scanStop">{% translate "Stop scanning" %}</button>
+</div>
+<div id="searchResults" class="list-group"></div>
+</div>
+
+<div class="page-panel">
+<h2 class="h5 mb-3">{% translate "Cart" %}</h2>
+<div class="table-responsive">
+<table class="table table-striped align-middle small" id="cartTable">
+<thead>
+<tr>
+<th>{% translate "Title" %}</th>
+<th style="width:90px;">{% translate "Qty" %}</th>
+<th style="width:110px;">{% translate "Price" %}</th>
+<th style="width:110px;">{% translate "Subtotal" %}</th>
+<th style="width:40px;"></th>
+</tr>
+</thead>
+<tbody id="cartBody">
+<tr id="cartEmptyRow"><td colspan="5" class="muted-text">{% translate "Cart is empty." %}</td></tr>
+</tbody>
+</table>
+</div>
+</div>
+
+</div>
+
+<div class="col-lg-5">
+<div class="page-panel">
+<h2 class="h5 mb-3">{% translate "Complete sale" %}</h2>
+
+<div class="mb-3">
+<label class="form-label">{% translate "Customer (optional)" %}</label>
+<select id="customerSelect" class="form-select">
+<option value="">{% translate "Walk-in customer" %}</option>
+{% for customer in customers %}
+<option value="{{ customer.id }}">{{ customer.name }}</option>
+{% endfor %}
+</select>
+</div>
+
+<div class="mb-3">
+<label class="form-label">{% translate "Location" %}</label>
+<select id="locationSelect" class="form-select">
+<option value="">{% translate "Default location" %}</option>
+{% for location in locations %}
+<option value="{{ location.id }}">{{ location.name }}</option>
+{% endfor %}
+</select>
+</div>
+
+<div class="mb-3">
+<label class="form-label">{% translate "Payment method" %}</label>
+<select id="paymentSelect" class="form-select">
+{% for value, label in payment_choices %}
+<option value="{{ value }}">{{ label }}</option>
+{% endfor %}
+</select>
+</div>
+
+<div class="mb-3">
+<label class="form-label">{% translate "Currency" %}</label>
+<select id="currencySelect" class="form-select">
+{% for value, label in currency_choices %}
+<option value="{{ value }}" {% if value == "USD" %}selected{% endif %}>{{ value }}</option>
+{% endfor %}
+</select>
+</div>
+
+<hr>
+
+<div class="d-flex justify-content-between mb-1">
+<span class="muted-text">{% translate "Subtotal" %}</span>
+<span id="cartSubtotal">0.00</span>
+</div>
+<div class="d-flex justify-content-between mb-3">
+<span class="muted-text">{% translate "Tax" %}</span>
+<span id="cartTax">0.00</span>
+</div>
+<div class="d-flex justify-content-between mb-3 fw-bold">
+<span>{% translate "Total" %}</span>
+<span id="cartTotal">0.00</span>
+</div>
+
+<button type="button" class="btn btn-success w-100" id="completeSaleBtn">
+{% translate "Complete sale" %}
+</button>
+</div>
+</div>
+</div>
+
+
+<script src="https://unpkg.com/@zxing/library@latest/umd/index.min.js"></script>
+<script>
+(function(){
+    const cart = [];
+
+    const bookSearch = document.getElementById('bookSearch');
+    const searchResults = document.getElementById('searchResults');
+    const cartBody = document.getElementById('cartBody');
+    const cartEmptyRow = document.getElementById('cartEmptyRow');
+    const cartSubtotal = document.getElementById('cartSubtotal');
+    const cartTax = document.getElementById('cartTax');
+    const cartTotal = document.getElementById('cartTotal');
+    const errorBox = document.getElementById('checkoutError');
+    const completeSaleBtn = document.getElementById('completeSaleBtn');
+
+    function showError(message){
+        errorBox.textContent = message;
+        errorBox.style.display = 'block';
+    }
+
+    function clearError(){
+        errorBox.style.display = 'none';
+    }
+
+    function money(value){
+        return (Math.round(value * 100) / 100).toFixed(2);
+    }
+
+    function renderCart(){
+        cartBody.innerHTML = '';
+
+        if(cart.length === 0){
+            cartBody.appendChild(cartEmptyRow);
+            cartSubtotal.textContent = '0.00';
+            cartTax.textContent = '0.00';
+            cartTotal.textContent = '0.00';
+            return;
+        }
+
+        let subtotal = 0;
+
+        cart.forEach(function(line, index){
+            const lineSubtotal = line.quantity * line.unit_price;
+            subtotal += lineSubtotal;
+
+            const row = document.createElement('tr');
+
+            const titleCell = document.createElement('td');
+            titleCell.textContent = line.title;
+            row.appendChild(titleCell);
+
+            const qtyCell = document.createElement('td');
+            const qtyInput = document.createElement('input');
+            qtyInput.type = 'number';
+            qtyInput.min = '1';
+            qtyInput.max = String(line.stock_on_hand);
+            qtyInput.value = line.quantity;
+            qtyInput.className = 'form-control form-control-sm';
+            qtyInput.addEventListener('change', function(){
+                const value = parseInt(qtyInput.value, 10);
+                line.quantity = (value >= 1 && value <= line.stock_on_hand) ? value : line.quantity;
+                renderCart();
+            });
+            qtyCell.appendChild(qtyInput);
+            row.appendChild(qtyCell);
+
+            const priceCell = document.createElement('td');
+            const priceInput = document.createElement('input');
+            priceInput.type = 'number';
+            priceInput.step = '0.01';
+            priceInput.min = '0';
+            priceInput.value = line.unit_price;
+            priceInput.className = 'form-control form-control-sm';
+            priceInput.addEventListener('change', function(){
+                const value = parseFloat(priceInput.value);
+                line.unit_price = (value >= 0) ? value : line.unit_price;
+                renderCart();
+            });
+            priceCell.appendChild(priceInput);
+            row.appendChild(priceCell);
+
+            const subtotalCell = document.createElement('td');
+            subtotalCell.textContent = money(lineSubtotal);
+            row.appendChild(subtotalCell);
+
+            const removeCell = document.createElement('td');
+            const removeBtn = document.createElement('button');
+            removeBtn.type = 'button';
+            removeBtn.className = 'btn btn-sm btn-outline-danger';
+            removeBtn.innerHTML = '<i class="bi bi-x"></i>';
+            removeBtn.addEventListener('click', function(){
+                cart.splice(index, 1);
+                renderCart();
+            });
+            removeCell.appendChild(removeBtn);
+            row.appendChild(removeCell);
+
+            cartBody.appendChild(row);
+        });
+
+        cartSubtotal.textContent = money(subtotal);
+        cartTax.textContent = '0.00';
+        cartTotal.textContent = money(subtotal);
+    }
+
+    function addToCart(book){
+        const existing = cart.find(function(line){ return line.book_id === book.id; });
+        if(existing){
+            if(existing.quantity < book.stock_on_hand){
+                existing.quantity += 1;
+            }
+        } else {
+            cart.push({
+                book_id: book.id,
+                title: book.title,
+                quantity: 1,
+                unit_price: parseFloat(book.list_price || 0),
+                stock_on_hand: book.stock_on_hand,
+            });
+        }
+        renderCart();
+        searchResults.innerHTML = '';
+        bookSearch.value = '';
+    }
+
+    let searchTimer = null;
+    bookSearch.addEventListener('input', function(){
+        clearTimeout(searchTimer);
+        const query = bookSearch.value.trim();
+        if(!query){
+            searchResults.innerHTML = '';
+            return;
+        }
+        searchTimer = setTimeout(function(){
+            fetch('{% url "checkout_book_lookup" %}?q=' + encodeURIComponent(query))
+                .then(function(response){ return response.json(); })
+                .then(function(data){
+                    searchResults.innerHTML = '';
+                    (data.results || []).forEach(function(book){
+                        const item = document.createElement('button');
+                        item.type = 'button';
+                        item.className = 'list-group-item list-group-item-action';
+                        const stockLabel = book.stock_on_hand > 0
+                            ? "{% translate 'in stock' %}: " + book.stock_on_hand
+                            : "{% translate 'out of stock' %}";
+                        item.textContent = book.title + (book.isbn ? ' (' + book.isbn + ')' : '') + ' — ' + stockLabel;
+                        if(book.stock_on_hand <= 0){
+                            item.disabled = true;
+                        }
+                        item.addEventListener('click', function(){ addToCart(book); });
+                        searchResults.appendChild(item);
+                    });
+                });
+        }, 250);
+    });
+
+    const scanBtn = document.getElementById('scanBtn');
+    const scanBox = document.getElementById('scanBox');
+    const scanVideo = document.getElementById('scanVideo');
+    const scanStatus = document.getElementById('scanStatus');
+    const scanStop = document.getElementById('scanStop');
+    let reader = null;
+
+    function stopScan(){
+        if(reader){ reader.reset(); reader = null; }
+        scanBox.style.display = 'none';
+        scanStatus.textContent = '';
+    }
+
+    scanStop.addEventListener('click', stopScan);
+
+    scanBtn.addEventListener('click', async function(){
+        if(typeof ZXing === 'undefined'){
+            scanBox.style.display = 'block';
+            scanStatus.textContent = "{% translate 'Could not load the barcode scanner. Check your connection and try again.' %}";
+            return;
+        }
+
+        scanBox.style.display = 'block';
+        scanStatus.textContent = "{% translate 'Scanning — point camera at barcode...' %}";
+
+        reader = new ZXing.BrowserMultiFormatReader();
+
+        try{
+            await reader.decodeFromConstraints(
+                { video: { facingMode: 'environment' } },
+                scanVideo,
+                function(result, err){
+                    if(result){
+                        scanStatus.textContent = "{% translate 'Detected:' %} " + result.getText();
+                        stopScan();
+                        bookSearch.value = result.getText();
+                        bookSearch.dispatchEvent(new Event('input'));
+                    }
+                }
+            );
+        } catch(e){
+            scanStatus.textContent = "{% translate 'Camera access denied or unavailable.' %}";
+        }
+    });
+
+    completeSaleBtn.addEventListener('click', function(){
+        clearError();
+
+        if(cart.length === 0){
+            showError("{% translate 'Cart is empty.' %}");
+            return;
+        }
+
+        const payload = {
+            customer_id: document.getElementById('customerSelect').value || null,
+            location_id: document.getElementById('locationSelect').value || null,
+            payment_method: document.getElementById('paymentSelect').value,
+            currency: document.getElementById('currencySelect').value,
+            lines: cart.map(function(line){
+                return {
+                    book_id: line.book_id,
+                    quantity: line.quantity,
+                    unit_price: line.unit_price,
+                };
+            }),
+        };
+
+        completeSaleBtn.disabled = true;
+
+        fetch('{% url "checkout_complete" %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}',
+            },
+            body: JSON.stringify(payload),
+        })
+        .then(function(response){
+            return response.json().then(function(data){ return {ok: response.ok, data: data}; });
+        })
+        .then(function(result){
+            if(!result.ok){
+                showError(result.data.error || "{% translate 'Checkout failed.' %}");
+                completeSaleBtn.disabled = false;
+                return;
+            }
+            window.location.href = result.data.receipt_url;
+        })
+        .catch(function(){
+            showError("{% translate 'Checkout failed. Check your connection and try again.' %}");
+            completeSaleBtn.disabled = false;
+        });
+    });
+
+    renderCart();
+})();
+</script>
+
+{% endblock %}

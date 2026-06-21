@@ -774,6 +774,40 @@ FR = {
     '6M': '6 mois',
     '12M': '12 mois',
     'Units': 'Unités',
+
+    # Checkout
+    "Checkout": "Caisse",
+    "Scan or search for books, add them to the cart, then complete the sale.":
+        "Scannez ou recherchez des livres, ajoutez-les au panier, puis finalisez la vente.",
+    "Search by title or ISBN": "Rechercher par titre ou ISBN",
+    "Type a title or ISBN…": "Saisissez un titre ou un ISBN…",
+    "Cart": "Panier",
+    "Qty": "Qté",
+    "Price": "Prix",
+    "Subtotal": "Sous-total",
+    "Cart is empty.": "Le panier est vide.",
+    "Complete sale": "Finaliser la vente",
+    "Customer (optional)": "Client (facultatif)",
+    "Walk-in customer": "Client de passage",
+    "Location": "Emplacement",
+    "Default location": "Emplacement par défaut",
+    "Payment method": "Mode de paiement",
+    "Currency": "Devise",
+    "Tax": "Taxe",
+    "Total": "Total",
+    "in stock": "en stock",
+    "out of stock": "épuisé",
+    "Checkout failed.": "Échec de la caisse.",
+    "Checkout failed. Check your connection and try again.": "Échec de la caisse. Vérifiez votre connexion et réessayez.",
+    "Receipt": "Reçu",
+    "Print": "Imprimer",
+    "New sale": "Nouvelle vente",
+    "List price": "Prix public",
+    "Default retail price, used to pre-fill checkout and sale forms.":
+        "Prix de vente par défaut, utilisé pour pré-remplir la caisse et les formulaires de vente.",
+    "Cash": "Espèces",
+    "Card": "Carte",
+    "Other": "Autre",
 }
 
 # ---------------------------------------------------------------------------
@@ -1528,6 +1562,40 @@ AR = {
     '6M': '6 أشهر',
     '12M': '12 شهرًا',
     'Units': 'وحدات',
+
+    # Checkout
+    "Checkout": "الدفع",
+    "Scan or search for books, add them to the cart, then complete the sale.":
+        "امسح أو ابحث عن الكتب، أضفها إلى السلة، ثم أكمل عملية البيع.",
+    "Search by title or ISBN": "البحث بالعنوان أو رقم ISBN",
+    "Type a title or ISBN…": "اكتب عنوانًا أو رقم ISBN…",
+    "Cart": "السلة",
+    "Qty": "الكمية",
+    "Price": "السعر",
+    "Subtotal": "الإجمالي الفرعي",
+    "Cart is empty.": "السلة فارغة.",
+    "Complete sale": "إكمال البيع",
+    "Customer (optional)": "العميل (اختياري)",
+    "Walk-in customer": "عميل عابر",
+    "Location": "الموقع",
+    "Default location": "الموقع الافتراضي",
+    "Payment method": "طريقة الدفع",
+    "Currency": "العملة",
+    "Tax": "الضريبة",
+    "Total": "الإجمالي",
+    "in stock": "متوفر",
+    "out of stock": "غير متوفر",
+    "Checkout failed.": "فشلت عملية الدفع.",
+    "Checkout failed. Check your connection and try again.": "فشلت عملية الدفع. تحقق من اتصالك وحاول مرة أخرى.",
+    "Receipt": "الإيصال",
+    "Print": "طباعة",
+    "New sale": "بيع جديد",
+    "List price": "السعر المعلن",
+    "Default retail price, used to pre-fill checkout and sale forms.":
+        "سعر التجزئة الافتراضي، يُستخدم لتعبئة نماذج الدفع والبيع مسبقًا.",
+    "Cash": "نقدًا",
+    "Card": "بطاقة",
+    "Other": "أخرى",
 }
 
 

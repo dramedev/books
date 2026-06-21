@@ -28,6 +28,7 @@ class BookForm(forms.ModelForm):
             "published_date",
             "category",
             "distribution_expense",
+            "list_price",
             "reorder_threshold",
         ]
 
@@ -76,6 +77,13 @@ class BookForm(forms.ModelForm):
                 attrs={
                     "class": "form-control",
                     "step": "0.01"
+                }
+            ),
+            "list_price": forms.NumberInput(
+                attrs={
+                    "class": "form-control",
+                    "step": "0.01",
+                    "min": "0",
                 }
             ),
             "reorder_threshold": forms.NumberInput(

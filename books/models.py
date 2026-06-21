@@ -225,6 +225,16 @@ class Book(AccountScopedModel):
     )
 
 
+    list_price = models.DecimalField(
+        max_digits=8,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("List price"),
+        help_text=_("Default retail price, used to pre-fill checkout and sale forms."),
+    )
+
+
     stock_on_hand = models.PositiveIntegerField(
         default=0,
         verbose_name=_("Stock on hand")
@@ -308,6 +318,16 @@ class Sale(AccountScopedModel):
     )
 
 
+    transaction = models.ForeignKey(
+        "SaleTransaction",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="line_items",
+        verbose_name=_("Transaction"),
+    )
+
+
     class Meta:
         ordering = ["-sale_date"]
 
@@ -330,6 +350,82 @@ class Sale(AccountScopedModel):
     def total(self):
         return self.revenue + self.tax_amount
 
+
+
+class SaleTransaction(AccountScopedModel):
+    """Groups multiple Sale line items created together at one checkout
+    (one customer, one register transaction) - Sale itself stays a single
+    book/quantity/price row, same as it's always been, so every existing
+    report/export that queries Sale directly keeps working unchanged."""
+
+    PAYMENT_CASH = "cash"
+    PAYMENT_CARD = "card"
+    PAYMENT_OTHER = "other"
+
+    PAYMENT_CHOICES = [
+        (PAYMENT_CASH, _("Cash")),
+        (PAYMENT_CARD, _("Card")),
+        (PAYMENT_OTHER, _("Other")),
+    ]
+
+    owner = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="owned_sale_transactions",
+    )
+
+    account = models.ForeignKey(
+        Account,
+        on_delete=models.CASCADE,
+        related_name="+",
+    )
+
+    customer = models.ForeignKey(
+        "Customer",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="sale_transactions",
+        verbose_name=_("Customer"),
+    )
+
+    location = models.ForeignKey(
+        "Location",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="sale_transactions",
+        verbose_name=_("Location"),
+    )
+
+    receipt_number = models.CharField(max_length=20, blank=True, verbose_name=_("Receipt number"))
+
+    payment_method = models.CharField(
+        max_length=10,
+        choices=PAYMENT_CHOICES,
+        default=PAYMENT_CASH,
+        verbose_name=_("Payment method"),
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return self.receipt_number or f"Transaction #{self.pk}"
+
+    @property
+    def subtotal(self):
+        return sum((item.revenue for item in self.line_items.all()), Decimal(0))
+
+    @property
+    def tax_total(self):
+        return sum((item.tax_amount for item in self.line_items.all()), Decimal(0))
+
+    @property
+    def total(self):
+        return self.subtotal + self.tax_total
 
 
 class Supplier(AccountScopedModel):

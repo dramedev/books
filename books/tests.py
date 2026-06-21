@@ -32,7 +32,7 @@ from .models import (
     AccessCode, AVATAR_MAX_SIZE_BYTES, Account, AccountInvitation, AccountMembership, Author, Book, Category,
     Customer, CustomerLoginToken, get_or_create_account_for_user,
     Integration, Invoice, InvoiceItem, Location, PrintRun, ProcessedShopifyOrder, Profile, Reorder, RoyaltyPayment, RoyaltyRate,
-    Sale, StockAdjustment, Subscription, Supplier, validate_avatar_size,
+    Sale, SaleTransaction, StockAdjustment, Subscription, Supplier, validate_avatar_size,
 )
 from .permissions import sync_user_groups_for_role
 from .views import _adjust_stock, _invoice_aging_data, _parse_publish_date, _pl_data, _safe_json
@@ -340,6 +340,138 @@ class SaleStockAdjustmentTests(TestCase):
         self.book.refresh_from_db()
         self.assertEqual(self.book.stock_on_hand, 10)
         self.assertFalse(Sale.objects.filter(id=sale.id).exists())
+
+
+class CheckoutTests(TestCase):
+
+    def setUp(self):
+        User = get_user_model()
+        self.user = User.objects.create_user(username="cashier", password="pass1234")
+        self.account = get_or_create_account_for_user(self.user)
+        grant(self.user, "view_book", "add_sale", "view_saletransaction")
+        self.client.force_login(self.user)
+
+        category = Category.objects.create(owner=self.user, account=self.account, name="Fiction")
+        self.book_a = Book.objects.create(
+            owner=self.user, account=self.account, title="Book A", isbn="111",
+            publisher="Acme", published_date=date(2024, 1, 1), category=category,
+            distribution_expense=Decimal("5.00"), list_price=Decimal("20.00"), stock_on_hand=10,
+        )
+        self.book_b = Book.objects.create(
+            owner=self.user, account=self.account, title="Book B", isbn="222",
+            publisher="Acme", published_date=date(2024, 1, 1), category=category,
+            distribution_expense=Decimal("5.00"), list_price=Decimal("15.00"), stock_on_hand=3,
+        )
+
+    def _checkout(self, lines, **overrides):
+        payload = {
+            "lines": lines,
+            "payment_method": "cash",
+            "currency": "USD",
+        }
+        payload.update(overrides)
+        return self.client.post(
+            reverse("checkout_complete"), data=json.dumps(payload), content_type="application/json",
+        )
+
+    def test_checkout_page_requires_permission(self):
+        other = get_user_model().objects.create_user(username="nopower", password="pass1234")
+        self.client.force_login(other)
+        response = self.client.get(reverse("checkout"))
+        self.assertEqual(response.status_code, 403)
+
+    def test_lookup_scoped_to_account(self):
+        other_user = get_user_model().objects.create_user(username="other_acct", password="pass1234")
+        other_account = get_or_create_account_for_user(other_user)
+        Book.objects.create(
+            owner=other_user, account=other_account, title="Other Account Book", isbn="999",
+            publisher="X", published_date=date(2024, 1, 1),
+            category=Category.objects.create(owner=other_user, account=other_account, name="Other"),
+            distribution_expense=Decimal("1.00"), stock_on_hand=5,
+        )
+
+        response = self.client.get(reverse("checkout_book_lookup"), {"q": "Other Account"})
+        self.assertEqual(response.json()["results"], [])
+
+    def test_single_line_checkout_deducts_stock_and_creates_records(self):
+        response = self._checkout([{"book_id": self.book_a.id, "quantity": 2, "unit_price": "20.00"}])
+        self.assertEqual(response.status_code, 200)
+
+        self.book_a.refresh_from_db()
+        self.assertEqual(self.book_a.stock_on_hand, 8)
+
+        sale_tx = SaleTransaction.objects.get(account=self.account)
+        self.assertEqual(sale_tx.line_items.count(), 1)
+        self.assertTrue(sale_tx.receipt_number.startswith("RCT-"))
+
+    def test_multi_line_checkout_deducts_stock_for_each_book(self):
+        response = self._checkout([
+            {"book_id": self.book_a.id, "quantity": 1, "unit_price": "20.00"},
+            {"book_id": self.book_b.id, "quantity": 2, "unit_price": "15.00"},
+        ])
+        self.assertEqual(response.status_code, 200)
+
+        self.book_a.refresh_from_db()
+        self.book_b.refresh_from_db()
+        self.assertEqual(self.book_a.stock_on_hand, 9)
+        self.assertEqual(self.book_b.stock_on_hand, 1)
+
+        sale_tx = SaleTransaction.objects.get(account=self.account)
+        self.assertEqual(sale_tx.line_items.count(), 2)
+
+    def test_checkout_rejected_when_any_line_exceeds_stock(self):
+        response = self._checkout([
+            {"book_id": self.book_a.id, "quantity": 1, "unit_price": "20.00"},
+            {"book_id": self.book_b.id, "quantity": 99, "unit_price": "15.00"},
+        ])
+        self.assertEqual(response.status_code, 400)
+
+        self.book_a.refresh_from_db()
+        self.book_b.refresh_from_db()
+        self.assertEqual(self.book_a.stock_on_hand, 10)
+        self.assertEqual(self.book_b.stock_on_hand, 3)
+        self.assertFalse(SaleTransaction.objects.filter(account=self.account).exists())
+
+    def test_checkout_rejects_book_from_another_account(self):
+        other_user = get_user_model().objects.create_user(username="other_acct2", password="pass1234")
+        other_account = get_or_create_account_for_user(other_user)
+        foreign_book = Book.objects.create(
+            owner=other_user, account=other_account, title="Foreign Book", isbn="333",
+            publisher="X", published_date=date(2024, 1, 1),
+            category=Category.objects.create(owner=other_user, account=other_account, name="Other"),
+            distribution_expense=Decimal("1.00"), stock_on_hand=5,
+        )
+
+        response = self._checkout([{"book_id": foreign_book.id, "quantity": 1, "unit_price": "5.00"}])
+        self.assertEqual(response.status_code, 400)
+        foreign_book.refresh_from_db()
+        self.assertEqual(foreign_book.stock_on_hand, 5)
+
+    def test_empty_cart_rejected(self):
+        response = self._checkout([])
+        self.assertEqual(response.status_code, 400)
+
+    def test_invalid_payment_method_rejected(self):
+        response = self._checkout(
+            [{"book_id": self.book_a.id, "quantity": 1, "unit_price": "20.00"}],
+            payment_method="bitcoin",
+        )
+        self.assertEqual(response.status_code, 400)
+
+    def test_receipt_page_renders_and_is_account_scoped(self):
+        self._checkout([{"book_id": self.book_a.id, "quantity": 1, "unit_price": "20.00"}])
+        sale_tx = SaleTransaction.objects.get(account=self.account)
+
+        response = self.client.get(reverse("checkout_receipt", args=[sale_tx.id]))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, sale_tx.receipt_number)
+
+        other_user = get_user_model().objects.create_user(username="other_acct3", password="pass1234")
+        get_or_create_account_for_user(other_user)
+        grant(other_user, "view_saletransaction")
+        self.client.force_login(other_user)
+        response = self.client.get(reverse("checkout_receipt", args=[sale_tx.id]))
+        self.assertEqual(response.status_code, 404)
 
 
 class AuthorViewPermissionTests(TestCase):
