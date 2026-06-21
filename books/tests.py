@@ -34,6 +34,7 @@ from .models import (
     Integration, Invoice, InvoiceItem, Location, PrintRun, ProcessedShopifyOrder, Profile, Reorder, RoyaltyPayment, RoyaltyRate,
     Sale, StockAdjustment, Subscription, Supplier, validate_avatar_size,
 )
+from .permissions import sync_user_groups_for_role
 from .views import _adjust_stock, _invoice_aging_data, _parse_publish_date, _pl_data, _safe_json
 
 
@@ -3530,6 +3531,20 @@ class TeamInviteTests(TestCase):
         response = self.client.post(reverse("team_member_remove", args=[staff_membership.id]))
         self.assertRedirects(response, reverse("team_members"))
         self.assertFalse(AccountMembership.objects.filter(id=staff_membership.id).exists())
+
+    def test_removing_member_revokes_their_group_permissions(self):
+        staff_user = get_user_model().objects.create_user(username="ex_staff", password="pass1234")
+        staff_membership = AccountMembership.objects.create(
+            account=self.account, user=staff_user, role=AccountMembership.ROLE_STAFF,
+        )
+        sync_user_groups_for_role(staff_user, AccountMembership.ROLE_STAFF)
+        self.assertEqual(list(staff_user.groups.values_list("name", flat=True)), ["Staff"])
+
+        self.client.force_login(self.admin)
+        self.client.post(reverse("team_member_remove", args=[staff_membership.id]))
+
+        staff_user.refresh_from_db()
+        self.assertEqual(list(staff_user.groups.values_list("name", flat=True)), [])
 
     def test_admin_can_cancel_pending_invitation(self):
         invitation = AccountInvitation.objects.create(

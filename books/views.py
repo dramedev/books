@@ -4245,7 +4245,13 @@ def team_member_remove(request, id):
         messages.error(request, gettext("An account must keep at least one Admin."))
         return redirect("team_members")
 
+    # Clear the removed user's Django Group membership too - otherwise they
+    # keep acting on their old role's permissions indefinitely, since
+    # nothing else revokes them once the AccountMembership row is gone.
+    removed_user = membership.user
     membership.delete()
+    sync_user_groups_for_role(removed_user, None)
+
     messages.success(request, gettext("Member removed."))
     return redirect("team_members")
 
