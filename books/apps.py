@@ -1,4 +1,9 @@
+import logging
+
 from django.apps import AppConfig
+
+
+logger = logging.getLogger(__name__)
 
 
 class BooksConfig(AppConfig):
@@ -15,6 +20,6 @@ class BooksConfig(AppConfig):
                 try:
                     ensure_roles()
                 except Exception:
-                    pass
+                    logger.exception("Failed to sync role permissions after migrate")
 
         post_migrate.connect(sync_roles, sender=self)

@@ -3,6 +3,7 @@ import csv
 import hashlib
 import hmac as _hmac
 import json
+import logging
 import math
 import random
 import re
@@ -28,6 +29,7 @@ from django.db.models import Case, Count, DecimalField, ExpressionWrapper, F, In
 from django.db.models.functions import Coalesce, TruncMonth
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.utils.http import url_has_allowed_host_and_scheme
 from django.urls import reverse
 from django.utils import timezone, translation
 from django.utils.translation import gettext, gettext_lazy
@@ -78,6 +80,9 @@ from .models import (
     Sale, StockAdjustment, StockLevel, Subscription, Supplier,
 )
 from .permissions import ensure_roles, sync_user_groups_for_role
+
+
+logger = logging.getLogger(__name__)
 
 
 def _book_export_headers():
@@ -1515,6 +1520,7 @@ def chat_api(request):
     try:
         reply, updated_history = ai_chat.get_chat_reply(request.user, request.account, message, history)
     except Exception:
+        logger.exception("AI chat request failed")
         reply = gettext("Sorry, something went wrong talking to the AI assistant. Please try again.")
         updated_history = history
 
@@ -3064,6 +3070,12 @@ def _advance_invoice_status(invoice, action, request):
     return True
 
 
+def _is_safe_next_url(request, next_url):
+    return bool(next_url) and url_has_allowed_host_and_scheme(
+        url=next_url, allowed_hosts={request.get_host()}, require_https=request.is_secure(),
+    )
+
+
 @login_required
 @permission_required("books.change_invoice", raise_exception=True)
 @require_POST
@@ -3079,7 +3091,7 @@ def invoice_update_status(request, id, action):
 
     messages.success(request, gettext("Invoice marked as %(status)s.") % {"status": invoice.get_status_display()})
     next_url = request.POST.get("next", "")
-    if next_url.startswith("/"):
+    if _is_safe_next_url(request, next_url):
         return redirect(next_url)
     return redirect("invoice_detail", id=invoice.id)
 
@@ -3109,7 +3121,7 @@ def invoice_bulk_update(request):
                 gettext("%(count)d invoice(s) skipped (incompatible status).") % {"count": skipped},
             )
 
-    if next_url.startswith("/"):
+    if _is_safe_next_url(request, next_url):
         return redirect(next_url)
     return redirect("invoice_list")
 

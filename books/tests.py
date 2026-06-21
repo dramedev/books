@@ -510,6 +510,21 @@ class ChatApiTests(TestCase):
         account = AccountMembership.objects.get(user=self.user).account
         mocked.assert_called_once_with(self.user, account, "Hi there", [])
 
+    def test_chat_reply_failure_is_logged_not_silent(self):
+        self.client.force_login(self.user)
+
+        with patch.object(ai_chat, "get_chat_reply", side_effect=RuntimeError("boom")):
+            with self.assertLogs("books.views", level="ERROR") as logs:
+                response = self.client.post(
+                    reverse("chat_api"),
+                    data=json.dumps({"message": "Hi there", "history": []}),
+                    content_type="application/json",
+                )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("something went wrong", response.json()["reply"].lower())
+        self.assertTrue(any("AI chat request failed" in record for record in logs.output))
+
 
 class AiChatToolTests(TestCase):
 
@@ -1633,6 +1648,50 @@ class InvoiceBulkUpdateTests(TestCase):
         })
         self.draft.refresh_from_db()
         self.assertEqual(self.draft.status, Invoice.STATUS_DRAFT)
+        self.assertRedirects(response, reverse("invoice_list"))
+
+
+class InvoiceNextRedirectSafetyTests(TestCase):
+    """A malicious `next` value must never redirect off-site (open redirect)."""
+
+    def setUp(self):
+        User = get_user_model()
+        self.user = User.objects.create_user(username="owner", password="pass1234")
+        self.client.force_login(self.user)
+        grant(self.user, "view_invoice", "change_invoice")
+
+        self.invoice = Invoice.objects.create(
+            owner=self.user, customer_name="A", invoice_date=date.today(),
+            currency="USD", status=Invoice.STATUS_DRAFT,
+        )
+
+    def test_update_status_follows_safe_relative_next(self):
+        response = self.client.post(
+            reverse("invoice_update_status", args=[self.invoice.id, "sent"]),
+            {"next": reverse("invoice_list")},
+        )
+        self.assertRedirects(response, reverse("invoice_list"))
+
+    def test_update_status_rejects_protocol_relative_next(self):
+        response = self.client.post(
+            reverse("invoice_update_status", args=[self.invoice.id, "sent"]),
+            {"next": "//evil.example.com/phish"},
+        )
+        self.assertRedirects(response, reverse("invoice_detail", args=[self.invoice.id]))
+
+    def test_update_status_rejects_absolute_external_next(self):
+        response = self.client.post(
+            reverse("invoice_update_status", args=[self.invoice.id, "sent"]),
+            {"next": "https://evil.example.com/phish"},
+        )
+        self.assertRedirects(response, reverse("invoice_detail", args=[self.invoice.id]))
+
+    def test_bulk_update_rejects_protocol_relative_next(self):
+        response = self.client.post(reverse("invoice_bulk_update"), {
+            "action": "sent",
+            "ids": [self.invoice.id],
+            "next": "//evil.example.com/phish",
+        })
         self.assertRedirects(response, reverse("invoice_list"))
 
 
