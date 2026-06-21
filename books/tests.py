@@ -18,6 +18,7 @@ from django.core.cache import cache
 from django.core.exceptions import ValidationError
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.core.management import call_command
+from django.db import connection
 from django.test import TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
@@ -25,6 +26,7 @@ from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode
 
 from . import ai_chat, iyzico_client
+from .fields import decrypt_value, encrypt_value
 from .isbn_lookup import IsbnLookupError, lookup_isbn
 from .models import (
     AccessCode, AVATAR_MAX_SIZE_BYTES, Account, AccountInvitation, AccountMembership, Author, Book, Category,
@@ -1390,6 +1392,66 @@ class IntegrationSecretExposureTests(TestCase):
         response = self.client.get(reverse("integration_create"))
         self.assertEqual(response.status_code, 200)
         self.assertNotIn("sk_live", response.content.decode())
+
+
+class IntegrationEncryptionAtRestTests(TestCase):
+    """api_key/api_secret/webhook_secret must be encrypted in the actual DB
+    column, not just round-trip correctly through the ORM (a no-op
+    "encryption" would still pass ORM-only tests)."""
+
+    def setUp(self):
+        User = get_user_model()
+        self.user = User.objects.create_user(username="enc_owner", password="pass1234")
+        self.account = get_or_create_account_for_user(self.user)
+
+    def test_raw_db_column_is_not_plaintext(self):
+        Integration.objects.create(
+            owner=self.user, account=self.account, platform=Integration.PLATFORM_STRIPE, name="Stripe",
+            api_key="sk_live_RAWCHECK123", api_secret="whsec_RAWCHECK456", webhook_secret="whsec_RAWCHECK789",
+        )
+
+        with connection.cursor() as cursor:
+            cursor.execute(
+                "SELECT api_key, api_secret, webhook_secret FROM books_integration WHERE name = %s", ["Stripe"],
+            )
+            raw_api_key, raw_api_secret, raw_webhook_secret = cursor.fetchone()
+
+        self.assertNotEqual(raw_api_key, "sk_live_RAWCHECK123")
+        self.assertNotEqual(raw_api_secret, "whsec_RAWCHECK456")
+        self.assertNotEqual(raw_webhook_secret, "whsec_RAWCHECK789")
+        self.assertNotIn("RAWCHECK", raw_api_key)
+
+    def test_orm_read_transparently_decrypts(self):
+        Integration.objects.create(
+            owner=self.user, account=self.account, platform=Integration.PLATFORM_STRIPE, name="Stripe",
+            api_key="sk_live_ROUNDTRIP123",
+        )
+
+        fetched = Integration.objects.get(name="Stripe")
+        self.assertEqual(fetched.api_key, "sk_live_ROUNDTRIP123")
+
+    def test_blank_secret_stays_blank_not_a_ciphertext_token(self):
+        Integration.objects.create(
+            owner=self.user, account=self.account, platform=Integration.PLATFORM_STRIPE, name="No Secret",
+        )
+
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT api_key FROM books_integration WHERE name = %s", ["No Secret"])
+            raw_value = cursor.fetchone()[0]
+
+        self.assertEqual(raw_value, "")
+
+    def test_encrypt_value_and_decrypt_value_round_trip(self):
+        ciphertext = encrypt_value("plain-text-secret")
+        self.assertNotEqual(ciphertext, "plain-text-secret")
+        self.assertEqual(decrypt_value(ciphertext), "plain-text-secret")
+
+    def test_decrypt_value_returns_input_unchanged_if_not_valid_ciphertext(self):
+        self.assertEqual(decrypt_value("not-actually-encrypted"), "not-actually-encrypted")
+
+    def test_blank_value_is_not_encrypted(self):
+        self.assertEqual(encrypt_value(""), "")
+        self.assertEqual(decrypt_value(""), "")
 
 
 class MultiTenancyIsolationTests(TestCase):

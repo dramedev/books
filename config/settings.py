@@ -27,6 +27,15 @@ SECRET_KEY = os.environ.get(
     "django-insecure-k^rrsrc4tq2hl&ny!l*5@x!z((#a_rl=7hae#e&p=6a_=xh5xl",
 )
 
+# Encrypts Integration.api_key/api_secret/webhook_secret at rest (see
+# books/fields.py). Dev-only fallback below, like SECRET_KEY above - must be
+# overridden via .env in production. Generate a real key with:
+#   python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
+FIELD_ENCRYPTION_KEY = os.environ.get(
+    "FIELD_ENCRYPTION_KEY",
+    "AN6JArALF8TZfOxSJNOZk5wVQd95nTXwAYI7XWX_Df4=",
+)
+
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get("DEBUG", "True") == "True"
 

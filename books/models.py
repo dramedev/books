@@ -6,6 +6,8 @@ from django.db import models
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
+from .fields import EncryptedCharField
+
 
 AVATAR_MAX_SIZE_BYTES = 2 * 1024 * 1024
 
@@ -1038,11 +1040,11 @@ class Integration(AccountScopedModel):
 
     store_url = models.CharField(max_length=200, blank=True, verbose_name=_("Store URL"))
 
-    api_key = models.CharField(max_length=200, blank=True, verbose_name=_("API key"))
+    api_key = EncryptedCharField(max_length=500, blank=True, verbose_name=_("API key"))
 
-    api_secret = models.CharField(max_length=200, blank=True, verbose_name=_("API secret"))
+    api_secret = EncryptedCharField(max_length=500, blank=True, verbose_name=_("API secret"))
 
-    webhook_secret = models.CharField(max_length=200, blank=True, verbose_name=_("Webhook secret"))
+    webhook_secret = EncryptedCharField(max_length=500, blank=True, verbose_name=_("Webhook secret"))
 
     is_active = models.BooleanField(default=True, verbose_name=_("Active"))
 
