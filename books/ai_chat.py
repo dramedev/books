@@ -3,7 +3,7 @@ from datetime import timedelta
 from decimal import Decimal, ROUND_HALF_UP
 
 from django.conf import settings
-from django.db.models import IntegerField, OuterRef, Q, Subquery, Sum, Value
+from django.db.models import Count, IntegerField, OuterRef, Q, Subquery, Sum, Value
 from django.db.models.functions import Coalesce
 from django.utils import timezone
 
@@ -453,7 +453,7 @@ def get_dashboard_overview(_input, account):
 
 
 def list_books(tool_input, account):
-    books = Book.objects.filter(account=account)
+    books = Book.objects.filter(account=account).select_related("category").prefetch_related("authors")
 
     category = (tool_input.get("category") or "").strip()
     if category:
@@ -483,6 +483,8 @@ def search_books(tool_input, account):
 
     books = (
         Book.objects.filter(account=account)
+        .select_related("category")
+        .prefetch_related("authors")
         .filter(
             Q(title__icontains=query)
             | Q(subtitle__icontains=query)
@@ -495,8 +497,8 @@ def search_books(tool_input, account):
 
 
 def get_low_stock_books(_input, account):
-    books = [book for book in Book.objects.filter(account=account) if book.is_low_stock]
-    return {"books": [_book_summary(book) for book in books]}
+    books = Book.objects.filter(account=account).select_related("category").prefetch_related("authors")
+    return {"books": [_book_summary(book) for book in books if book.is_low_stock]}
 
 
 def _parse_date(value):
@@ -558,10 +560,10 @@ def get_top_selling_books(tool_input, account):
 
 
 def get_categories(_input, account):
-    categories = Category.objects.filter(account=account)
+    categories = Category.objects.filter(account=account).annotate(book_count=Count("book"))
     return {
         "categories": [
-            {"name": category.name, "book_count": category.book_set.count()}
+            {"name": category.name, "book_count": category.book_count}
             for category in categories
         ]
     }
