@@ -85,6 +85,16 @@ from .permissions import ensure_roles, sync_user_groups_for_role
 logger = logging.getLogger(__name__)
 
 
+def _csv_safe(value):
+    """Neutralize CSV/formula injection: a leading =, +, -, @, tab or CR lets
+    a poisoned cell run as a formula in Excel/LibreOffice when the export is
+    later opened. Prefixing with a single quote forces it to be read as text."""
+    text = str(value)
+    if text and text[0] in "=+-@\t\r":
+        return "'" + text
+    return text
+
+
 def _book_export_headers():
     return [
         gettext("ISBN"),
@@ -158,12 +168,12 @@ def _book_export_rows(books):
     for book in books:
         yield [
             book.isbn or "",
-            book.title,
-            book.subtitle,
-            ", ".join(author.name for author in book.authors.all()),
-            book.publisher,
+            _csv_safe(book.title),
+            _csv_safe(book.subtitle),
+            _csv_safe(", ".join(author.name for author in book.authors.all())),
+            _csv_safe(book.publisher),
             book.published_date.isoformat(),
-            book.category.name,
+            _csv_safe(book.category.name),
             book.distribution_expense,
         ]
 
@@ -228,15 +238,15 @@ def _sale_export_rows(sales):
     for sale in sales:
         yield [
             sale.sale_date.isoformat(),
-            sale.book.title,
-            sale.book.category.name,
+            _csv_safe(sale.book.title),
+            _csv_safe(sale.book.category.name),
             sale.quantity,
             sale.unit_price,
             sale.currency,
             sale.tax_rate,
             sale.tax_amount,
             sale.total,
-            sale.channel,
+            _csv_safe(sale.channel),
         ]
 
 
@@ -257,8 +267,8 @@ def _invoice_export_headers():
 def _invoice_export_rows(invoices):
     for invoice in invoices:
         yield [
-            invoice.invoice_number,
-            invoice.customer_name,
+            _csv_safe(invoice.invoice_number),
+            _csv_safe(invoice.customer_name),
             invoice.invoice_date.isoformat(),
             invoice.due_date.isoformat() if invoice.due_date else "",
             invoice.currency,
@@ -287,13 +297,13 @@ def _reorder_export_rows(reorders):
     for reorder in reorders:
         yield [
             reorder.created_at.date().isoformat(),
-            reorder.book.title,
-            reorder.supplier.name if reorder.supplier else "",
+            _csv_safe(reorder.book.title),
+            _csv_safe(reorder.supplier.name) if reorder.supplier else "",
             reorder.quantity,
             reorder.unit_cost,
             reorder.total_cost,
             reorder.get_status_display(),
-            reorder.note,
+            _csv_safe(reorder.note),
             reorder.received_at.date().isoformat() if reorder.received_at else "",
         ]
 
@@ -2213,6 +2223,10 @@ def import_books_csv(request):
             messages.error(request, gettext("Please upload a .csv file."))
             return redirect("import_books_csv")
 
+        if f.size > settings.CSV_IMPORT_MAX_SIZE_BYTES:
+            messages.error(request, gettext("File is too large (maximum 5 MB)."))
+            return redirect("import_books_csv")
+
         try:
             text = f.read().decode("utf-8-sig")
         except UnicodeDecodeError:
@@ -2274,6 +2288,18 @@ def import_books_csv(request):
             if book is None:
                 book = Book(owner=request.user, account=request.account)
                 is_new = True
+
+            if is_new and not published_date:
+                errors.append(
+                    gettext("Row %(n)s: a valid published date (YYYY-MM-DD) is required for new books.") % {"n": i}
+                )
+                skipped += 1
+                continue
+
+            if is_new and not category:
+                errors.append(gettext("Row %(n)s: category is required for new books.") % {"n": i})
+                skipped += 1
+                continue
 
             book.title = title
             book.subtitle = subtitle
@@ -3852,7 +3878,7 @@ self.addEventListener("fetch", event => {
 
 
 def _generate_verification_code():
-    return f"{random.randint(0, 999999):06d}"
+    return f"{secrets.randbelow(1000000):06d}"
 
 
 def _send_verification_email(user, code):
@@ -3951,6 +3977,7 @@ def verify_email(request):
         return redirect("redeem_access_code")
 
     form = VerifyEmailForm()
+    attempts_key = f"verify_email_attempts:{user.id}"
 
     if request.method == "POST":
         if request.POST.get("action") == "resend":
@@ -3961,28 +3988,40 @@ def verify_email(request):
             )
             profile.save()
             _send_verification_email(user, code)
+            cache.delete(attempts_key)
             messages.success(request, gettext("A new verification code has been sent to your email."))
         else:
             form = VerifyEmailForm(request.POST)
 
             if form.is_valid():
-                code = form.cleaned_data["code"]
-                expires_at = profile.verification_code_expires_at
+                if cache.get(attempts_key, 0) >= settings.VERIFICATION_CODE_MAX_ATTEMPTS:
+                    form.add_error(
+                        "code", gettext("Too many incorrect attempts. Please request a new code."),
+                    )
+                else:
+                    code = form.cleaned_data["code"]
+                    expires_at = profile.verification_code_expires_at
 
-                if (
-                    profile.verification_code
-                    and code == profile.verification_code
-                    and expires_at
-                    and timezone.now() <= expires_at
-                ):
-                    profile.email_verified = True
-                    profile.verification_code = ""
-                    profile.verification_code_expires_at = None
-                    profile.save()
-                    _notify_owners_of_pending_activation(user)
-                    return redirect("redeem_access_code")
+                    if (
+                        profile.verification_code
+                        and code == profile.verification_code
+                        and expires_at
+                        and timezone.now() <= expires_at
+                    ):
+                        profile.email_verified = True
+                        profile.verification_code = ""
+                        profile.verification_code_expires_at = None
+                        profile.save()
+                        cache.delete(attempts_key)
+                        _notify_owners_of_pending_activation(user)
+                        return redirect("redeem_access_code")
 
-                form.add_error("code", gettext("That code is invalid or has expired."))
+                    cache.set(
+                        attempts_key,
+                        cache.get(attempts_key, 0) + 1,
+                        timeout=settings.VERIFICATION_CODE_TTL_MINUTES * 60,
+                    )
+                    form.add_error("code", gettext("That code is invalid or has expired."))
 
     return render(
         request,
@@ -4005,11 +4044,14 @@ def redeem_access_code(request):
         return redirect("verify_email")
 
     form = RedeemAccessCodeForm()
+    attempts_key = f"redeem_access_code_attempts:{user.id}"
 
     if request.method == "POST":
         form = RedeemAccessCodeForm(request.POST)
 
-        if form.is_valid():
+        if form.is_valid() and cache.get(attempts_key, 0) >= settings.ACCESS_CODE_MAX_ATTEMPTS:
+            form.add_error("code", gettext("Too many incorrect attempts. Please try again later."))
+        elif form.is_valid():
             code_value = form.cleaned_data["code"].strip()
 
             try:
@@ -4018,6 +4060,7 @@ def redeem_access_code(request):
                 access_code = None
 
             if access_code is None or not access_code.is_valid:
+                cache.set(attempts_key, cache.get(attempts_key, 0) + 1, timeout=3600)
                 form.add_error("code", gettext("That access code is invalid, used, or expired."))
             else:
                 access_code.is_used = True
@@ -4040,6 +4083,7 @@ def redeem_access_code(request):
                 Category.objects.get_or_create(owner=user, account=account, name="General")
                 Subscription.objects.get_or_create(account=account, defaults={"user": user})
 
+                cache.delete(attempts_key)
                 del request.session["pending_user_id"]
 
                 login(request, user, backend="django.contrib.auth.backends.ModelBackend")

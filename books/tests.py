@@ -10,11 +10,13 @@ from decimal import Decimal
 from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Permission
 from django.core import mail
 from django.core.cache import cache
 from django.core.exceptions import ValidationError
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.core.management import call_command
 from django.test import TestCase, override_settings
 from django.urls import reverse
@@ -1034,6 +1036,7 @@ class SignupFlowTests(TestCase):
 class EmailVerificationTests(TestCase):
 
     def setUp(self):
+        cache.clear()
         User = get_user_model()
         self.user = User.objects.create_user(
             username="pending", password="pass1234", email="pending@example.com", is_active=False
@@ -1109,10 +1112,33 @@ class EmailVerificationTests(TestCase):
         self.assertIsNotNone(self.profile.verification_code_expires_at)
         del old_code
 
+    def test_too_many_wrong_attempts_blocks_further_guesses(self):
+        for _ in range(settings.VERIFICATION_CODE_MAX_ATTEMPTS):
+            self.client.post(reverse("verify_email"), {"code": "000000"})
+
+        response = self.client.post(reverse("verify_email"), {"code": "123456"})
+
+        self.assertFormError(
+            response.context["form"], "code", "Too many incorrect attempts. Please request a new code.",
+        )
+        self.profile.refresh_from_db()
+        self.assertFalse(self.profile.email_verified)
+
+    def test_resend_resets_attempt_counter(self):
+        for _ in range(settings.VERIFICATION_CODE_MAX_ATTEMPTS):
+            self.client.post(reverse("verify_email"), {"code": "000000"})
+
+        self.client.post(reverse("verify_email"), {"action": "resend"})
+        self.profile.refresh_from_db()
+
+        response = self.client.post(reverse("verify_email"), {"code": self.profile.verification_code})
+        self.assertRedirects(response, reverse("redeem_access_code"))
+
 
 class AccessCodeRedemptionTests(TestCase):
 
     def setUp(self):
+        cache.clear()
         User = get_user_model()
         self.user = User.objects.create_user(
             username="pending", password="pass1234", email="pending@example.com", is_active=False
@@ -1188,6 +1214,128 @@ class AccessCodeRedemptionTests(TestCase):
         self.assertFormError(
             response.context["form"], "code", "That access code is invalid, used, or expired."
         )
+
+    def test_too_many_wrong_attempts_blocks_further_guesses(self):
+        AccessCode.objects.create(code="REALCODE123")
+
+        for _ in range(settings.ACCESS_CODE_MAX_ATTEMPTS):
+            self.client.post(reverse("redeem_access_code"), {"code": "WRONGCODE12"})
+
+        response = self.client.post(reverse("redeem_access_code"), {"code": "REALCODE123"})
+
+        self.assertFormError(
+            response.context["form"], "code", "Too many incorrect attempts. Please try again later.",
+        )
+        self.user.refresh_from_db()
+        self.assertFalse(self.user.is_active)
+
+
+class CsvImportSecurityTests(TestCase):
+
+    def setUp(self):
+        User = get_user_model()
+        self.user = User.objects.create_user(username="importer", password="pass1234")
+        self.account = get_or_create_account_for_user(self.user)
+        self.client.force_login(self.user)
+        grant(self.user, "add_book", "view_book")
+
+    def _upload(self, content, name="books.csv"):
+        return self.client.post(
+            reverse("import_books_csv"),
+            {"csv_file": SimpleUploadedFile(name, content.encode("utf-8"), content_type="text/csv")},
+        )
+
+    def test_oversized_file_is_rejected(self):
+        header = "isbn,title,subtitle,authors,publisher,published_date,category,distribution_expense\n"
+        row = "111,Test Book,,Author,Acme,2024-01-01,Fiction,10.00\n"
+        big_csv = header + row * 110000
+        big_bytes = big_csv.encode("utf-8")
+        self.assertGreater(len(big_bytes), settings.CSV_IMPORT_MAX_SIZE_BYTES)
+
+        response = self.client.post(
+            reverse("import_books_csv"),
+            {"csv_file": SimpleUploadedFile("big.csv", big_bytes, content_type="text/csv")},
+            follow=True,
+        )
+        self.assertContains(response, "too large")
+        self.assertFalse(Book.objects.filter(account=self.account, title="Test Book").exists())
+
+    def test_invalid_date_row_is_skipped_not_fatal(self):
+        csv_content = (
+            "isbn,title,subtitle,authors,publisher,published_date,category,distribution_expense\n"
+            "111,Bad Date Book,,Author,Acme,not-a-date,Fiction,10.00\n"
+            "222,Good Book,,Author,Acme,2024-01-01,Fiction,10.00\n"
+        )
+        response = self._upload(csv_content)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(Book.objects.filter(account=self.account, title="Bad Date Book").exists())
+        self.assertTrue(Book.objects.filter(account=self.account, title="Good Book").exists())
+
+    def test_missing_category_row_is_skipped_not_fatal(self):
+        csv_content = (
+            "isbn,title,subtitle,authors,publisher,published_date,category,distribution_expense\n"
+            "111,No Category Book,,Author,Acme,2024-01-01,,10.00\n"
+        )
+        response = self._upload(csv_content)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(Book.objects.filter(account=self.account, title="No Category Book").exists())
+
+    def test_existing_book_update_does_not_require_date_or_category(self):
+        cat = Category.objects.create(owner=self.user, account=self.account, name="Fiction")
+        Book.objects.create(
+            owner=self.user, account=self.account, title="Old Title", isbn="111",
+            publisher="Acme", published_date=date(2024, 1, 1), category=cat,
+            distribution_expense=Decimal("5.00"), stock_on_hand=1, reorder_threshold=1,
+        )
+        csv_content = (
+            "isbn,title,subtitle,authors,publisher,published_date,category,distribution_expense\n"
+            "111,Updated Title,,Author,Acme,,,12.00\n"
+        )
+        self._upload(csv_content)
+
+        book = Book.objects.get(account=self.account, isbn="111")
+        self.assertEqual(book.title, "Updated Title")
+        self.assertEqual(book.category.name, "Fiction")
+
+
+class CsvExportInjectionTests(TestCase):
+
+    def setUp(self):
+        User = get_user_model()
+        self.user = User.objects.create_user(username="exporter", password="pass1234")
+        self.account = get_or_create_account_for_user(self.user)
+        self.client.force_login(self.user)
+        grant(self.user, "view_book")
+
+    def test_formula_prefixed_title_is_neutralized_on_csv_export(self):
+        cat = Category.objects.create(owner=self.user, account=self.account, name="Fiction")
+        Book.objects.create(
+            owner=self.user, account=self.account, title="=cmd|/c calc", isbn="666",
+            publisher="Acme", published_date=date(2024, 1, 1), category=cat,
+            distribution_expense=Decimal("5.00"), stock_on_hand=1, reorder_threshold=1,
+        )
+
+        response = self.client.get(reverse("export_books_csv"))
+        content = response.content.decode()
+
+        self.assertNotIn("\n=cmd", content)
+        self.assertIn("'=cmd|/c calc", content)
+
+    def test_safe_title_is_unaffected(self):
+        cat = Category.objects.create(owner=self.user, account=self.account, name="Fiction")
+        Book.objects.create(
+            owner=self.user, account=self.account, title="A Normal Title", isbn="777",
+            publisher="Acme", published_date=date(2024, 1, 1), category=cat,
+            distribution_expense=Decimal("5.00"), stock_on_hand=1, reorder_threshold=1,
+        )
+
+        response = self.client.get(reverse("export_books_csv"))
+        content = response.content.decode()
+
+        self.assertIn("A Normal Title", content)
+        self.assertNotIn("'A Normal Title", content)
 
 
 class MultiTenancyIsolationTests(TestCase):

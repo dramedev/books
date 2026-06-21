@@ -213,6 +213,12 @@ ISBN_LOOKUP_COOLDOWN_SECONDS = 2
 
 CHAT_API_COOLDOWN_SECONDS = 2
 
+CSV_IMPORT_MAX_SIZE_BYTES = int(os.environ.get("CSV_IMPORT_MAX_SIZE_BYTES", str(5 * 1024 * 1024)))
+
+VERIFICATION_CODE_MAX_ATTEMPTS = 10
+
+ACCESS_CODE_MAX_ATTEMPTS = 10
+
 # Platform-level billing (RumiPress charging its own account owners via
 # iyzico) - distinct from the per-owner Stripe Integration model used for
 # invoice payments. The trial length itself is configured on the Pricing
