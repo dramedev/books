@@ -4785,6 +4785,7 @@ def customer_portal_verify(request, token):
 
     request.session.flush()
     request.session[CUSTOMER_PORTAL_SESSION_KEY] = login_token.customer_id
+    request.session.set_expiry(settings.CUSTOMER_PORTAL_SESSION_AGE_SECONDS)
     return redirect("customer_portal_dashboard")
 
 

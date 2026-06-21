@@ -2430,6 +2430,22 @@ class CustomerPortalTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Acme Shop")
 
+    def test_login_sets_shorter_session_expiry_than_default(self):
+        from django.conf import settings as django_settings
+
+        self._request_login_link("acme@example.com")
+        token = CustomerLoginToken.objects.get(customer=self.customer)
+        self.client.get(reverse("customer_portal_verify", args=[token.token]))
+
+        self.assertEqual(
+            self.client.session.get_expiry_age(),
+            django_settings.CUSTOMER_PORTAL_SESSION_AGE_SECONDS,
+        )
+        self.assertLess(
+            django_settings.CUSTOMER_PORTAL_SESSION_AGE_SECONDS,
+            django_settings.SESSION_COOKIE_AGE,
+        )
+
     def test_login_flushes_pre_existing_session(self):
         session = self.client.session
         session["pre_existing"] = "fixation-attempt"

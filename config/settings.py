@@ -203,6 +203,12 @@ CUSTOMER_PORTAL_TOKEN_TTL_MINUTES = 30
 
 CUSTOMER_PORTAL_LOGIN_COOLDOWN_SECONDS = 60
 
+# Portal sessions get their own (shorter) expiry via request.session.set_expiry()
+# rather than inheriting Django's default SESSION_COOKIE_AGE (2 weeks) - the
+# magic link itself expires in 30 minutes, so a stolen session cookie
+# shouldn't meaningfully outlive that by weeks.
+CUSTOMER_PORTAL_SESSION_AGE_SECONDS = int(os.environ.get("CUSTOMER_PORTAL_SESSION_AGE_SECONDS", "7200"))
+
 ISBN_LOOKUP_COOLDOWN_SECONDS = 2
 
 CHAT_API_COOLDOWN_SECONDS = 2
