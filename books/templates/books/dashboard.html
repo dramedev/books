@@ -215,7 +215,15 @@
 <td>{{ item.book.stock_on_hand }}</td>
 <td>{{ item.book.reorder_threshold }}</td>
 <td>{{ item.suggested_quantity }}</td>
-<td><span class="badge bg-danger">{% translate "Low" %}</span></td>
+<td>
+{% if perms.books.add_reorder %}
+<a class="btn btn-outline-light btn-sm" href="{% url 'reorder_create' item.book.id %}">
+{% translate "Reorder" %}
+</a>
+{% else %}
+<span class="badge bg-danger">{% translate "Low" %}</span>
+{% endif %}
+</td>
 </tr>
 {% empty %}
 <tr>
