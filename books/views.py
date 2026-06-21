@@ -235,6 +235,27 @@ def _pdf_text(value):
     return text
 
 
+PDF_ACCENT_COLOR = "#b9802f"
+
+
+def _pdf_leaf_drawing(size=22, color=PDF_ACCENT_COLOR):
+    """A small drawn leaf (pointed oval + center vein) used as a brand
+    accent in generated PDFs, instead of embedding the app's raster icon."""
+    from reportlab.graphics.shapes import Drawing, Line, Path
+    from reportlab.lib.colors import HexColor, white
+
+    drawing = Drawing(size, size)
+
+    leaf = Path(fillColor=HexColor(color), strokeColor=HexColor(color), strokeWidth=0.5)
+    leaf.moveTo(size / 2, 2)
+    leaf.curveTo(size * 0.92, size * 0.32, size * 0.92, size * 0.72, size / 2, size - 2)
+    leaf.curveTo(size * 0.08, size * 0.72, size * 0.08, size * 0.32, size / 2, 2)
+    drawing.add(leaf)
+    drawing.add(Line(size / 2, 4, size / 2, size - 4, strokeColor=white, strokeWidth=0.6))
+
+    return drawing
+
+
 def _sale_export_rows(sales):
     for sale in sales:
         yield [
@@ -2004,9 +2025,8 @@ def checkout_receipt(request, id):
 def _checkout_receipt_pdf_response(sale_transaction):
     from reportlab.lib import colors
     from reportlab.lib.pagesizes import letter
-    from reportlab.lib.styles import getSampleStyleSheet
-    from reportlab.lib.units import inch
-    from reportlab.platypus import Image, Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
+    from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
+    from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
 
     _register_pdf_fonts()
     body_font, bold_font = _pdf_fonts()
@@ -2017,18 +2037,27 @@ def _checkout_receipt_pdf_response(sale_transaction):
     doc = SimpleDocTemplate(buffer, pagesize=letter, leftMargin=48, rightMargin=48, topMargin=48, bottomMargin=48)
     styles = getSampleStyleSheet()
     styles["Title"].fontName = bold_font
+    styles["Title"].textColor = colors.HexColor(PDF_ACCENT_COLOR)
+    styles["Title"].alignment = 1
     styles["Normal"].fontName = body_font
 
-    elements = []
+    accent_style = ParagraphStyle(
+        "Accent", parent=styles["Normal"], fontName=bold_font,
+        textColor=colors.HexColor(PDF_ACCENT_COLOR), alignment=1,
+    )
 
-    logo_path = settings.BASE_DIR / "books" / "static" / "books" / "img" / "icon-512.png"
-    if logo_path.exists():
-        elements.append(Image(str(logo_path), width=0.6 * inch, height=0.6 * inch))
-        elements.append(Spacer(1, 6))
+    header = Table(
+        [[_pdf_leaf_drawing(), Paragraph(_pdf_text("Rumi Press"), styles["Title"]), _pdf_leaf_drawing()]],
+        colWidths=[40, 340, 40],
+    )
+    header.setStyle(TableStyle([
+        ("ALIGN", (0, 0), (-1, -1), "CENTER"),
+        ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+    ]))
 
-    elements += [
-        Paragraph(_pdf_text("Rumi Press"), styles["Title"]),
-        Spacer(1, 4),
+    elements = [
+        header,
+        Spacer(1, 8),
         Paragraph(_pdf_text(f"{gettext('Receipt')} {sale_transaction.receipt_number}"), styles["Normal"]),
         Paragraph(_pdf_text(str(sale_transaction.created_at)), styles["Normal"]),
     ]
@@ -2082,8 +2111,19 @@ def _checkout_receipt_pdf_response(sale_transaction):
     elements.append(Paragraph(_pdf_text(f"{gettext('Total')}: {sale_transaction.total}"), styles["Normal"]))
     elements.append(Spacer(1, 24))
 
-    quote_style = styles["Normal"]
-    elements.append(Paragraph(_pdf_text(str(random.choice(LEARNING_QUOTES))), quote_style))
+    footer = Table(
+        [[_pdf_leaf_drawing(16), Paragraph(
+            _pdf_text(gettext("Thank you for shopping with Rumi Press!")), accent_style,
+        ), _pdf_leaf_drawing(16)]],
+        colWidths=[24, 332, 24],
+    )
+    footer.setStyle(TableStyle([
+        ("ALIGN", (0, 0), (-1, -1), "CENTER"),
+        ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+    ]))
+    elements.append(footer)
+    elements.append(Spacer(1, 6))
+    elements.append(Paragraph(_pdf_text(str(random.choice(LEARNING_QUOTES))), styles["Normal"]))
 
     doc.build(elements)
     buffer.seek(0)
