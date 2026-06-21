@@ -18,7 +18,7 @@ from django.core.cache import cache
 from django.core.exceptions import ValidationError
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.core.management import call_command
-from django.db import connection
+from django.db import IntegrityError, connection, transaction
 from django.test import TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
@@ -35,7 +35,7 @@ from .models import (
     Sale, SaleTransaction, StockAdjustment, Subscription, Supplier, validate_avatar_size,
 )
 from .permissions import sync_user_groups_for_role
-from .views import _adjust_stock, _invoice_aging_data, _parse_publish_date, _pl_data, _safe_json
+from .views import _adjust_stock, _invoice_aging_data, _next_receipt_number, _parse_publish_date, _pl_data, _safe_json
 
 
 def grant(user, *codenames):
@@ -472,6 +472,33 @@ class CheckoutTests(TestCase):
         self.client.force_login(other_user)
         response = self.client.get(reverse("checkout_receipt", args=[sale_tx.id]))
         self.assertEqual(response.status_code, 404)
+
+    def test_duplicate_receipt_number_same_account_rejected_at_db_level(self):
+        SaleTransaction.objects.create(
+            owner=self.user, account=self.account, receipt_number="RCT-DUPETEST-0001",
+        )
+        with self.assertRaises(IntegrityError):
+            with transaction.atomic():
+                SaleTransaction.objects.create(
+                    owner=self.user, account=self.account, receipt_number="RCT-DUPETEST-0001",
+                )
+
+    def test_checkout_retries_when_receipt_number_collides(self):
+        # Pre-create a transaction holding the exact receipt number
+        # _next_receipt_number would generate next, simulating another
+        # checkout winning the race - the retry loop should recover and
+        # still complete this checkout under a different number.
+        next_number = _next_receipt_number(self.account)
+        SaleTransaction.objects.create(owner=self.user, account=self.account, receipt_number=next_number)
+
+        response = self._checkout([{"book_id": self.book_a.id, "quantity": 1, "unit_price": "20.00"}])
+        self.assertEqual(response.status_code, 200)
+
+        self.book_a.refresh_from_db()
+        self.assertEqual(self.book_a.stock_on_hand, 9)
+
+        new_tx = SaleTransaction.objects.exclude(receipt_number=next_number).get(account=self.account)
+        self.assertNotEqual(new_tx.receipt_number, next_number)
 
 
 class AuthorViewPermissionTests(TestCase):

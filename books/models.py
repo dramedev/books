@@ -411,6 +411,13 @@ class SaleTransaction(AccountScopedModel):
 
     class Meta:
         ordering = ["-created_at"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["account", "receipt_number"],
+                condition=~models.Q(receipt_number=""),
+                name="unique_receipt_number_per_account",
+            ),
+        ]
 
     def __str__(self):
         return self.receipt_number or f"Transaction #{self.pk}"

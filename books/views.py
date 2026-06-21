@@ -24,7 +24,7 @@ from django.core.cache import cache
 from django.core.exceptions import PermissionDenied
 from django.core.mail import send_mail
 from django.core.paginator import Paginator
-from django.db import models, transaction
+from django.db import IntegrityError, models, transaction
 from django.db.models import Case, Count, DecimalField, ExpressionWrapper, F, IntegerField, Max, OuterRef, Q, Subquery, Sum, Value, When
 from django.db.models.functions import Coalesce, TruncMonth
 from django.http import HttpResponse, JsonResponse
@@ -1837,6 +1837,11 @@ def _next_receipt_number(account):
     return f"{prefix}{seq:04d}"
 
 
+class _CheckoutError(Exception):
+    def __init__(self, message):
+        self.message = message
+
+
 @login_required
 @permission_required("books.add_sale", raise_exception=True)
 def checkout(request):
@@ -1906,10 +1911,15 @@ def checkout_complete(request):
     if location_id:
         location = Location.objects.filter(id=location_id, account=request.account).first()
 
+    # Parse/validate everything that doesn't need a DB lock before opening
+    # the transaction (book existence/ownership, quantity/price shape).
+    # The actual stock check happens later, *after* locking each book row -
+    # checking stock_on_hand here would read a value that could be stale by
+    # the time the transaction below actually runs, letting two concurrent
+    # checkouts both pass the check and oversell the same copies.
     parsed_lines = []
     for line in lines:
-        book = Book.objects.filter(id=line.get("book_id"), account=request.account).first()
-        if book is None:
+        if not Book.objects.filter(id=line.get("book_id"), account=request.account).exists():
             return JsonResponse({"error": gettext("One of the books in the cart could not be found.")}, status=400)
 
         try:
@@ -1921,38 +1931,56 @@ def checkout_complete(request):
         if quantity < 1 or unit_price < 0:
             return JsonResponse({"error": gettext("Invalid quantity or price.")}, status=400)
 
-        if book.stock_on_hand < quantity:
-            return JsonResponse({
-                "error": gettext("Not enough stock for '%(title)s' (available: %(n)s).") % {
-                    "title": book.title, "n": book.stock_on_hand,
-                },
-            }, status=400)
+        parsed_lines.append((line.get("book_id"), quantity, unit_price))
 
-        parsed_lines.append((book, quantity, unit_price))
+    today = timezone.now().date()
+    receipt_attempts = 0
 
-    with transaction.atomic():
-        sale_transaction = SaleTransaction.objects.create(
-            owner=request.user,
-            account=request.account,
-            customer=customer,
-            location=location,
-            payment_method=payment_method,
-            receipt_number=_next_receipt_number(request.account),
-        )
+    while True:
+        receipt_attempts += 1
+        try:
+            with transaction.atomic():
+                sale_transaction = SaleTransaction.objects.create(
+                    owner=request.user,
+                    account=request.account,
+                    customer=customer,
+                    location=location,
+                    payment_method=payment_method,
+                    receipt_number=_next_receipt_number(request.account),
+                )
 
-        today = timezone.now().date()
-        for book, quantity, unit_price in parsed_lines:
-            Sale.objects.create(
-                owner=request.user,
-                account=request.account,
-                book=book,
-                quantity=quantity,
-                unit_price=unit_price,
-                currency=currency,
-                sale_date=today,
-                transaction=sale_transaction,
-            )
-            _adjust_stock(book.id, -quantity, request.user, request.account, location=location)
+                for book_id, quantity, unit_price in parsed_lines:
+                    book = Book.objects.select_for_update().get(id=book_id, account=request.account)
+                    if book.stock_on_hand < quantity:
+                        raise _CheckoutError(
+                            gettext("Not enough stock for '%(title)s' (available: %(n)s).") % {
+                                "title": book.title, "n": book.stock_on_hand,
+                            },
+                        )
+
+                    Sale.objects.create(
+                        owner=request.user,
+                        account=request.account,
+                        book=book,
+                        quantity=quantity,
+                        unit_price=unit_price,
+                        currency=currency,
+                        sale_date=today,
+                        transaction=sale_transaction,
+                    )
+                    _adjust_stock(book.id, -quantity, request.user, request.account, location=location)
+        except IntegrityError:
+            # Another checkout grabbed the same receipt number between our
+            # read and write - retry with a freshly-generated one. Bounded
+            # so a real schema/data problem still surfaces as an error
+            # instead of looping forever.
+            if receipt_attempts >= 5:
+                raise
+            continue
+        except _CheckoutError as exc:
+            return JsonResponse({"error": exc.message}, status=400)
+        else:
+            break
 
     return JsonResponse({
         "receipt_url": reverse("checkout_receipt", args=[sale_transaction.id]),
