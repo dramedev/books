@@ -1995,7 +1995,10 @@ def checkout_complete(request):
 @permission_required("books.view_saletransaction", raise_exception=True)
 def checkout_receipt(request, id):
     sale_transaction = get_object_or_404(SaleTransaction, id=id, account=request.account)
-    return render(request, "books/checkout_receipt.html", {"transaction": sale_transaction})
+    return render(request, "books/checkout_receipt.html", {
+        "transaction": sale_transaction,
+        "quote": random.choice(LEARNING_QUOTES),
+    })
 
 
 def _checkout_receipt_pdf_response(sale_transaction):

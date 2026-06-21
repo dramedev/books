@@ -2062,3 +2062,6 @@ msgstr "N° de reçu ou client…"
 msgid "Download PDF"
 msgstr "Télécharger le PDF"
 
+msgid "Thank you for shopping with Rumi Press!"
+msgstr "Merci d'avoir fait vos achats chez Rumi Press !"
+

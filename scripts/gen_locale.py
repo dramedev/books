@@ -839,6 +839,7 @@ FR = {
     "Account settings updated.": "Paramètres du compte mis à jour.",
     "Receipt # or customer…": "N° de reçu ou client…",
     "Download PDF": "Télécharger le PDF",
+    "Thank you for shopping with Rumi Press!": "Merci d'avoir fait vos achats chez Rumi Press !",
 }
 
 # ---------------------------------------------------------------------------
@@ -1658,6 +1659,7 @@ AR = {
     "Account settings updated.": "تم تحديث إعدادات الحساب.",
     "Receipt # or customer…": "رقم الإيصال أو العميل…",
     "Download PDF": "تنزيل PDF",
+    "Thank you for shopping with Rumi Press!": "شكرًا لتسوقك مع Rumi Press!",
 }
 
 
