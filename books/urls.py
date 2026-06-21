@@ -49,6 +49,7 @@ urlpatterns = [
     path("checkout/complete/", views.checkout_complete, name="checkout_complete"),
     path("checkout/history/", views.checkout_history, name="checkout_history"),
     path("checkout/<int:id>/receipt/", views.checkout_receipt, name="checkout_receipt"),
+    path("checkout/<int:id>/void/", views.checkout_void, name="checkout_void"),
     path("report/", views.report, name="report"),
     path("about/", views.about, name="about"),
     path("chat/", views.chat_api, name="chat_api"),

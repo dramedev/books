@@ -2020,3 +2020,27 @@ msgstr "لا توجد معاملات دفع حتى الآن."
 msgid "%(count)s transaction(s) found"
 msgstr "تم العثور على %(count)s معاملة"
 
+msgid "Void transaction"
+msgstr "إلغاء المعاملة"
+
+msgid "Void this transaction and restore stock for every item?"
+msgstr "هل تريد إلغاء هذه المعاملة واستعادة المخزون لكل عنصر؟"
+
+msgid "Transaction voided"
+msgstr "تم إلغاء المعاملة"
+
+msgid "Transaction voided and stock restored."
+msgstr "تم إلغاء المعاملة واستعادة المخزون."
+
+msgid "This transaction was already fully refunded."
+msgstr "تم استرداد هذه المعاملة بالكامل من قبل."
+
+msgid "This transaction has been fully refunded."
+msgstr "تم استرداد هذه المعاملة بالكامل."
+
+msgid "This transaction has been partially refunded."
+msgstr "تم استرداد هذه المعاملة جزئيًا."
+
+msgid "Partially refunded"
+msgstr "مسترد جزئيًا"
+

@@ -18,11 +18,25 @@
 <button type="button" class="btn btn-outline-light" onclick="window.print()">
 <i class="bi bi-printer"></i> {% translate "Print" %}
 </button>
+{% if perms.books.add_return and not transaction.is_fully_refunded %}
+<form method="post" action="{% url 'checkout_void' transaction.id %}" onsubmit="return confirm('{% translate "Void this transaction and restore stock for every item?" %}');">
+{% csrf_token %}
+<button type="submit" class="btn btn-danger">
+<i class="bi bi-x-circle"></i> {% translate "Void transaction" %}
+</button>
+</form>
+{% endif %}
 <a class="btn btn-success" href="{% url 'checkout' %}">
 <i class="bi bi-plus-lg"></i> {% translate "New sale" %}
 </a>
 </div>
 </div>
+
+{% if transaction.is_fully_refunded %}
+<div class="alert alert-warning no-print">{% translate "This transaction has been fully refunded." %}</div>
+{% elif transaction.has_any_refund %}
+<div class="alert alert-warning no-print">{% translate "This transaction has been partially refunded." %}</div>
+{% endif %}
 
 <div class="page-panel" style="max-width:480px;">
 {% if transaction.customer %}
@@ -40,15 +54,23 @@
 <th>{% translate "Qty" %}</th>
 <th>{% translate "Price" %}</th>
 <th>{% translate "Subtotal" %}</th>
+<th></th>
 </tr>
 </thead>
 <tbody>
 {% for item in transaction.line_items.all %}
 <tr>
 <td>{{ item.book.title }}</td>
-<td>{{ item.quantity }}</td>
+<td>{{ item.original_quantity }}</td>
 <td>{{ item.unit_price }}</td>
-<td>{{ item.revenue }}</td>
+<td>{{ item.original_revenue }}</td>
+<td>
+{% if item.quantity == 0 %}
+<span class="badge bg-warning text-dark">{% translate "Refunded" %}</span>
+{% elif item.returned_quantity > 0 %}
+<span class="badge bg-warning text-dark">{% translate "Partially refunded" %}</span>
+{% endif %}
+</td>
 </tr>
 {% endfor %}
 </tbody>

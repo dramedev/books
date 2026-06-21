@@ -350,6 +350,18 @@ class Sale(AccountScopedModel):
     def total(self):
         return self.revenue + self.tax_amount
 
+    @property
+    def returned_quantity(self):
+        return sum((r.quantity for r in self.returns.all()), 0)
+
+    @property
+    def original_quantity(self):
+        return self.quantity + self.returned_quantity
+
+    @property
+    def original_revenue(self):
+        return self.original_quantity * self.unit_price
+
 
 
 class SaleTransaction(AccountScopedModel):
@@ -433,6 +445,15 @@ class SaleTransaction(AccountScopedModel):
     @property
     def total(self):
         return self.subtotal + self.tax_total
+
+    @property
+    def is_fully_refunded(self):
+        items = list(self.line_items.all())
+        return bool(items) and all(item.quantity == 0 for item in items)
+
+    @property
+    def has_any_refund(self):
+        return any(item.returned_quantity > 0 for item in self.line_items.all())
 
 
 class Supplier(AccountScopedModel):

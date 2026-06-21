@@ -31,7 +31,7 @@ from .isbn_lookup import IsbnLookupError, lookup_isbn
 from .models import (
     AccessCode, AVATAR_MAX_SIZE_BYTES, Account, AccountInvitation, AccountMembership, Author, Book, Category,
     Customer, CustomerLoginToken, get_or_create_account_for_user,
-    Integration, Invoice, InvoiceItem, Location, PrintRun, ProcessedShopifyOrder, Profile, Reorder, RoyaltyPayment, RoyaltyRate,
+    Integration, Invoice, InvoiceItem, Location, PrintRun, ProcessedShopifyOrder, Profile, Reorder, Return, RoyaltyPayment, RoyaltyRate,
     Sale, SaleTransaction, StockAdjustment, Subscription, Supplier, validate_avatar_size,
 )
 from .permissions import sync_user_groups_for_role
@@ -348,7 +348,7 @@ class CheckoutTests(TestCase):
         User = get_user_model()
         self.user = User.objects.create_user(username="cashier", password="pass1234")
         self.account = get_or_create_account_for_user(self.user)
-        grant(self.user, "view_book", "add_sale", "view_saletransaction")
+        grant(self.user, "view_book", "add_sale", "view_saletransaction", "add_return")
         self.client.force_login(self.user)
 
         category = Category.objects.create(owner=self.user, account=self.account, name="Fiction")
@@ -518,6 +518,72 @@ class CheckoutTests(TestCase):
         future = (timezone.now() + timedelta(days=1)).date().isoformat()
         response = self.client.get(reverse("checkout_history"), {"start_date": future})
         self.assertNotContains(response, sale_tx.receipt_number)
+
+    def test_void_transaction_restores_stock_and_creates_returns(self):
+        self._checkout([
+            {"book_id": self.book_a.id, "quantity": 2, "unit_price": "20.00"},
+            {"book_id": self.book_b.id, "quantity": 1, "unit_price": "15.00"},
+        ])
+        self.book_a.refresh_from_db()
+        self.book_b.refresh_from_db()
+        self.assertEqual(self.book_a.stock_on_hand, 8)
+        self.assertEqual(self.book_b.stock_on_hand, 2)
+
+        sale_tx = SaleTransaction.objects.get(account=self.account)
+        response = self.client.post(reverse("checkout_void", args=[sale_tx.id]))
+        self.assertRedirects(response, reverse("checkout_receipt", args=[sale_tx.id]))
+
+        self.book_a.refresh_from_db()
+        self.book_b.refresh_from_db()
+        self.assertEqual(self.book_a.stock_on_hand, 10)
+        self.assertEqual(self.book_b.stock_on_hand, 3)
+
+        for sale in sale_tx.line_items.all():
+            self.assertEqual(sale.quantity, 0)
+        self.assertEqual(Return.objects.filter(sale__transaction=sale_tx).count(), 2)
+        self.assertTrue(sale_tx.is_fully_refunded)
+
+    def test_voiding_already_voided_transaction_is_a_safe_no_op(self):
+        self._checkout([{"book_id": self.book_a.id, "quantity": 1, "unit_price": "20.00"}])
+        sale_tx = SaleTransaction.objects.get(account=self.account)
+
+        self.client.post(reverse("checkout_void", args=[sale_tx.id]))
+        self.book_a.refresh_from_db()
+        self.assertEqual(self.book_a.stock_on_hand, 10)
+
+        self.client.post(reverse("checkout_void", args=[sale_tx.id]))
+        self.book_a.refresh_from_db()
+        self.assertEqual(self.book_a.stock_on_hand, 10)
+        self.assertEqual(Return.objects.filter(sale__transaction=sale_tx).count(), 1)
+
+    def test_void_requires_permission(self):
+        self._checkout([{"book_id": self.book_a.id, "quantity": 1, "unit_price": "20.00"}])
+        sale_tx = SaleTransaction.objects.get(account=self.account)
+
+        other = get_user_model().objects.create_user(username="nopower3", password="pass1234")
+        self.client.force_login(other)
+        response = self.client.post(reverse("checkout_void", args=[sale_tx.id]))
+        self.assertEqual(response.status_code, 403)
+
+    def test_void_scoped_to_account(self):
+        other_user = get_user_model().objects.create_user(username="other_acct5", password="pass1234")
+        other_account = get_or_create_account_for_user(other_user)
+        category = Category.objects.create(owner=other_user, account=other_account, name="Other")
+        foreign_book = Book.objects.create(
+            owner=other_user, account=other_account, title="Foreign", isbn="444",
+            publisher="X", published_date=date(2024, 1, 1), category=category,
+            distribution_expense=Decimal("1.00"), stock_on_hand=5,
+        )
+        foreign_tx = SaleTransaction.objects.create(owner=other_user, account=other_account, receipt_number="RCT-FOREIGN-0001")
+        Sale.objects.create(
+            owner=other_user, account=other_account, book=foreign_book, quantity=1,
+            unit_price=Decimal("5.00"), sale_date=date(2024, 1, 1), transaction=foreign_tx,
+        )
+
+        response = self.client.post(reverse("checkout_void", args=[foreign_tx.id]))
+        self.assertEqual(response.status_code, 404)
+        foreign_book.refresh_from_db()
+        self.assertEqual(foreign_book.stock_on_hand, 5)
 
     def test_duplicate_receipt_number_same_account_rejected_at_db_level(self):
         SaleTransaction.objects.create(

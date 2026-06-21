@@ -56,6 +56,7 @@
 <th>{% translate "Location" %}</th>
 <th>{% translate "Payment method" %}</th>
 <th>{% translate "Total" %}</th>
+<th>{% translate "Status" %}</th>
 <th>{% translate "Actions" %}</th>
 </tr>
 </thead>
@@ -69,6 +70,13 @@
 <td>{{ transaction.get_payment_method_display }}</td>
 <td>{{ transaction.total }}</td>
 <td>
+{% if transaction.is_fully_refunded %}
+<span class="badge bg-warning text-dark">{% translate "Refunded" %}</span>
+{% elif transaction.has_any_refund %}
+<span class="badge bg-warning text-dark">{% translate "Partially refunded" %}</span>
+{% endif %}
+</td>
+<td>
 <a class="btn btn-outline-light btn-sm" href="{% url 'checkout_receipt' transaction.id %}" title="{% translate 'View receipt' %}">
 <i class="bi bi-receipt"></i>
 </a>
@@ -77,7 +85,7 @@
 
 {% empty %}
 <tr>
-<td colspan="7" class="text-center muted-text py-4">
+<td colspan="8" class="text-center muted-text py-4">
 {% if has_any_transactions %}
 {% translate "No transactions match the current filters." %}
 {% else %}

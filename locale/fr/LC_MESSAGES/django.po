@@ -2020,3 +2020,27 @@ msgstr "Aucune transaction de caisse pour le moment."
 msgid "%(count)s transaction(s) found"
 msgstr "%(count)s transaction(s) trouvée(s)"
 
+msgid "Void transaction"
+msgstr "Annuler la transaction"
+
+msgid "Void this transaction and restore stock for every item?"
+msgstr "Annuler cette transaction et restaurer le stock de tous les articles ?"
+
+msgid "Transaction voided"
+msgstr "Transaction annulée"
+
+msgid "Transaction voided and stock restored."
+msgstr "Transaction annulée et stock restauré."
+
+msgid "This transaction was already fully refunded."
+msgstr "Cette transaction a déjà été entièrement remboursée."
+
+msgid "This transaction has been fully refunded."
+msgstr "Cette transaction a été entièrement remboursée."
+
+msgid "This transaction has been partially refunded."
+msgstr "Cette transaction a été partiellement remboursée."
+
+msgid "Partially refunded"
+msgstr "Partiellement remboursé"
+

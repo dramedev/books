@@ -823,6 +823,15 @@ FR = {
     "No transactions match the current filters.": "Aucune transaction ne correspond aux filtres actuels.",
     "No checkout transactions yet.": "Aucune transaction de caisse pour le moment.",
     "%(count)s transaction(s) found": "%(count)s transaction(s) trouvée(s)",
+    "Void transaction": "Annuler la transaction",
+    "Void this transaction and restore stock for every item?":
+        "Annuler cette transaction et restaurer le stock de tous les articles ?",
+    "Transaction voided": "Transaction annulée",
+    "Transaction voided and stock restored.": "Transaction annulée et stock restauré.",
+    "This transaction was already fully refunded.": "Cette transaction a déjà été entièrement remboursée.",
+    "This transaction has been fully refunded.": "Cette transaction a été entièrement remboursée.",
+    "This transaction has been partially refunded.": "Cette transaction a été partiellement remboursée.",
+    "Partially refunded": "Partiellement remboursé",
 }
 
 # ---------------------------------------------------------------------------
@@ -1626,6 +1635,15 @@ AR = {
     "No transactions match the current filters.": "لا توجد معاملات مطابقة للفلاتر الحالية.",
     "No checkout transactions yet.": "لا توجد معاملات دفع حتى الآن.",
     "%(count)s transaction(s) found": "تم العثور على %(count)s معاملة",
+    "Void transaction": "إلغاء المعاملة",
+    "Void this transaction and restore stock for every item?":
+        "هل تريد إلغاء هذه المعاملة واستعادة المخزون لكل عنصر؟",
+    "Transaction voided": "تم إلغاء المعاملة",
+    "Transaction voided and stock restored.": "تم إلغاء المعاملة واستعادة المخزون.",
+    "This transaction was already fully refunded.": "تم استرداد هذه المعاملة بالكامل من قبل.",
+    "This transaction has been fully refunded.": "تم استرداد هذه المعاملة بالكامل.",
+    "This transaction has been partially refunded.": "تم استرداد هذه المعاملة جزئيًا.",
+    "Partially refunded": "مسترد جزئيًا",
 }
 
 

@@ -2002,7 +2002,7 @@ def checkout_history(request):
     transactions = (
         SaleTransaction.objects.filter(account=request.account)
         .select_related("customer", "location")
-        .prefetch_related("line_items")
+        .prefetch_related("line_items__returns")
     )
 
     start_date = request.GET.get("start_date", "").strip()
@@ -2028,6 +2028,41 @@ def checkout_history(request):
         "result_count_text": gettext("%(count)s transaction(s) found") % {"count": paginator.count},
         "has_any_transactions": SaleTransaction.objects.filter(account=request.account).exists(),
     })
+
+
+@login_required
+@permission_required("books.add_return", raise_exception=True)
+@require_POST
+def checkout_void(request, id):
+    sale_transaction = get_object_or_404(SaleTransaction, id=id, account=request.account)
+    today = timezone.now().date()
+    refunded_any = False
+
+    with transaction.atomic():
+        for sale in sale_transaction.line_items.select_for_update():
+            if sale.quantity <= 0:
+                continue
+
+            quantity = sale.quantity
+            Return.objects.create(
+                owner=request.user,
+                account=request.account,
+                sale=sale,
+                quantity=quantity,
+                reason=gettext("Transaction voided"),
+                return_date=today,
+            )
+            sale.quantity = 0
+            sale.save(update_fields=["quantity"])
+            _adjust_stock(sale.book_id, quantity, request.user, request.account, location=sale_transaction.location)
+            refunded_any = True
+
+    if refunded_any:
+        messages.success(request, gettext("Transaction voided and stock restored."))
+    else:
+        messages.info(request, gettext("This transaction was already fully refunded."))
+
+    return redirect("checkout_receipt", id=sale_transaction.id)
 
 
 @login_required
