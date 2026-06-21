@@ -24,7 +24,7 @@ from django.core.cache import cache
 from django.core.exceptions import PermissionDenied
 from django.core.mail import send_mail
 from django.core.paginator import Paginator
-from django.db import models
+from django.db import models, transaction
 from django.db.models import Case, Count, DecimalField, ExpressionWrapper, F, IntegerField, Max, OuterRef, Q, Subquery, Sum, Value, When
 from django.db.models.functions import Coalesce, TruncMonth
 from django.http import HttpResponse, JsonResponse
@@ -1542,41 +1542,46 @@ def chat_api(request):
 
 
 def _adjust_stock(book_id, delta, owner, account, location=None):
-    book = Book.objects.get(id=book_id, account=account)
+    # select_for_update() serializes concurrent adjustments to the same book
+    # (sales, returns, reorder receipts, transfers, the Shopify webhook all
+    # funnel through here) - without it, two requests racing past the
+    # read-then-write below can silently drop one of the two updates.
+    with transaction.atomic():
+        book = Book.objects.select_for_update().get(id=book_id, account=account)
 
-    if location is None:
-        location, _ = Location.objects.get_or_create(
-            account=account,
-            is_default=True,
-            defaults={"name": "Main Warehouse", "owner": owner},
+        if location is None:
+            location, _ = Location.objects.get_or_create(
+                account=account,
+                is_default=True,
+                defaults={"name": "Main Warehouse", "owner": owner},
+            )
+
+        book_has_stock_levels = StockLevel.objects.filter(book=book).exists()
+
+        level, created = StockLevel.objects.select_for_update().get_or_create(
+            account=account, book=book, location=location,
+            defaults={"quantity": 0, "owner": owner},
         )
 
-    book_has_stock_levels = StockLevel.objects.filter(book=book).exists()
+        # First-ever StockLevel for this book: seed from stock_on_hand so location
+        # tracking starts from reality instead of silently discarding it. Skip this
+        # when the book already has other locations, since their total is already
+        # reflected in stock_on_hand and seeding again would double-count it.
+        if created and not book_has_stock_levels:
+            level.quantity = book.stock_on_hand
 
-    level, created = StockLevel.objects.get_or_create(
-        account=account, book=book, location=location,
-        defaults={"quantity": 0, "owner": owner},
-    )
+        level.quantity = max(0, level.quantity + delta)
+        level.save(update_fields=["quantity"])
 
-    # First-ever StockLevel for this book: seed from stock_on_hand so location
-    # tracking starts from reality instead of silently discarding it. Skip this
-    # when the book already has other locations, since their total is already
-    # reflected in stock_on_hand and seeding again would double-count it.
-    if created and not book_has_stock_levels:
-        level.quantity = book.stock_on_hand
+        total = StockLevel.objects.filter(book=book).aggregate(t=Sum("quantity"))["t"] or 0
+        book.stock_on_hand = total
 
-    level.quantity = max(0, level.quantity + delta)
-    level.save(update_fields=["quantity"])
+        if book.is_low_stock and not book.low_stock_alert_sent:
+            book.low_stock_alert_sent = True
+        elif not book.is_low_stock and book.low_stock_alert_sent:
+            book.low_stock_alert_sent = False
 
-    total = StockLevel.objects.filter(book=book).aggregate(t=Sum("quantity"))["t"] or 0
-    book.stock_on_hand = total
-
-    if book.is_low_stock and not book.low_stock_alert_sent:
-        book.low_stock_alert_sent = True
-    elif not book.is_low_stock and book.low_stock_alert_sent:
-        book.low_stock_alert_sent = False
-
-    book.save(update_fields=["stock_on_hand", "low_stock_alert_sent"])
+        book.save(update_fields=["stock_on_hand", "low_stock_alert_sent"])
     return book
 
 
@@ -3623,26 +3628,36 @@ def stock_transfer(request):
         if from_loc == to_loc:
             form.add_error("to_location", gettext("Source and destination must differ."))
         else:
-            from_level = StockLevel.objects.filter(account=request.account, book=book, location=from_loc).first()
-            available = from_level.quantity if from_level else 0
-
-            if available < qty:
-                form.add_error("quantity", gettext("Not enough stock at source location (available: %(n)s).") % {"n": available})
-            else:
-                from_level.quantity -= qty
-                from_level.save(update_fields=["quantity"])
-
-                to_level, _ = StockLevel.objects.get_or_create(
-                    account=request.account, book=book, location=to_loc,
-                    defaults={"quantity": 0, "owner": request.user},
+            # transaction.atomic() + select_for_update() closes the race
+            # between checking "available" and writing the deduction - two
+            # concurrent transfers from the same location could otherwise
+            # both read the same stale quantity and the slower save() would
+            # silently overwrite the faster one's update.
+            with transaction.atomic():
+                from_level = (
+                    StockLevel.objects.select_for_update()
+                    .filter(account=request.account, book=book, location=from_loc)
+                    .first()
                 )
-                to_level.quantity += qty
-                to_level.save(update_fields=["quantity"])
+                available = from_level.quantity if from_level else 0
 
-                messages.success(request, gettext("Transferred %(qty)s copies of «%(book)s» from %(from)s to %(to)s.") % {
-                    "qty": qty, "book": book.title, "from": from_loc.name, "to": to_loc.name,
-                })
-                return redirect("location_list")
+                if available < qty:
+                    form.add_error("quantity", gettext("Not enough stock at source location (available: %(n)s).") % {"n": available})
+                else:
+                    from_level.quantity -= qty
+                    from_level.save(update_fields=["quantity"])
+
+                    to_level, _ = StockLevel.objects.select_for_update().get_or_create(
+                        account=request.account, book=book, location=to_loc,
+                        defaults={"quantity": 0, "owner": request.user},
+                    )
+                    to_level.quantity += qty
+                    to_level.save(update_fields=["quantity"])
+
+                    messages.success(request, gettext("Transferred %(qty)s copies of «%(book)s» from %(from)s to %(to)s.") % {
+                        "qty": qty, "book": book.title, "from": from_loc.name, "to": to_loc.name,
+                    })
+                    return redirect("location_list")
 
     return render(request, "books/stock_transfer_form.html", {"form": form})
 
