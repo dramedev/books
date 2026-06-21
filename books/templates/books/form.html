@@ -14,6 +14,7 @@
 {{ form.non_field_errors }}
 
 {% for field in form %}
+{% if field.html_name != 'cover_url' %}
 <div class="mb-3">
 <label class="form-label" for="{{ field.id_for_label }}">
 {{ field.label }}
@@ -25,12 +26,18 @@
 <button type="button" class="btn btn-outline-light" id="scanBtn" title="{% translate 'Scan barcode' %}">
 <i class="bi bi-upc-scan"></i> {% translate "Scan" %}
 </button>
+<button type="button" class="btn btn-outline-light" id="lookupBtn" title="{% translate 'Look up book details' %}">
+<i class="bi bi-search"></i> {% translate "Look up" %}
+</button>
 </div>
 <div id="scanBox" style="display:none; margin-top:0.5rem;">
 <video id="scanVideo" playsinline style="width:100%; border-radius:8px; max-height:260px; background:#000;"></video>
 <p class="small muted-text mt-1 mb-1" id="scanStatus"></p>
 <button type="button" class="btn btn-sm btn-outline-light" id="scanStop">{% translate "Stop scanning" %}</button>
 </div>
+<p class="small muted-text mt-1 mb-1" id="lookupStatus"></p>
+<img id="coverPreview" alt="{% translate 'Cover preview' %}" style="display:none; max-height:120px; border-radius:8px; margin-top:0.5rem;">
+{{ form.cover_url }}
 {% else %}
 {{ field }}
 {% endif %}
@@ -43,6 +50,7 @@
 <div class="text-danger small">{{ error }}</div>
 {% endfor %}
 </div>
+{% endif %}
 {% endfor %}
 
 <button class="btn btn-success">
@@ -98,12 +106,72 @@
                         isbnField.value = result.getText();
                         scanStatus.textContent = "{% translate 'Detected:' %} " + result.getText();
                         stopScan();
+                        performLookup(result.getText());
                     }
                 }
             );
         } catch(e){
             scanStatus.textContent = "{% translate 'Camera access denied or unavailable.' %}";
         }
+    });
+
+    const lookupBtn = document.getElementById('lookupBtn');
+    const lookupStatus = document.getElementById('lookupStatus');
+    const coverUrlField = document.getElementById('id_cover_url');
+    const coverPreview = document.getElementById('coverPreview');
+    const titleField = document.getElementById('id_title');
+    const subtitleField = document.getElementById('id_subtitle');
+    const publisherField = document.getElementById('id_publisher');
+    const publishedDateField = document.getElementById('id_published_date');
+    const authorsSelect = document.getElementById('id_authors');
+
+    async function performLookup(isbn){
+        isbn = (isbn || '').trim();
+        if(!isbn){
+            return;
+        }
+
+        lookupStatus.textContent = "{% translate 'Looking up book details…' %}";
+
+        try{
+            const response = await fetch('{% url "isbn_lookup" %}?isbn=' + encodeURIComponent(isbn));
+            const data = await response.json();
+
+            if(!response.ok){
+                lookupStatus.textContent = data.error || "{% translate 'Lookup failed.' %}";
+                return;
+            }
+
+            if(!titleField.value && data.title){ titleField.value = data.title; }
+            if(!subtitleField.value && data.subtitle){ subtitleField.value = data.subtitle; }
+            if(!publisherField.value && data.publisher){ publisherField.value = data.publisher; }
+            if(!publishedDateField.value && data.published_date){ publishedDateField.value = data.published_date; }
+
+            if(data.cover_url){
+                coverUrlField.value = data.cover_url;
+                coverPreview.src = data.cover_url;
+                coverPreview.style.display = 'block';
+            }
+
+            (data.authors || []).forEach(function(author){
+                let option = authorsSelect.querySelector('option[value="' + author.id + '"]');
+                if(!option){
+                    option = document.createElement('option');
+                    option.value = author.id;
+                    option.textContent = author.name;
+                    authorsSelect.appendChild(option);
+                }
+                option.selected = true;
+            });
+
+            lookupStatus.textContent = "{% translate 'Book details filled in — please review.' %}";
+        } catch(e){
+            lookupStatus.textContent = "{% translate 'Lookup failed. Check your connection and try again.' %}";
+        }
+    }
+
+    lookupBtn.addEventListener('click', function(){
+        performLookup(isbnField.value);
     });
 })();
 </script>

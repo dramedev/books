@@ -154,6 +154,33 @@ msgstr "تم الكشف عن:"
 msgid "Camera access denied or unavailable."
 msgstr "تم رفض الوصول إلى الكاميرا أو أنه غير متاح."
 
+msgid "Look up"
+msgstr "بحث"
+
+msgid "Look up book details"
+msgstr "البحث عن تفاصيل الكتاب"
+
+msgid "Looking up book details…"
+msgstr "جارٍ البحث عن تفاصيل الكتاب…"
+
+msgid "Lookup failed."
+msgstr "فشل البحث."
+
+msgid "Lookup failed. Check your connection and try again."
+msgstr "فشل البحث. تحقق من اتصالك وحاول مرة أخرى."
+
+msgid "No book found for this ISBN."
+msgstr "لم يتم العثور على كتاب لهذا الرقم الدولي."
+
+msgid "Book details filled in — please review."
+msgstr "تم تعبئة تفاصيل الكتاب — يرجى المراجعة."
+
+msgid "ISBN is required."
+msgstr "الرقم الدولي للكتاب مطلوب."
+
+msgid "Cover preview"
+msgstr "معاينة الغلاف"
+
 msgid "Add Sale"
 msgstr "إضافة عملية بيع"
 

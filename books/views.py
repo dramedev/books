@@ -5,9 +5,10 @@ import hmac as _hmac
 import json
 import math
 import random
+import re
 import secrets
 import stripe
-from datetime import timedelta
+from datetime import date, datetime, timedelta
 from decimal import Decimal
 from functools import wraps
 from io import BytesIO
@@ -34,6 +35,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 
 from . import ai_chat, iyzico_client
+from .isbn_lookup import IsbnLookupError, lookup_isbn
 from .analytics import PURCHASE_COST_EXPRESSION, REVENUE_EXPRESSION
 from .reorder_logic import (
     REORDER_VELOCITY_WINDOW_DAYS, REORDER_COVER_DAYS,
@@ -2309,6 +2311,55 @@ def import_books_template(request):
     writer = csv.writer(response)
     writer.writerow(["ISBN", "Title", "Subtitle", "Authors", "Publisher", "Published Date", "Category", "Distribution Expense"])
     return response
+
+
+_PUBLISH_DATE_FORMATS = ["%B %d, %Y", "%b %d, %Y", "%B %Y", "%b %Y", "%Y-%m-%d", "%Y"]
+
+
+def _parse_publish_date(value):
+    value = (value or "").strip()
+    if not value:
+        return ""
+
+    for fmt in _PUBLISH_DATE_FORMATS:
+        try:
+            return datetime.strptime(value, fmt).date().isoformat()
+        except ValueError:
+            continue
+
+    year_match = re.search(r"\b(1[5-9]\d{2}|20\d{2})\b", value)
+    if year_match:
+        return date(int(year_match.group(1)), 1, 1).isoformat()
+
+    return ""
+
+
+@login_required
+def isbn_lookup(request):
+    isbn = request.GET.get("isbn", "").strip()
+    if not isbn:
+        return JsonResponse({"error": gettext("ISBN is required.")}, status=400)
+
+    try:
+        data = lookup_isbn(isbn)
+    except IsbnLookupError:
+        return JsonResponse({"error": gettext("No book found for this ISBN.")}, status=404)
+
+    authors_payload = []
+    for name in data["authors"]:
+        author, _ = Author.objects.get_or_create(
+            account=request.account, name=name, defaults={"owner": request.user},
+        )
+        authors_payload.append({"id": author.id, "name": author.name})
+
+    return JsonResponse({
+        "title": data["title"],
+        "subtitle": data["subtitle"],
+        "publisher": data["publishers"][0] if data["publishers"] else "",
+        "published_date": _parse_publish_date(data["publish_date"]),
+        "cover_url": data["cover_url"],
+        "authors": authors_payload,
+    })
 
 
 @login_required

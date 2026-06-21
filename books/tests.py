@@ -2,6 +2,7 @@ import base64
 import hashlib
 import hmac
 import json
+import requests
 import stripe
 from datetime import date, timedelta
 from decimal import Decimal
@@ -19,13 +20,14 @@ from django.urls import reverse
 from django.utils import timezone
 
 from . import ai_chat, iyzico_client
+from .isbn_lookup import IsbnLookupError, lookup_isbn
 from .models import (
     AccessCode, AVATAR_MAX_SIZE_BYTES, Account, AccountInvitation, AccountMembership, Author, Book, Category,
     Customer, CustomerLoginToken, get_or_create_account_for_user,
     Integration, Invoice, InvoiceItem, Location, PrintRun, Profile, Reorder, RoyaltyPayment, RoyaltyRate,
     Sale, StockAdjustment, Subscription, Supplier, validate_avatar_size,
 )
-from .views import _adjust_stock, _invoice_aging_data, _pl_data, _safe_json
+from .views import _adjust_stock, _invoice_aging_data, _parse_publish_date, _pl_data, _safe_json
 
 
 def grant(user, *codenames):
@@ -3130,3 +3132,141 @@ class TeamInviteTests(TestCase):
         response = self.client.post(reverse("team_invite_cancel", args=[invitation.id]))
         self.assertRedirects(response, reverse("team_members"))
         self.assertFalse(AccountInvitation.objects.filter(id=invitation.id).exists())
+
+
+def _open_library_response(bibkey, record):
+    response = MagicMock()
+    response.json.return_value = {bibkey: record} if record else {}
+    return response
+
+
+class IsbnLookupClientTests(TestCase):
+
+    def test_lookup_isbn_requires_isbn(self):
+        with self.assertRaises(IsbnLookupError):
+            lookup_isbn("")
+
+    @patch("books.isbn_lookup.requests.get")
+    def test_lookup_isbn_returns_parsed_data(self, mock_get):
+        mock_get.return_value = _open_library_response("ISBN:111", {
+            "title": "The Last Lighthouse",
+            "subtitle": "A Novel",
+            "publishers": [{"name": "Acme Press"}],
+            "publish_date": "January 1, 2009",
+            "authors": [{"name": "Jane Doe"}],
+            "cover": {"large": "https://covers.example/large.jpg", "medium": "https://covers.example/medium.jpg"},
+        })
+
+        result = lookup_isbn("111")
+
+        self.assertEqual(result["title"], "The Last Lighthouse")
+        self.assertEqual(result["subtitle"], "A Novel")
+        self.assertEqual(result["publishers"], ["Acme Press"])
+        self.assertEqual(result["publish_date"], "January 1, 2009")
+        self.assertEqual(result["authors"], ["Jane Doe"])
+        self.assertEqual(result["cover_url"], "https://covers.example/large.jpg")
+
+    @patch("books.isbn_lookup.requests.get")
+    def test_lookup_isbn_falls_back_to_medium_cover(self, mock_get):
+        mock_get.return_value = _open_library_response("ISBN:111", {
+            "title": "No Large Cover", "cover": {"medium": "https://covers.example/medium.jpg"},
+        })
+        result = lookup_isbn("111")
+        self.assertEqual(result["cover_url"], "https://covers.example/medium.jpg")
+
+    @patch("books.isbn_lookup.requests.get")
+    def test_lookup_isbn_raises_when_not_found(self, mock_get):
+        mock_get.return_value = _open_library_response("ISBN:111", None)
+        with self.assertRaises(IsbnLookupError):
+            lookup_isbn("111")
+
+    @patch("books.isbn_lookup.requests.get")
+    def test_lookup_isbn_raises_on_network_error(self, mock_get):
+        mock_get.side_effect = requests.RequestException("boom")
+        with self.assertRaises(IsbnLookupError):
+            lookup_isbn("111")
+
+    @patch("books.isbn_lookup.requests.get")
+    def test_lookup_isbn_raises_on_invalid_json(self, mock_get):
+        response = MagicMock()
+        response.json.side_effect = ValueError("not json")
+        mock_get.return_value = response
+        with self.assertRaises(IsbnLookupError):
+            lookup_isbn("111")
+
+
+class ParsePublishDateTests(TestCase):
+
+    def test_parses_full_date(self):
+        self.assertEqual(_parse_publish_date("January 1, 2009"), "2009-01-01")
+
+    def test_parses_iso_date(self):
+        self.assertEqual(_parse_publish_date("2009-01-01"), "2009-01-01")
+
+    def test_parses_bare_year(self):
+        self.assertEqual(_parse_publish_date("2009"), "2009-01-01")
+
+    def test_falls_back_to_year_extracted_from_text(self):
+        self.assertEqual(_parse_publish_date("circa 1990"), "1990-01-01")
+
+    def test_returns_empty_string_for_unparseable_value(self):
+        self.assertEqual(_parse_publish_date("unknown"), "")
+
+    def test_returns_empty_string_for_blank_value(self):
+        self.assertEqual(_parse_publish_date(""), "")
+
+
+class IsbnLookupViewTests(TestCase):
+
+    def setUp(self):
+        User = get_user_model()
+        self.user = User.objects.create_user(username="lookup_user", password="pass1234")
+        self.account = get_or_create_account_for_user(self.user)
+        self.client.force_login(self.user)
+
+    def test_requires_isbn_param(self):
+        response = self.client.get(reverse("isbn_lookup"))
+        self.assertEqual(response.status_code, 400)
+
+    @patch("books.views.lookup_isbn")
+    def test_returns_404_when_not_found(self, mock_lookup):
+        mock_lookup.side_effect = IsbnLookupError("No book found for this ISBN.")
+        response = self.client.get(reverse("isbn_lookup"), {"isbn": "999"})
+        self.assertEqual(response.status_code, 404)
+        self.assertIn("error", response.json())
+
+    @patch("books.views.lookup_isbn")
+    def test_returns_data_and_creates_authors(self, mock_lookup):
+        mock_lookup.return_value = {
+            "title": "The Last Lighthouse",
+            "subtitle": "A Novel",
+            "publishers": ["Acme Press"],
+            "publish_date": "2009",
+            "authors": ["Jane Doe"],
+            "cover_url": "https://covers.example/large.jpg",
+        }
+
+        response = self.client.get(reverse("isbn_lookup"), {"isbn": "111"})
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+
+        self.assertEqual(data["title"], "The Last Lighthouse")
+        self.assertEqual(data["publisher"], "Acme Press")
+        self.assertEqual(data["published_date"], "2009-01-01")
+        self.assertEqual(data["cover_url"], "https://covers.example/large.jpg")
+        self.assertEqual(len(data["authors"]), 1)
+        self.assertEqual(data["authors"][0]["name"], "Jane Doe")
+
+        self.assertTrue(Author.objects.filter(account=self.account, name="Jane Doe").exists())
+
+    @patch("books.views.lookup_isbn")
+    def test_does_not_duplicate_existing_author(self, mock_lookup):
+        Author.objects.create(owner=self.user, account=self.account, name="Jane Doe")
+        mock_lookup.return_value = {
+            "title": "Book", "subtitle": "", "publishers": [], "publish_date": "",
+            "authors": ["Jane Doe"], "cover_url": "",
+        }
+
+        self.client.get(reverse("isbn_lookup"), {"isbn": "111"})
+
+        self.assertEqual(Author.objects.filter(account=self.account, name="Jane Doe").count(), 1)

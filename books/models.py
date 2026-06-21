@@ -176,6 +176,8 @@ class Book(AccountScopedModel):
         verbose_name=_("ISBN")
     )
 
+    cover_url = models.URLField(blank=True, verbose_name=_("Cover image URL"))
+
 
     title = models.CharField(
         max_length=200,

@@ -154,6 +154,33 @@ msgstr "Détecté :"
 msgid "Camera access denied or unavailable."
 msgstr "Accès à la caméra refusé ou indisponible."
 
+msgid "Look up"
+msgstr "Rechercher"
+
+msgid "Look up book details"
+msgstr "Rechercher les détails du livre"
+
+msgid "Looking up book details…"
+msgstr "Recherche des détails du livre…"
+
+msgid "Lookup failed."
+msgstr "La recherche a échoué."
+
+msgid "Lookup failed. Check your connection and try again."
+msgstr "La recherche a échoué. Vérifiez votre connexion et réessayez."
+
+msgid "No book found for this ISBN."
+msgstr "Aucun livre trouvé pour cet ISBN."
+
+msgid "Book details filled in — please review."
+msgstr "Détails du livre remplis — veuillez vérifier."
+
+msgid "ISBN is required."
+msgstr "L'ISBN est requis."
+
+msgid "Cover preview"
+msgstr "Aperçu de la couverture"
+
 msgid "Add Sale"
 msgstr "Ajouter une vente"
 

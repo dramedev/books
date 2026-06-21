@@ -20,6 +20,7 @@ class BookForm(forms.ModelForm):
 
         fields = [
             "isbn",
+            "cover_url",
             "title",
             "subtitle",
             "authors",
@@ -37,6 +38,7 @@ class BookForm(forms.ModelForm):
                     "placeholder": _("ISBN")
                 }
             ),
+            "cover_url": forms.HiddenInput(),
             "title": forms.TextInput(
                 attrs={
                     "class": "form-control"
