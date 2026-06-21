@@ -184,9 +184,9 @@ def _book_summary(book):
     }
 
 
-def get_dashboard_overview(_input, user):
-    books = Book.objects.filter(owner=user)
-    sales = Sale.objects.filter(owner=user)
+def get_dashboard_overview(_input, account):
+    books = Book.objects.filter(account=account)
+    sales = Sale.objects.filter(account=account)
 
     total_units_sold = sales.aggregate(total=Sum("quantity"))["total"] or 0
     total_revenue = sum((sale.revenue for sale in sales), start=0)
@@ -201,8 +201,8 @@ def get_dashboard_overview(_input, user):
     }
 
 
-def list_books(tool_input, user):
-    books = Book.objects.filter(owner=user)
+def list_books(tool_input, account):
+    books = Book.objects.filter(account=account)
 
     category = (tool_input.get("category") or "").strip()
     if category:
@@ -225,13 +225,13 @@ def list_books(tool_input, user):
     return {"books": [_book_summary(book) for book in books.distinct()]}
 
 
-def search_books(tool_input, user):
+def search_books(tool_input, account):
     query = (tool_input.get("query") or "").strip()
     if not query:
         return {"books": []}
 
     books = (
-        Book.objects.filter(owner=user)
+        Book.objects.filter(account=account)
         .filter(
             Q(title__icontains=query)
             | Q(subtitle__icontains=query)
@@ -243,8 +243,8 @@ def search_books(tool_input, user):
     return {"books": [_book_summary(book) for book in books]}
 
 
-def get_low_stock_books(_input, user):
-    books = [book for book in Book.objects.filter(owner=user) if book.is_low_stock]
+def get_low_stock_books(_input, account):
+    books = [book for book in Book.objects.filter(account=account) if book.is_low_stock]
     return {"books": [_book_summary(book) for book in books]}
 
 
@@ -256,8 +256,8 @@ def _parse_date(value):
     return date.fromisoformat(value)
 
 
-def get_sales_summary(tool_input, user):
-    sales = Sale.objects.filter(owner=user)
+def get_sales_summary(tool_input, account):
+    sales = Sale.objects.filter(account=account)
 
     start_date = _parse_date(tool_input.get("start_date"))
     end_date = _parse_date(tool_input.get("end_date"))
@@ -278,8 +278,8 @@ def get_sales_summary(tool_input, user):
     }
 
 
-def get_top_selling_books(tool_input, user):
-    sales = Sale.objects.filter(owner=user)
+def get_top_selling_books(tool_input, account):
+    sales = Sale.objects.filter(account=account)
 
     start_date = _parse_date(tool_input.get("start_date"))
     end_date = _parse_date(tool_input.get("end_date"))
@@ -306,8 +306,8 @@ def get_top_selling_books(tool_input, user):
     return {"books": ranked}
 
 
-def get_categories(_input, user):
-    categories = Category.objects.filter(owner=user)
+def get_categories(_input, account):
+    categories = Category.objects.filter(account=account)
     return {
         "categories": [
             {"name": category.name, "book_count": category.book_set.count()}
@@ -335,12 +335,12 @@ def build_tools_for_user(user):
     ]
 
 
-def execute_tool(name, tool_input, user):
+def execute_tool(name, tool_input, user, account):
     spec = next((spec for spec in TOOL_SPECS if spec["name"] == name), None)
     if spec is None or not user.has_perm(spec["permission"]):
         return {"error": "You don't have permission to access this information."}
 
-    return TOOL_FUNCTIONS[name](tool_input, user)
+    return TOOL_FUNCTIONS[name](tool_input, account)
 
 
 NOT_CONFIGURED_REPLY = (
@@ -351,7 +351,7 @@ NOT_CONFIGURED_REPLY = (
 MAX_TOOL_ITERATIONS = 4
 
 
-def get_chat_reply(user, message, history):
+def get_chat_reply(user, account, message, history):
     if not settings.ANTHROPIC_API_KEY:
         return NOT_CONFIGURED_REPLY, history
 
@@ -384,7 +384,7 @@ def get_chat_reply(user, message, history):
         for block in response.content:
             if block.type != "tool_use":
                 continue
-            result = execute_tool(block.name, block.input, user)
+            result = execute_tool(block.name, block.input, user, account)
             tool_results.append(
                 {
                     "type": "tool_result",

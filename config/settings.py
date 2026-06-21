@@ -60,6 +60,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'axes.middleware.AxesMiddleware',
+    'books.middleware.AccountContextMiddleware',
     'books.middleware.SubscriptionRequiredMiddleware',
 ]
 

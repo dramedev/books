@@ -8,12 +8,12 @@ from .models import Author, Book, Category, Customer, Integration, Invoice, Invo
 
 class BookForm(forms.ModelForm):
 
-    def __init__(self, *args, user=None, **kwargs):
+    def __init__(self, *args, account=None, **kwargs):
         super().__init__(*args, **kwargs)
 
-        if user is not None:
-            self.fields["category"].queryset = Category.objects.filter(owner=user)
-            self.fields["authors"].queryset = Author.objects.filter(owner=user)
+        if account is not None:
+            self.fields["category"].queryset = Category.objects.filter(account=account)
+            self.fields["authors"].queryset = Author.objects.filter(account=account)
 
     class Meta:
         model = Book
@@ -125,11 +125,11 @@ class AuthorForm(forms.ModelForm):
 
 class SaleForm(forms.ModelForm):
 
-    def __init__(self, *args, user=None, **kwargs):
+    def __init__(self, *args, account=None, **kwargs):
         super().__init__(*args, **kwargs)
 
-        if user is not None:
-            self.fields["book"].queryset = Book.objects.filter(owner=user)
+        if account is not None:
+            self.fields["book"].queryset = Book.objects.filter(account=account)
 
     class Meta:
         model = Sale
@@ -158,11 +158,11 @@ class SaleForm(forms.ModelForm):
 
 class ReorderForm(forms.ModelForm):
 
-    def __init__(self, *args, user=None, **kwargs):
+    def __init__(self, *args, account=None, **kwargs):
         super().__init__(*args, **kwargs)
 
-        if user is not None:
-            self.fields["supplier"].queryset = Supplier.objects.filter(owner=user)
+        if account is not None:
+            self.fields["supplier"].queryset = Supplier.objects.filter(account=account)
 
         self.fields["supplier"].required = False
         self.fields["supplier"].empty_label = _("No supplier")
@@ -450,10 +450,10 @@ class CustomerForm(forms.ModelForm):
 
 class InvoiceForm(forms.ModelForm):
 
-    def __init__(self, *args, user=None, **kwargs):
+    def __init__(self, *args, account=None, **kwargs):
         super().__init__(*args, **kwargs)
-        if user is not None:
-            self.fields["customer"].queryset = Customer.objects.filter(owner=user)
+        if account is not None:
+            self.fields["customer"].queryset = Customer.objects.filter(account=account)
         self.fields["customer"].required = False
         self.fields["customer"].empty_label = _("— Select saved customer (optional) —")
 
@@ -486,10 +486,10 @@ class InvoiceForm(forms.ModelForm):
 
 class InvoiceItemForm(forms.ModelForm):
 
-    def __init__(self, *args, user=None, **kwargs):
+    def __init__(self, *args, account=None, **kwargs):
         super().__init__(*args, **kwargs)
-        if user is not None:
-            self.fields["book"].queryset = Book.objects.filter(owner=user)
+        if account is not None:
+            self.fields["book"].queryset = Book.objects.filter(account=account)
         self.fields["book"].required = False
         self.fields["book"].empty_label = _("No book (custom item)")
 
@@ -526,11 +526,11 @@ class PrintRunForm(forms.ModelForm):
 
 class RoyaltyRateForm(forms.ModelForm):
 
-    def __init__(self, *args, user=None, **kwargs):
+    def __init__(self, *args, account=None, **kwargs):
         super().__init__(*args, **kwargs)
-        if user is not None:
-            self.fields["book"].queryset = Book.objects.filter(owner=user)
-            self.fields["author"].queryset = Author.objects.filter(owner=user)
+        if account is not None:
+            self.fields["book"].queryset = Book.objects.filter(account=account)
+            self.fields["author"].queryset = Author.objects.filter(account=account)
 
     class Meta:
         model = RoyaltyRate
@@ -549,10 +549,10 @@ class RoyaltyRateForm(forms.ModelForm):
 
 class RoyaltyPaymentForm(forms.ModelForm):
 
-    def __init__(self, *args, user=None, **kwargs):
+    def __init__(self, *args, account=None, **kwargs):
         super().__init__(*args, **kwargs)
-        if user is not None:
-            self.fields["author"].queryset = Author.objects.filter(owner=user)
+        if account is not None:
+            self.fields["author"].queryset = Author.objects.filter(account=account)
 
     class Meta:
         model = RoyaltyPayment
@@ -607,11 +607,11 @@ class StockTransferForm(forms.Form):
         widget=forms.NumberInput(attrs={"class": "form-control", "min": "1"}),
     )
 
-    def __init__(self, *args, user=None, **kwargs):
+    def __init__(self, *args, account=None, **kwargs):
         super().__init__(*args, **kwargs)
-        if user is not None:
-            self.fields["book"].queryset = Book.objects.filter(owner=user)
-            locs = Location.objects.filter(owner=user)
+        if account is not None:
+            self.fields["book"].queryset = Book.objects.filter(account=account)
+            locs = Location.objects.filter(account=account)
             self.fields["from_location"].queryset = locs
             self.fields["to_location"].queryset = locs
 

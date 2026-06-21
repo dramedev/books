@@ -81,7 +81,33 @@ class AccountInvitation(models.Model):
         return f"{self.email} -> {self.account} ({self.role})"
 
 
-class Category(models.Model):
+def get_or_create_account_for_user(user):
+    """Resolve a user's Account, creating one (as Admin) if they don't have one yet.
+
+    Lets any owner-scoped row created without an explicit account (legacy code
+    paths, fixtures, the Django shell) self-heal into a usable tenant instead
+    of silently ending up with a null account.
+    """
+    membership = AccountMembership.objects.filter(user=user).select_related("account").first()
+    if membership is not None:
+        return membership.account
+
+    account = Account.objects.create(name=getattr(user, "username", ""))
+    AccountMembership.objects.create(account=account, user=user, role=AccountMembership.ROLE_ADMIN)
+    return account
+
+
+class AccountScopedModel(models.Model):
+    class Meta:
+        abstract = True
+
+    def save(self, *args, **kwargs):
+        if self.account_id is None and self.owner_id is not None:
+            self.account = get_or_create_account_for_user(self.owner)
+        super().save(*args, **kwargs)
+
+
+class Category(AccountScopedModel):
     owner = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
@@ -91,8 +117,6 @@ class Category(models.Model):
     account = models.ForeignKey(
         Account,
         on_delete=models.CASCADE,
-        null=True,
-        blank=True,
         related_name="+",
     )
 
@@ -104,7 +128,7 @@ class Category(models.Model):
 
 
 
-class Author(models.Model):
+class Author(AccountScopedModel):
 
     owner = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -115,8 +139,6 @@ class Author(models.Model):
     account = models.ForeignKey(
         Account,
         on_delete=models.CASCADE,
-        null=True,
-        blank=True,
         related_name="+",
     )
 
@@ -125,7 +147,7 @@ class Author(models.Model):
 
     class Meta:
         ordering = ["name"]
-        unique_together = ("owner", "name")
+        unique_together = ("account", "name")
 
 
     def __str__(self):
@@ -133,7 +155,7 @@ class Author(models.Model):
 
 
 
-class Book(models.Model):
+class Book(AccountScopedModel):
 
     owner = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -144,8 +166,6 @@ class Book(models.Model):
     account = models.ForeignKey(
         Account,
         on_delete=models.CASCADE,
-        null=True,
-        blank=True,
         related_name="+",
     )
 
@@ -226,7 +246,7 @@ class Book(models.Model):
 
 
 
-class Sale(models.Model):
+class Sale(AccountScopedModel):
 
     owner = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -237,8 +257,6 @@ class Sale(models.Model):
     account = models.ForeignKey(
         Account,
         on_delete=models.CASCADE,
-        null=True,
-        blank=True,
         related_name="+",
     )
 
@@ -310,7 +328,7 @@ class Sale(models.Model):
 
 
 
-class Supplier(models.Model):
+class Supplier(AccountScopedModel):
 
     owner = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -321,8 +339,6 @@ class Supplier(models.Model):
     account = models.ForeignKey(
         Account,
         on_delete=models.CASCADE,
-        null=True,
-        blank=True,
         related_name="+",
     )
 
@@ -339,7 +355,7 @@ class Supplier(models.Model):
 
     class Meta:
         ordering = ["name"]
-        unique_together = ("owner", "name")
+        unique_together = ("account", "name")
 
 
     def __str__(self):
@@ -347,7 +363,7 @@ class Supplier(models.Model):
 
 
 
-class Reorder(models.Model):
+class Reorder(AccountScopedModel):
 
     STATUS_PENDING = "pending"
     STATUS_ORDERED = "ordered"
@@ -370,8 +386,6 @@ class Reorder(models.Model):
     account = models.ForeignKey(
         Account,
         on_delete=models.CASCADE,
-        null=True,
-        blank=True,
         related_name="+",
     )
 
@@ -443,7 +457,7 @@ class Reorder(models.Model):
 
 
 
-class Return(models.Model):
+class Return(AccountScopedModel):
 
     owner = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -454,8 +468,6 @@ class Return(models.Model):
     account = models.ForeignKey(
         Account,
         on_delete=models.CASCADE,
-        null=True,
-        blank=True,
         related_name="+",
     )
 
@@ -490,7 +502,7 @@ class Return(models.Model):
 
 
 
-class Customer(models.Model):
+class Customer(AccountScopedModel):
 
     owner = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -501,8 +513,6 @@ class Customer(models.Model):
     account = models.ForeignKey(
         Account,
         on_delete=models.CASCADE,
-        null=True,
-        blank=True,
         related_name="+",
     )
 
@@ -519,7 +529,7 @@ class Customer(models.Model):
 
     class Meta:
         ordering = ["name"]
-        unique_together = ("owner", "name")
+        unique_together = ("account", "name")
 
 
     def __str__(self):
@@ -554,7 +564,7 @@ class CustomerLoginToken(models.Model):
 
 
 
-class Invoice(models.Model):
+class Invoice(AccountScopedModel):
 
     STATUS_DRAFT = "draft"
     STATUS_SENT = "sent"
@@ -575,8 +585,6 @@ class Invoice(models.Model):
     account = models.ForeignKey(
         Account,
         on_delete=models.CASCADE,
-        null=True,
-        blank=True,
         related_name="+",
     )
 
@@ -716,7 +724,7 @@ class InvoiceItem(models.Model):
 
 
 
-class PrintRun(models.Model):
+class PrintRun(AccountScopedModel):
 
     STATUS_PENDING = "pending"
     STATUS_COMPLETED = "completed"
@@ -735,8 +743,6 @@ class PrintRun(models.Model):
     account = models.ForeignKey(
         Account,
         on_delete=models.CASCADE,
-        null=True,
-        blank=True,
         related_name="+",
     )
 
@@ -779,7 +785,7 @@ class PrintRun(models.Model):
 
 
 
-class RoyaltyRate(models.Model):
+class RoyaltyRate(AccountScopedModel):
 
     owner = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -790,8 +796,6 @@ class RoyaltyRate(models.Model):
     account = models.ForeignKey(
         Account,
         on_delete=models.CASCADE,
-        null=True,
-        blank=True,
         related_name="+",
     )
 
@@ -825,7 +829,7 @@ class RoyaltyRate(models.Model):
 
 
 
-class RoyaltyPayment(models.Model):
+class RoyaltyPayment(AccountScopedModel):
 
     owner = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -836,8 +840,6 @@ class RoyaltyPayment(models.Model):
     account = models.ForeignKey(
         Account,
         on_delete=models.CASCADE,
-        null=True,
-        blank=True,
         related_name="+",
     )
 
@@ -871,7 +873,7 @@ class RoyaltyPayment(models.Model):
 
 
 
-class StockAdjustment(models.Model):
+class StockAdjustment(AccountScopedModel):
 
     REASON_DAMAGED = "damaged"
     REASON_LOST = "lost"
@@ -898,8 +900,6 @@ class StockAdjustment(models.Model):
     account = models.ForeignKey(
         Account,
         on_delete=models.CASCADE,
-        null=True,
-        blank=True,
         related_name="+",
     )
 
@@ -935,7 +935,7 @@ class StockAdjustment(models.Model):
 
 
 
-class Location(models.Model):
+class Location(AccountScopedModel):
 
     owner = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -946,8 +946,6 @@ class Location(models.Model):
     account = models.ForeignKey(
         Account,
         on_delete=models.CASCADE,
-        null=True,
-        blank=True,
         related_name="+",
     )
 
@@ -960,7 +958,7 @@ class Location(models.Model):
 
     class Meta:
         ordering = ["name"]
-        unique_together = ("owner", "name")
+        unique_together = ("account", "name")
 
 
     def __str__(self):
@@ -968,7 +966,7 @@ class Location(models.Model):
 
 
 
-class StockLevel(models.Model):
+class StockLevel(AccountScopedModel):
 
     owner = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -979,8 +977,6 @@ class StockLevel(models.Model):
     account = models.ForeignKey(
         Account,
         on_delete=models.CASCADE,
-        null=True,
-        blank=True,
         related_name="+",
     )
 
@@ -1010,7 +1006,7 @@ class StockLevel(models.Model):
 
 
 
-class Integration(models.Model):
+class Integration(AccountScopedModel):
 
     PLATFORM_SHOPIFY = "shopify"
     PLATFORM_AMAZON = "amazon"
@@ -1031,8 +1027,6 @@ class Integration(models.Model):
     account = models.ForeignKey(
         Account,
         on_delete=models.CASCADE,
-        null=True,
-        blank=True,
         related_name="+",
     )
 

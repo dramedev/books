@@ -20,7 +20,8 @@ from django.utils import timezone
 
 from . import ai_chat, iyzico_client
 from .models import (
-    AccessCode, AVATAR_MAX_SIZE_BYTES, Author, Book, Category, Customer, CustomerLoginToken,
+    AccessCode, AVATAR_MAX_SIZE_BYTES, Account, AccountMembership, Author, Book, Category,
+    Customer, CustomerLoginToken, get_or_create_account_for_user,
     Integration, Invoice, InvoiceItem, Location, PrintRun, Profile, Reorder, RoyaltyPayment,
     Sale, StockAdjustment, Subscription, Supplier, validate_avatar_size,
 )
@@ -504,7 +505,8 @@ class ChatApiTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()["reply"], "Hello!")
-        mocked.assert_called_once_with(self.user, "Hi there", [])
+        account = AccountMembership.objects.get(user=self.user).account
+        mocked.assert_called_once_with(self.user, account, "Hi there", [])
 
 
 class AiChatToolTests(TestCase):
@@ -512,6 +514,7 @@ class AiChatToolTests(TestCase):
     def setUp(self):
         User = get_user_model()
         self.user = User.objects.create_user(username="tooluser", password="pass1234")
+        self.account = get_or_create_account_for_user(self.user)
 
         self.fiction = Category.objects.create(owner=self.user, name="Fiction")
         self.author = Author.objects.create(owner=self.user, name="Jane Doe")
@@ -567,7 +570,7 @@ class AiChatToolTests(TestCase):
         self.assertNotIn("get_categories", tool_names)
 
     def test_list_books_returns_everything(self):
-        result = ai_chat.list_books({}, self.user)
+        result = ai_chat.list_books({}, self.account)
         titles = {book["title"] for book in result["books"]}
         self.assertEqual(titles, {"Low Stock Book", "Well Stocked Book"})
 
@@ -585,21 +588,21 @@ class AiChatToolTests(TestCase):
             reorder_threshold=5,
         )
 
-        result = ai_chat.list_books({"category": "Fiction"}, self.user)
+        result = ai_chat.list_books({"category": "Fiction"}, self.account)
         titles = {book["title"] for book in result["books"]}
         self.assertEqual(titles, {"Low Stock Book", "Well Stocked Book"})
 
     def test_list_books_filters_by_author(self):
-        result = ai_chat.list_books({"author": "Jane"}, self.user)
+        result = ai_chat.list_books({"author": "Jane"}, self.account)
         titles = {book["title"] for book in result["books"]}
         self.assertEqual(titles, {"Low Stock Book"})
 
     def test_list_books_filters_by_stock_range(self):
-        result = ai_chat.list_books({"min_stock": 10}, self.user)
+        result = ai_chat.list_books({"min_stock": 10}, self.account)
         titles = {book["title"] for book in result["books"]}
         self.assertEqual(titles, {"Well Stocked Book"})
 
-        result = ai_chat.list_books({"max_stock": 10}, self.user)
+        result = ai_chat.list_books({"max_stock": 10}, self.account)
         titles = {book["title"] for book in result["books"]}
         self.assertEqual(titles, {"Low Stock Book"})
 
@@ -616,44 +619,44 @@ class AiChatToolTests(TestCase):
             reorder_threshold=5,
         )
 
-        result = ai_chat.list_books({"max_price": 20}, self.user)
+        result = ai_chat.list_books({"max_price": 20}, self.account)
         titles = {book["title"] for book in result["books"]}
         self.assertEqual(titles, {"Low Stock Book", "Well Stocked Book"})
 
-        result = ai_chat.list_books({"min_price": 20}, self.user)
+        result = ai_chat.list_books({"min_price": 20}, self.account)
         titles = {book["title"] for book in result["books"]}
         self.assertEqual(titles, {"Pricey Book"})
 
     def test_get_low_stock_books(self):
-        result = ai_chat.get_low_stock_books({}, self.user)
+        result = ai_chat.get_low_stock_books({}, self.account)
         titles = {book["title"] for book in result["books"]}
         self.assertEqual(titles, {"Low Stock Book"})
 
     def test_search_books_matches_author(self):
-        result = ai_chat.search_books({"query": "Jane"}, self.user)
+        result = ai_chat.search_books({"query": "Jane"}, self.account)
         titles = {book["title"] for book in result["books"]}
         self.assertEqual(titles, {"Low Stock Book"})
 
     def test_get_sales_summary_filters_by_date(self):
-        result = ai_chat.get_sales_summary({"start_date": "2024-02-01"}, self.user)
+        result = ai_chat.get_sales_summary({"start_date": "2024-02-01"}, self.account)
         self.assertEqual(result["total_units_sold"], 1)
         self.assertEqual(result["sale_count"], 1)
 
     def test_get_top_selling_books(self):
-        result = ai_chat.get_top_selling_books({"limit": 1}, self.user)
+        result = ai_chat.get_top_selling_books({"limit": 1}, self.account)
         self.assertEqual(len(result["books"]), 1)
         self.assertEqual(result["books"][0]["title"], "Low Stock Book")
         self.assertEqual(result["books"][0]["units_sold"], 3)
 
     def test_get_categories(self):
-        result = ai_chat.get_categories({}, self.user)
+        result = ai_chat.get_categories({}, self.account)
         self.assertEqual(
             result["categories"],
             [{"name": "Fiction", "book_count": 2}],
         )
 
     def test_execute_tool_denies_without_permission(self):
-        result = ai_chat.execute_tool("get_categories", {}, self.user)
+        result = ai_chat.execute_tool("get_categories", {}, self.user, self.account)
         self.assertIn("error", result)
 
 
@@ -1608,6 +1611,7 @@ class AdjustStockTests(TestCase):
     def setUp(self):
         User = get_user_model()
         self.user = User.objects.create_user(username="owner", password="pass1234")
+        self.account = get_or_create_account_for_user(self.user)
         cat = Category.objects.create(owner=self.user, name="Fiction")
         self.book = Book.objects.create(
             owner=self.user, title="Test Book", publisher="Acme",
@@ -1616,18 +1620,18 @@ class AdjustStockTests(TestCase):
         )
 
     def test_first_positive_adjustment_adds_to_manually_set_stock(self):
-        book = _adjust_stock(self.book.id, 50, self.user)
+        book = _adjust_stock(self.book.id, 50, self.user, self.account)
         self.assertEqual(book.stock_on_hand, 60)
 
     def test_first_negative_adjustment_subtracts_from_manually_set_stock(self):
-        book = _adjust_stock(self.book.id, -3, self.user)
+        book = _adjust_stock(self.book.id, -3, self.user, self.account)
         self.assertEqual(book.stock_on_hand, 7)
 
     def test_second_location_does_not_double_count_existing_stock(self):
         other_location = Location.objects.create(owner=self.user, name="Warehouse 2")
 
-        _adjust_stock(self.book.id, 50, self.user)
-        book = _adjust_stock(self.book.id, 5, self.user, location=other_location)
+        _adjust_stock(self.book.id, 50, self.user, self.account)
+        book = _adjust_stock(self.book.id, 5, self.user, self.account, location=other_location)
 
         self.assertEqual(book.stock_on_hand, 65)
 
@@ -1753,6 +1757,7 @@ class InvoiceAgingReportTests(TestCase):
     def setUp(self):
         User = get_user_model()
         self.user = User.objects.create_user(username="owner", password="pass1234")
+        self.account = get_or_create_account_for_user(self.user)
         self.client.force_login(self.user)
         grant(self.user, "view_invoice")
         self.today = timezone.now().date()
@@ -1773,7 +1778,7 @@ class InvoiceAgingReportTests(TestCase):
 
     def test_not_yet_due_invoice_in_current_bucket(self):
         self._invoice(due_date=self.today + timedelta(days=10))
-        buckets, grand_total = _invoice_aging_data(self.user)
+        buckets, grand_total = _invoice_aging_data(self.account)
         self.assertEqual(len(buckets["current"]["invoices"]), 1)
         self.assertEqual(grand_total, Decimal("100.00"))
 
@@ -1782,7 +1787,7 @@ class InvoiceAgingReportTests(TestCase):
         self._invoice(due_date=self.today - timedelta(days=45))
         self._invoice(due_date=self.today - timedelta(days=90))
 
-        buckets, grand_total = _invoice_aging_data(self.user)
+        buckets, grand_total = _invoice_aging_data(self.account)
         self.assertEqual(len(buckets["0_30"]["invoices"]), 1)
         self.assertEqual(len(buckets["31_60"]["invoices"]), 1)
         self.assertEqual(len(buckets["60_plus"]["invoices"]), 1)
@@ -1790,12 +1795,12 @@ class InvoiceAgingReportTests(TestCase):
 
     def test_paid_invoices_excluded(self):
         self._invoice(due_date=self.today - timedelta(days=10), status=Invoice.STATUS_PAID)
-        buckets, grand_total = _invoice_aging_data(self.user)
+        buckets, grand_total = _invoice_aging_data(self.account)
         self.assertEqual(grand_total, Decimal("0"))
 
     def test_invoice_without_due_date_is_current(self):
         self._invoice(due_date=None)
-        buckets, grand_total = _invoice_aging_data(self.user)
+        buckets, grand_total = _invoice_aging_data(self.account)
         self.assertEqual(len(buckets["current"]["invoices"]), 1)
 
     def test_report_view_accessible(self):
@@ -1808,6 +1813,7 @@ class ProfitLossReportTests(TestCase):
     def setUp(self):
         User = get_user_model()
         self.user = User.objects.create_user(username="owner", password="pass1234")
+        self.account = get_or_create_account_for_user(self.user)
         self.client.force_login(self.user)
         grant(self.user, "view_book")
         cat = Category.objects.create(owner=self.user, name="Fiction")
@@ -1823,7 +1829,7 @@ class ProfitLossReportTests(TestCase):
         )
 
     def test_no_sales_returns_empty_rows(self):
-        rows, totals = _pl_data(self.user, None, None)
+        rows, totals = _pl_data(self.account, None, None)
         self.assertEqual(rows, [])
         self.assertEqual(totals["net_profit"], Decimal("0"))
 
@@ -1836,7 +1842,7 @@ class ProfitLossReportTests(TestCase):
             sale_date=date(2024, 1, 15),
             channel="online",
         )
-        rows, totals = _pl_data(self.user, None, None)
+        rows, totals = _pl_data(self.account, None, None)
         self.assertEqual(len(rows), 1)
         self.assertEqual(rows[0]["revenue"], Decimal("150.00"))
         self.assertEqual(rows[0]["units"], 10)
@@ -1850,7 +1856,7 @@ class ProfitLossReportTests(TestCase):
             sale_date=date(2023, 12, 1),
             channel="online",
         )
-        rows, totals = _pl_data(self.user, "2024-01-01", "2024-12-31")
+        rows, totals = _pl_data(self.account, "2024-01-01", "2024-12-31")
         self.assertEqual(rows, [])
 
     def test_report_view_accessible(self):
@@ -1871,7 +1877,7 @@ class ProfitLossReportTests(TestCase):
             owner=other, book=book2, quantity=5,
             unit_price=Decimal("20.00"), sale_date=date.today(), channel="online",
         )
-        rows, totals = _pl_data(self.user, None, None)
+        rows, totals = _pl_data(self.account, None, None)
         self.assertEqual(rows, [])
 
 

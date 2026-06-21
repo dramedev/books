@@ -283,7 +283,7 @@ def _reorder_export_rows(reorders):
 
 
 def _book_filters(request):
-    books = Book.objects.filter(owner=request.user).select_related("category").prefetch_related("authors")
+    books = Book.objects.filter(account=request.account).select_related("category").prefetch_related("authors")
 
     search = request.GET.get("q", "").strip()
     category = request.GET.get("category", "")
@@ -376,16 +376,16 @@ def _filter_context(request):
         query_params.pop("page")
 
     return {
-        "categories": Category.objects.filter(owner=request.user).order_by("name"),
-        "authors": Author.objects.filter(owner=request.user).order_by("name"),
+        "categories": Category.objects.filter(account=request.account).order_by("name"),
+        "authors": Author.objects.filter(account=request.account).order_by("name"),
         "publishers": (
-            Book.objects.filter(owner=request.user)
+            Book.objects.filter(account=request.account)
             .exclude(publisher="")
             .order_by("publisher")
             .values_list("publisher", flat=True)
             .distinct()
         ),
-        "years": Book.objects.filter(owner=request.user).dates("published_date", "year", order="DESC"),
+        "years": Book.objects.filter(account=request.account).dates("published_date", "year", order="DESC"),
         "filters": request.GET,
         "query_string": query_params.urlencode(),
     }
@@ -397,7 +397,7 @@ def _filter_context(request):
 def book_bulk_delete(request):
     ids = request.POST.getlist("book_ids")
     if ids:
-        deleted, _ = Book.objects.filter(id__in=ids, owner=request.user).delete()
+        deleted, _ = Book.objects.filter(id__in=ids, account=request.account).delete()
         messages.success(request, gettext("%(count)s book(s) deleted.") % {"count": deleted})
     else:
         messages.warning(request, gettext("No books selected."))
@@ -432,7 +432,7 @@ def book_list(request):
             "page_obj": page_obj,
             "sort": sort,
             "result_count_text": gettext("%(count)s book(s) found") % {"count": paginator.count},
-            "has_any_books": Book.objects.filter(owner=request.user).exists(),
+            "has_any_books": Book.objects.filter(account=request.account).exists(),
         }
     )
     context["active_filters"] = _active_book_filters(request, context)
@@ -446,10 +446,10 @@ def book_detail(request, id):
     book = get_object_or_404(
         Book.objects.select_related("category").prefetch_related("authors"),
         id=id,
-        owner=request.user,
+        account=request.account,
     )
 
-    sales_qs = book.sales.filter(owner=request.user)
+    sales_qs = book.sales.filter(account=request.account)
     totals = sales_qs.aggregate(
         total_quantity=Sum("quantity"),
         total_revenue=Sum(REVENUE_EXPRESSION),
@@ -465,7 +465,7 @@ def book_detail(request, id):
             "note": f"{sale.quantity} sold" + (f" via {sale.channel}" if sale.channel else ""),
         })
 
-    for ret in Return.objects.filter(owner=request.user, sale__book=book).select_related("sale"):
+    for ret in Return.objects.filter(account=request.account, sale__book=book).select_related("sale"):
         history.append({
             "date": ret.return_date,
             "type": "return",
@@ -473,7 +473,7 @@ def book_detail(request, id):
             "note": ret.reason or "-",
         })
 
-    for adj in book.stock_adjustments.filter(owner=request.user):
+    for adj in book.stock_adjustments.filter(account=request.account):
         history.append({
             "date": adj.created_at.date(),
             "type": "adjustment",
@@ -496,14 +496,15 @@ def book_detail(request, id):
 @login_required
 @permission_required("books.add_book", raise_exception=True)
 def book_create(request):
-    form = BookForm(user=request.user)
+    form = BookForm(account=request.account)
 
     if request.method == "POST":
-        form = BookForm(request.POST, user=request.user)
+        form = BookForm(request.POST, account=request.account)
 
         if form.is_valid():
             book = form.save(commit=False)
             book.owner = request.user
+            book.account = request.account
             book.save()
             form.save_m2m()
             messages.success(request, gettext("Book created."))
@@ -515,11 +516,11 @@ def book_create(request):
 @login_required
 @permission_required("books.change_book", raise_exception=True)
 def book_update(request, id):
-    book = get_object_or_404(Book, id=id, owner=request.user)
-    form = BookForm(instance=book, user=request.user)
+    book = get_object_or_404(Book, id=id, account=request.account)
+    form = BookForm(instance=book, account=request.account)
 
     if request.method == "POST":
-        form = BookForm(request.POST, instance=book, user=request.user)
+        form = BookForm(request.POST, instance=book, account=request.account)
 
         if form.is_valid():
             form.save()
@@ -532,7 +533,7 @@ def book_update(request, id):
 @login_required
 @permission_required("books.delete_book", raise_exception=True)
 def book_delete(request, id):
-    book = get_object_or_404(Book, id=id, owner=request.user)
+    book = get_object_or_404(Book, id=id, account=request.account)
 
     if request.method == "POST":
         book.delete()
@@ -553,7 +554,7 @@ def book_delete(request, id):
 @login_required
 @permission_required("books.view_book", raise_exception=True)
 def stock_list(request):
-    books = Book.objects.filter(owner=request.user).select_related("category").order_by("stock_on_hand", "title")
+    books = Book.objects.filter(account=request.account).select_related("category").order_by("stock_on_hand", "title")
     low_only = request.GET.get("low") == "1"
     q = request.GET.get("q", "").strip()
 
@@ -604,7 +605,7 @@ def stock_list(request):
             "active_filters": active_filters,
             "toggle_low_url": toggle_low_url,
             "result_count_text": gettext("%(count)s book(s) found") % {"count": paginator.count},
-            "has_any_books": Book.objects.filter(owner=request.user).exists(),
+            "has_any_books": Book.objects.filter(account=request.account).exists(),
         },
     )
 
@@ -612,7 +613,7 @@ def stock_list(request):
 @login_required
 @permission_required("books.view_stockadjustment", raise_exception=True)
 def stock_adjustment_list(request):
-    adjustments = StockAdjustment.objects.filter(owner=request.user).select_related("book", "book__category")
+    adjustments = StockAdjustment.objects.filter(account=request.account).select_related("book", "book__category")
 
     book_id = request.GET.get("book", "").strip()
     reason = request.GET.get("reason", "").strip()
@@ -628,7 +629,7 @@ def stock_adjustment_list(request):
     if end_date:
         adjustments = adjustments.filter(created_at__date__lte=end_date)
 
-    books_qs = Book.objects.filter(owner=request.user).order_by("title")
+    books_qs = Book.objects.filter(account=request.account).order_by("title")
 
     query_params = request.GET.copy()
     query_params.pop("page", None)
@@ -671,7 +672,7 @@ def stock_adjustment_list(request):
             "query_string": query_string,
             "active_filters": active_filters,
             "result_count_text": gettext("%(count)s adjustment(s) found") % {"count": paginator.count},
-            "has_any_adjustments": StockAdjustment.objects.filter(owner=request.user).exists(),
+            "has_any_adjustments": StockAdjustment.objects.filter(account=request.account).exists(),
         },
     )
 
@@ -679,7 +680,7 @@ def stock_adjustment_list(request):
 @login_required
 @permission_required("books.add_stockadjustment", raise_exception=True)
 def stock_adjustment_create(request, book_id):
-    book = get_object_or_404(Book, id=book_id, owner=request.user)
+    book = get_object_or_404(Book, id=book_id, account=request.account)
 
     if request.method == "POST":
         form = StockAdjustmentForm(request.POST)
@@ -696,9 +697,10 @@ def stock_adjustment_create(request, book_id):
             else:
                 adjustment = form.save(commit=False)
                 adjustment.owner = request.user
+                adjustment.account = request.account
                 adjustment.book = book
 
-                book = _adjust_stock(book.id, change, request.user)
+                book = _adjust_stock(book.id, change, request.user, request.account)
                 adjustment.resulting_stock = book.stock_on_hand
                 adjustment.save()
 
@@ -721,7 +723,7 @@ def stock_adjustment_create(request, book_id):
 @login_required
 @permission_required("books.view_category", raise_exception=True)
 def category_list(request):
-    categories = Category.objects.filter(owner=request.user).annotate(book_count=Count("book")).order_by("name")
+    categories = Category.objects.filter(account=request.account).annotate(book_count=Count("book")).order_by("name")
     q = request.GET.get("q", "").strip()
     if q:
         categories = categories.filter(name__icontains=q)
@@ -742,7 +744,7 @@ def category_list(request):
             "q": q,
             "query_string": query_string,
             "result_count_text": gettext("%(count)s category(ies) found") % {"count": paginator.count},
-            "has_any_categories": Category.objects.filter(owner=request.user).exists(),
+            "has_any_categories": Category.objects.filter(account=request.account).exists(),
         },
     )
 
@@ -758,6 +760,7 @@ def category_create(request):
         if form.is_valid():
             category = form.save(commit=False)
             category.owner = request.user
+            category.account = request.account
             category.save()
             messages.success(request, gettext("Category created."))
             return redirect("category_list")
@@ -768,7 +771,7 @@ def category_create(request):
 @login_required
 @permission_required("books.change_category", raise_exception=True)
 def category_update(request, id):
-    category = get_object_or_404(Category, id=id, owner=request.user)
+    category = get_object_or_404(Category, id=id, account=request.account)
     form = CategoryForm(instance=category)
 
     if request.method == "POST":
@@ -792,7 +795,7 @@ def category_update(request, id):
 @login_required
 @permission_required("books.delete_category", raise_exception=True)
 def category_delete(request, id):
-    category = get_object_or_404(Category, id=id, owner=request.user)
+    category = get_object_or_404(Category, id=id, account=request.account)
     book_count = category.book_set.count()
 
     if request.method == "POST":
@@ -827,7 +830,7 @@ def category_delete(request, id):
 @login_required
 @permission_required("books.view_author", raise_exception=True)
 def author_list(request):
-    authors = Author.objects.filter(owner=request.user).annotate(book_count=Count("books")).order_by("name")
+    authors = Author.objects.filter(account=request.account).annotate(book_count=Count("books")).order_by("name")
     q = request.GET.get("q", "").strip()
     if q:
         authors = authors.filter(name__icontains=q)
@@ -848,7 +851,7 @@ def author_list(request):
             "q": q,
             "query_string": query_string,
             "result_count_text": gettext("%(count)s author(s) found") % {"count": paginator.count},
-            "has_any_authors": Author.objects.filter(owner=request.user).exists(),
+            "has_any_authors": Author.objects.filter(account=request.account).exists(),
         },
     )
 
@@ -864,6 +867,7 @@ def author_create(request):
         if form.is_valid():
             author = form.save(commit=False)
             author.owner = request.user
+            author.account = request.account
             author.save()
             messages.success(request, gettext("Author created."))
             return redirect("author_list")
@@ -874,7 +878,7 @@ def author_create(request):
 @login_required
 @permission_required("books.change_author", raise_exception=True)
 def author_update(request, id):
-    author = get_object_or_404(Author, id=id, owner=request.user)
+    author = get_object_or_404(Author, id=id, account=request.account)
     form = AuthorForm(instance=author)
 
     if request.method == "POST":
@@ -898,7 +902,7 @@ def author_update(request, id):
 @login_required
 @permission_required("books.delete_author", raise_exception=True)
 def author_delete(request, id):
-    author = get_object_or_404(Author, id=id, owner=request.user)
+    author = get_object_or_404(Author, id=id, account=request.account)
     book_count = author.books.count()
 
     if request.method == "POST":
@@ -933,7 +937,7 @@ def author_delete(request, id):
 @login_required
 @permission_required("books.view_supplier", raise_exception=True)
 def supplier_list(request):
-    suppliers = Supplier.objects.filter(owner=request.user).annotate(reorder_count=Count("reorders")).order_by("name")
+    suppliers = Supplier.objects.filter(account=request.account).annotate(reorder_count=Count("reorders")).order_by("name")
     q = request.GET.get("q", "").strip()
     if q:
         suppliers = suppliers.filter(
@@ -956,7 +960,7 @@ def supplier_list(request):
             "q": q,
             "query_string": query_string,
             "result_count_text": gettext("%(count)s supplier(s) found") % {"count": paginator.count},
-            "has_any_suppliers": Supplier.objects.filter(owner=request.user).exists(),
+            "has_any_suppliers": Supplier.objects.filter(account=request.account).exists(),
         },
     )
 
@@ -972,6 +976,7 @@ def supplier_create(request):
         if form.is_valid():
             supplier = form.save(commit=False)
             supplier.owner = request.user
+            supplier.account = request.account
             supplier.save()
             messages.success(request, gettext("Supplier created."))
             return redirect("supplier_list")
@@ -982,7 +987,7 @@ def supplier_create(request):
 @login_required
 @permission_required("books.change_supplier", raise_exception=True)
 def supplier_update(request, id):
-    supplier = get_object_or_404(Supplier, id=id, owner=request.user)
+    supplier = get_object_or_404(Supplier, id=id, account=request.account)
     form = SupplierForm(instance=supplier)
 
     if request.method == "POST":
@@ -1006,7 +1011,7 @@ def supplier_update(request, id):
 @login_required
 @permission_required("books.delete_supplier", raise_exception=True)
 def supplier_delete(request, id):
-    supplier = get_object_or_404(Supplier, id=id, owner=request.user)
+    supplier = get_object_or_404(Supplier, id=id, account=request.account)
     reorder_count = supplier.reorders.count()
 
     if request.method == "POST":
@@ -1245,8 +1250,8 @@ def report(request):
 @login_required
 @permission_required("books.view_book", raise_exception=True)
 def dashboard(request):
-    books = Book.objects.filter(owner=request.user).select_related("category")
-    sales = Sale.objects.filter(owner=request.user)
+    books = Book.objects.filter(account=request.account).select_related("category")
+    sales = Sale.objects.filter(account=request.account)
 
     total_expense = books.aggregate(total=Sum("distribution_expense"))["total"] or 0
     total_revenue = sales.aggregate(total=Sum(REVENUE_EXPRESSION))["total"] or 0
@@ -1271,7 +1276,7 @@ def dashboard(request):
         )
     }
 
-    received_reorders = Reorder.objects.filter(owner=request.user, status=Reorder.STATUS_RECEIVED)
+    received_reorders = Reorder.objects.filter(account=request.account, status=Reorder.STATUS_RECEIVED)
 
     purchase_cost_by_category = {
         item["book__category__name"]: item["cost"] or 0
@@ -1368,13 +1373,13 @@ def dashboard(request):
     recent_sales = sales.select_related("book", "book__category")[:5]
 
     pending_reorders_count = Reorder.objects.filter(
-        owner=request.user,
+        account=request.account,
         status__in=[Reorder.STATUS_PENDING, Reorder.STATUS_ORDERED],
     ).count()
 
     today = timezone.now().date()
     overdue_invoices_count = Invoice.objects.filter(
-        owner=request.user,
+        account=request.account,
         due_date__lt=today,
         due_date__isnull=False,
     ).exclude(status=Invoice.STATUS_PAID).count()
@@ -1394,8 +1399,8 @@ def dashboard(request):
         "quote": random.choice(LEARNING_QUOTES),
         "all_quotes": [str(quote) for quote in LEARNING_QUOTES],
         "total_books": books.count(),
-        "total_authors": Author.objects.filter(owner=request.user).count(),
-        "total_categories": Category.objects.filter(owner=request.user).count(),
+        "total_authors": Author.objects.filter(account=request.account).count(),
+        "total_categories": Category.objects.filter(account=request.account).count(),
         "low_stock_count": low_stock_books.count(),
         "low_stock_books": [
             {
@@ -1490,17 +1495,17 @@ def global_search(request):
 
     if query:
         if request.user.has_perm("books.view_book"):
-            books = Book.objects.filter(owner=request.user).filter(
+            books = Book.objects.filter(account=request.account).filter(
                 Q(title__icontains=query) | Q(isbn__icontains=query) | Q(publisher__icontains=query)
             ).select_related("category")[:SEARCH_RESULT_LIMIT]
 
         if request.user.has_perm("books.view_customer"):
-            customers = Customer.objects.filter(owner=request.user).filter(
+            customers = Customer.objects.filter(account=request.account).filter(
                 Q(name__icontains=query) | Q(email__icontains=query) | Q(phone__icontains=query)
             )[:SEARCH_RESULT_LIMIT]
 
         if request.user.has_perm("books.view_invoice"):
-            invoices = Invoice.objects.filter(owner=request.user).filter(
+            invoices = Invoice.objects.filter(account=request.account).filter(
                 Q(invoice_number__icontains=query) | Q(customer_name__icontains=query)
             )[:SEARCH_RESULT_LIMIT]
 
@@ -1533,7 +1538,7 @@ def chat_api(request):
         return JsonResponse({"error": "Message is required."}, status=400)
 
     try:
-        reply, updated_history = ai_chat.get_chat_reply(request.user, message, history)
+        reply, updated_history = ai_chat.get_chat_reply(request.user, request.account, message, history)
     except Exception:
         reply = gettext("Sorry, something went wrong talking to the AI assistant. Please try again.")
         updated_history = history
@@ -1541,21 +1546,21 @@ def chat_api(request):
     return JsonResponse({"reply": reply, "history": updated_history})
 
 
-def _adjust_stock(book_id, delta, owner, location=None):
-    book = Book.objects.get(id=book_id, owner=owner)
+def _adjust_stock(book_id, delta, owner, account, location=None):
+    book = Book.objects.get(id=book_id, account=account)
 
     if location is None:
         location, _ = Location.objects.get_or_create(
-            owner=owner,
+            account=account,
             is_default=True,
-            defaults={"name": "Main Warehouse"},
+            defaults={"name": "Main Warehouse", "owner": owner},
         )
 
     book_has_stock_levels = StockLevel.objects.filter(book=book).exists()
 
     level, created = StockLevel.objects.get_or_create(
-        owner=owner, book=book, location=location,
-        defaults={"quantity": 0},
+        account=account, book=book, location=location,
+        defaults={"quantity": 0, "owner": owner},
     )
 
     # First-ever StockLevel for this book: seed from stock_on_hand so location
@@ -1622,7 +1627,7 @@ def _notify_stock_level(request, book):
 
 
 def _sale_filters(request):
-    sales = Sale.objects.filter(owner=request.user).select_related("book", "book__category")
+    sales = Sale.objects.filter(account=request.account).select_related("book", "book__category")
     start_date = request.GET.get("start_date", "").strip()
     end_date = request.GET.get("end_date", "").strip()
     book_id = request.GET.get("book", "")
@@ -1685,9 +1690,9 @@ def sale_list(request):
     query_params.pop("page", None)
     query_string = query_params.urlencode()
 
-    books_qs = Book.objects.filter(owner=request.user).order_by("title")
+    books_qs = Book.objects.filter(account=request.account).order_by("title")
     channels = (
-        Sale.objects.filter(owner=request.user)
+        Sale.objects.filter(account=request.account)
         .exclude(channel="")
         .values_list("channel", flat=True)
         .distinct()
@@ -1715,7 +1720,7 @@ def sale_list(request):
             "query_string": query_string,
             "active_filters": _active_sale_filters(request, books_qs),
             "result_count_text": gettext("%(count)s sale(s) found") % {"count": paginator.count},
-            "has_any_sales": Sale.objects.filter(owner=request.user).exists(),
+            "has_any_sales": Sale.objects.filter(account=request.account).exists(),
             "totals_by_currency": totals_by_currency,
         },
     )
@@ -1724,10 +1729,10 @@ def sale_list(request):
 @login_required
 @permission_required("books.add_sale", raise_exception=True)
 def sale_create(request):
-    form = SaleForm(user=request.user)
+    form = SaleForm(account=request.account)
 
     if request.method == "POST":
-        form = SaleForm(request.POST, user=request.user)
+        form = SaleForm(request.POST, account=request.account)
 
         if form.is_valid():
             book = form.cleaned_data["book"]
@@ -1742,8 +1747,9 @@ def sale_create(request):
             else:
                 sale = form.save(commit=False)
                 sale.owner = request.user
+                sale.account = request.account
                 sale.save()
-                book = _adjust_stock(sale.book_id, -sale.quantity, request.user)
+                book = _adjust_stock(sale.book_id, -sale.quantity, request.user, request.account)
                 messages.success(request, gettext("Sale recorded."))
                 _notify_stock_level(request, book)
                 return redirect("sale_list")
@@ -1754,14 +1760,14 @@ def sale_create(request):
 @login_required
 @permission_required("books.change_sale", raise_exception=True)
 def sale_update(request, id):
-    sale = get_object_or_404(Sale, id=id, owner=request.user)
-    form = SaleForm(instance=sale, user=request.user)
+    sale = get_object_or_404(Sale, id=id, account=request.account)
+    form = SaleForm(instance=sale, account=request.account)
 
     if request.method == "POST":
         previous_book_id = sale.book_id
         previous_quantity = sale.quantity
 
-        form = SaleForm(request.POST, instance=sale, user=request.user)
+        form = SaleForm(request.POST, instance=sale, account=request.account)
 
         if form.is_valid():
             new_book = form.cleaned_data["book"]
@@ -1779,8 +1785,8 @@ def sale_update(request, id):
                 )
             else:
                 sale = form.save()
-                _adjust_stock(previous_book_id, previous_quantity, request.user)
-                book = _adjust_stock(sale.book_id, -sale.quantity, request.user)
+                _adjust_stock(previous_book_id, previous_quantity, request.user, request.account)
+                book = _adjust_stock(sale.book_id, -sale.quantity, request.user, request.account)
                 messages.success(request, gettext("Sale updated."))
                 _notify_stock_level(request, book)
                 return redirect("sale_list")
@@ -1798,10 +1804,10 @@ def sale_update(request, id):
 @login_required
 @permission_required("books.delete_sale", raise_exception=True)
 def sale_delete(request, id):
-    sale = get_object_or_404(Sale, id=id, owner=request.user)
+    sale = get_object_or_404(Sale, id=id, account=request.account)
 
     if request.method == "POST":
-        _adjust_stock(sale.book_id, sale.quantity, request.user)
+        _adjust_stock(sale.book_id, sale.quantity, request.user, request.account)
         sale.delete()
         messages.success(request, gettext("Sale deleted."))
         return redirect("sale_list")
@@ -1820,7 +1826,7 @@ def sale_delete(request, id):
 @login_required
 @permission_required("books.view_return", raise_exception=True)
 def return_list(request):
-    returns = Return.objects.filter(owner=request.user).select_related("sale", "sale__book")
+    returns = Return.objects.filter(account=request.account).select_related("sale", "sale__book")
 
     book_id = request.GET.get("book", "").strip()
     start_date = request.GET.get("start_date", "").strip()
@@ -1833,7 +1839,7 @@ def return_list(request):
     if end_date:
         returns = returns.filter(return_date__lte=end_date)
 
-    books_qs = Book.objects.filter(owner=request.user).order_by("title")
+    books_qs = Book.objects.filter(account=request.account).order_by("title")
 
     query_params = request.GET.copy()
     query_params.pop("page", None)
@@ -1879,7 +1885,7 @@ def return_list(request):
             "query_string": query_string,
             "active_filters": active_filters,
             "result_count_text": gettext("%(count)s return(s) found") % {"count": paginator.count},
-            "has_any_returns": Return.objects.filter(owner=request.user).exists(),
+            "has_any_returns": Return.objects.filter(account=request.account).exists(),
             "refund_totals_by_currency": refund_totals_by_currency,
         },
     )
@@ -1888,7 +1894,7 @@ def return_list(request):
 @login_required
 @permission_required("books.add_return", raise_exception=True)
 def return_create(request, sale_id):
-    sale = get_object_or_404(Sale, id=sale_id, owner=request.user)
+    sale = get_object_or_404(Sale, id=sale_id, account=request.account)
 
     if sale.quantity <= 0:
         messages.error(request, gettext("This sale has already been fully returned."))
@@ -1909,13 +1915,14 @@ def return_create(request, sale_id):
             else:
                 return_obj = form.save(commit=False)
                 return_obj.owner = request.user
+                return_obj.account = request.account
                 return_obj.sale = sale
                 return_obj.save()
 
                 sale.quantity -= quantity
                 sale.save(update_fields=["quantity"])
 
-                book = _adjust_stock(sale.book_id, quantity, request.user)
+                book = _adjust_stock(sale.book_id, quantity, request.user, request.account)
                 messages.success(request, gettext("Return recorded and stock updated."))
                 _notify_stock_level(request, book)
                 return redirect("return_list")
@@ -1935,13 +1942,13 @@ def return_create(request, sale_id):
 @login_required
 @permission_required("books.delete_return", raise_exception=True)
 def return_delete(request, id):
-    return_obj = get_object_or_404(Return, id=id, owner=request.user)
+    return_obj = get_object_or_404(Return, id=id, account=request.account)
 
     if request.method == "POST":
         sale = return_obj.sale
         sale.quantity += return_obj.quantity
         sale.save(update_fields=["quantity"])
-        _adjust_stock(sale.book_id, -return_obj.quantity, request.user)
+        _adjust_stock(sale.book_id, -return_obj.quantity, request.user, request.account)
         return_obj.delete()
         messages.success(request, gettext("Return deleted."))
         return redirect("return_list")
@@ -1960,7 +1967,7 @@ def return_delete(request, id):
 @login_required
 @permission_required("books.view_reorder", raise_exception=True)
 def reorder_suggestions(request):
-    books = Book.objects.filter(owner=request.user).select_related("category")
+    books = Book.objects.filter(account=request.account).select_related("category")
 
     cutoff = timezone.now().date() - timedelta(days=REORDER_VELOCITY_WINDOW_DAYS)
 
@@ -2009,7 +2016,7 @@ def reorder_suggestions(request):
 
 
 def _reorder_filters(request):
-    reorders = Reorder.objects.filter(owner=request.user).select_related("book", "book__category", "supplier")
+    reorders = Reorder.objects.filter(account=request.account).select_related("book", "book__category", "supplier")
 
     status = request.GET.get("status", "").strip()
     start_date = request.GET.get("start_date", "").strip()
@@ -2082,8 +2089,8 @@ def reorder_list(request):
     query_params.pop("page", None)
     query_string = query_params.urlencode()
 
-    suppliers = Supplier.objects.filter(owner=request.user).order_by("name")
-    books_qs = Book.objects.filter(owner=request.user).order_by("title")
+    suppliers = Supplier.objects.filter(account=request.account).order_by("name")
+    books_qs = Book.objects.filter(account=request.account).order_by("title")
 
     paginator = Paginator(reorders, 10)
     page_obj = paginator.get_page(request.GET.get("page"))
@@ -2102,7 +2109,7 @@ def reorder_list(request):
             "query_string": query_string,
             "active_filters": _active_reorder_filters(request, books_qs, suppliers),
             "result_count_text": gettext("%(count)s reorder(s) found") % {"count": paginator.count},
-            "has_any_reorders": Reorder.objects.filter(owner=request.user).exists(),
+            "has_any_reorders": Reorder.objects.filter(account=request.account).exists(),
         },
     )
 
@@ -2110,22 +2117,23 @@ def reorder_list(request):
 @login_required
 @permission_required("books.add_reorder", raise_exception=True)
 def reorder_create(request, book_id):
-    book = get_object_or_404(Book, id=book_id, owner=request.user)
+    book = get_object_or_404(Book, id=book_id, account=request.account)
 
     suggested_quantity = _suggested_reorder_quantity(book)
 
     if request.method == "POST":
-        form = ReorderForm(request.POST, user=request.user)
+        form = ReorderForm(request.POST, account=request.account)
 
         if form.is_valid():
             reorder = form.save(commit=False)
             reorder.owner = request.user
+            reorder.account = request.account
             reorder.book = book
             reorder.save()
             messages.success(request, gettext("Reorder created."))
             return redirect("reorder_list")
     else:
-        form = ReorderForm(initial={"quantity": suggested_quantity}, user=request.user)
+        form = ReorderForm(initial={"quantity": suggested_quantity}, account=request.account)
 
     return render(
         request,
@@ -2141,7 +2149,7 @@ def reorder_create(request, book_id):
 @permission_required("books.change_reorder", raise_exception=True)
 @require_POST
 def reorder_update_status(request, id, action):
-    reorder = get_object_or_404(Reorder, id=id, owner=request.user)
+    reorder = get_object_or_404(Reorder, id=id, account=request.account)
 
     transitions = {
         "ordered": (Reorder.STATUS_PENDING, Reorder.STATUS_ORDERED),
@@ -2167,7 +2175,7 @@ def reorder_update_status(request, id, action):
     if new_status == Reorder.STATUS_RECEIVED:
         reorder.received_at = timezone.now()
         reorder.save(update_fields=["status", "received_at"])
-        book = _adjust_stock(reorder.book_id, reorder.quantity, request.user)
+        book = _adjust_stock(reorder.book_id, reorder.quantity, request.user, request.account)
         messages.success(request, gettext("Reorder received and stock updated."))
         _notify_stock_level(request, book)
     else:
@@ -2186,7 +2194,7 @@ def reorder_update_status(request, id, action):
 @login_required
 @permission_required("books.delete_reorder", raise_exception=True)
 def reorder_delete(request, id):
-    reorder = get_object_or_404(Reorder, id=id, owner=request.user)
+    reorder = get_object_or_404(Reorder, id=id, account=request.account)
 
     if reorder.status != Reorder.STATUS_CANCELLED:
         messages.error(request, gettext("Only cancelled reorders can be deleted."))
@@ -2251,7 +2259,10 @@ def import_books_csv(request):
             # Resolve category
             category = None
             if category_name:
-                category, _ = Category.objects.get_or_create(owner=request.user, name=category_name)
+                category, _ = Category.objects.get_or_create(
+                    account=request.account, name=category_name,
+                    defaults={"owner": request.user},
+                )
 
             # Resolve published date
             published_date = None
@@ -2273,10 +2284,10 @@ def import_books_csv(request):
             book = None
             is_new = False
             if isbn:
-                book = Book.objects.filter(owner=request.user, isbn=isbn).first()
+                book = Book.objects.filter(account=request.account, isbn=isbn).first()
 
             if book is None:
-                book = Book(owner=request.user)
+                book = Book(owner=request.user, account=request.account)
                 is_new = True
 
             book.title = title
@@ -2298,7 +2309,10 @@ def import_books_csv(request):
                 for name in authors_raw.split(","):
                     name = name.strip()
                     if name:
-                        author, _ = Author.objects.get_or_create(owner=request.user, name=name)
+                        author, _ = Author.objects.get_or_create(
+                            account=request.account, name=name,
+                            defaults={"owner": request.user},
+                        )
                         author_objs.append(author)
                 if author_objs:
                     book.authors.set(author_objs)
@@ -2772,12 +2786,12 @@ def export_invoices_pdf(request):
     return response
 
 
-def _next_invoice_number(owner):
+def _next_invoice_number(account):
     from datetime import date as _date
     year = _date.today().year
     prefix = f"INV-{year}-"
     last = (
-        Invoice.objects.filter(owner=owner, invoice_number__startswith=prefix)
+        Invoice.objects.filter(account=account, invoice_number__startswith=prefix)
         .order_by("-invoice_number")
         .values_list("invoice_number", flat=True)
         .first()
@@ -2787,7 +2801,7 @@ def _next_invoice_number(owner):
 
 
 def _invoice_filters(request):
-    invoices = Invoice.objects.filter(owner=request.user).prefetch_related("items")
+    invoices = Invoice.objects.filter(account=request.account).prefetch_related("items")
     status = request.GET.get("status")
     today = timezone.now().date()
 
@@ -2845,7 +2859,7 @@ def _active_invoice_filters(request, query_params):
 
     customer_id = request.GET.get("customer", "")
     if customer_id.isdigit():
-        customer = Customer.objects.filter(id=customer_id, owner=request.user).first()
+        customer = Customer.objects.filter(id=customer_id, account=request.account).first()
         if customer:
             filters.append({"label": gettext("Customer: %(name)s") % {"name": customer.name}, "url": remove("customer")})
 
@@ -2860,7 +2874,7 @@ def invoice_list(request):
     today = timezone.now().date()
 
     overdue_count = Invoice.objects.filter(
-        owner=request.user,
+        account=request.account,
         due_date__lt=today,
         due_date__isnull=False,
     ).exclude(status=Invoice.STATUS_PAID).count()
@@ -2900,20 +2914,20 @@ def invoice_list(request):
         "filters": request.GET,
         "active_filters": _active_invoice_filters(request, query_params),
         "result_count_text": gettext("%(count)s invoice(s) found") % {"count": paginator.count},
-        "has_any_invoices": Invoice.objects.filter(owner=request.user).exists(),
+        "has_any_invoices": Invoice.objects.filter(account=request.account).exists(),
     })
 
 
 @login_required
 @permission_required("books.add_invoice", raise_exception=True)
 def invoice_create(request):
-    customers = Customer.objects.filter(owner=request.user).values("id", "name", "email", "address")
+    customers = Customer.objects.filter(account=request.account).values("id", "name", "email", "address")
     customers_json = _safe_json(list(customers))
 
     initial = {}
     customer_id = request.GET.get("customer", "")
     if customer_id.isdigit():
-        customer = Customer.objects.filter(id=customer_id, owner=request.user).first()
+        customer = Customer.objects.filter(id=customer_id, account=request.account).first()
         if customer:
             initial = {
                 "customer": customer.id,
@@ -2922,14 +2936,15 @@ def invoice_create(request):
                 "customer_address": customer.address,
             }
 
-    form = InvoiceForm(user=request.user, initial=initial)
+    form = InvoiceForm(account=request.account, initial=initial)
 
     if request.method == "POST":
-        form = InvoiceForm(request.POST, user=request.user)
+        form = InvoiceForm(request.POST, account=request.account)
         if form.is_valid():
             invoice = form.save(commit=False)
             invoice.owner = request.user
-            invoice.invoice_number = _next_invoice_number(request.user)
+            invoice.account = request.account
+            invoice.invoice_number = _next_invoice_number(request.account)
             invoice.save()
             messages.success(request, gettext("Invoice %(number)s created.") % {"number": invoice.invoice_number})
             return redirect("invoice_detail", id=invoice.id)
@@ -2940,8 +2955,8 @@ def invoice_create(request):
 @login_required
 @permission_required("books.view_invoice", raise_exception=True)
 def invoice_detail(request, id):
-    invoice = get_object_or_404(Invoice, id=id, owner=request.user)
-    item_form = InvoiceItemForm(user=request.user)
+    invoice = get_object_or_404(Invoice, id=id, account=request.account)
+    item_form = InvoiceItemForm(account=request.account)
 
     return render(request, "books/invoice_detail.html", {
         "invoice": invoice,
@@ -2953,8 +2968,8 @@ def invoice_detail(request, id):
 @permission_required("books.add_invoiceitem", raise_exception=True)
 @require_POST
 def invoice_item_add(request, invoice_id):
-    invoice = get_object_or_404(Invoice, id=invoice_id, owner=request.user)
-    form = InvoiceItemForm(request.POST, user=request.user)
+    invoice = get_object_or_404(Invoice, id=invoice_id, account=request.account)
+    form = InvoiceItemForm(request.POST, account=request.account)
 
     if form.is_valid():
         item = form.save(commit=False)
@@ -2973,7 +2988,7 @@ def invoice_item_add(request, invoice_id):
 @permission_required("books.delete_invoiceitem", raise_exception=True)
 @require_POST
 def invoice_item_delete(request, id):
-    item = get_object_or_404(InvoiceItem, id=id, invoice__owner=request.user)
+    item = get_object_or_404(InvoiceItem, id=id, invoice__account=request.account)
     invoice_id = item.invoice_id
     item.delete()
     messages.success(request, gettext("Item removed."))
@@ -3029,7 +3044,7 @@ def _advance_invoice_status(invoice, action, request):
 @permission_required("books.change_invoice", raise_exception=True)
 @require_POST
 def invoice_update_status(request, id, action):
-    invoice = get_object_or_404(Invoice, id=id, owner=request.user)
+    invoice = get_object_or_404(Invoice, id=id, account=request.account)
 
     if action not in _invoice_status_transitions():
         return redirect("invoice_list")
@@ -3057,7 +3072,7 @@ def invoice_bulk_update(request):
         messages.error(request, gettext("Select at least one invoice and an action."))
     else:
         updated = 0
-        for invoice in Invoice.objects.filter(owner=request.user, id__in=ids):
+        for invoice in Invoice.objects.filter(account=request.account, id__in=ids):
             if _advance_invoice_status(invoice, action, request):
                 updated += 1
         skipped = len(ids) - updated
@@ -3078,7 +3093,7 @@ def invoice_bulk_update(request):
 @login_required
 @permission_required("books.delete_invoice", raise_exception=True)
 def invoice_delete(request, id):
-    invoice = get_object_or_404(Invoice, id=id, owner=request.user)
+    invoice = get_object_or_404(Invoice, id=id, account=request.account)
 
     if request.method == "POST":
         invoice.delete()
@@ -3100,10 +3115,10 @@ INVOICE_AGING_BUCKETS = [
 ]
 
 
-def _invoice_aging_data(user):
+def _invoice_aging_data(account):
     today = timezone.now().date()
     invoices = (
-        Invoice.objects.filter(owner=user)
+        Invoice.objects.filter(account=account)
         .exclude(status=Invoice.STATUS_PAID)
         .prefetch_related("items")
         .order_by("due_date")
@@ -3135,7 +3150,7 @@ def _invoice_aging_data(user):
 @login_required
 @permission_required("books.view_invoice", raise_exception=True)
 def invoice_aging_report(request):
-    buckets, grand_total = _invoice_aging_data(request.user)
+    buckets, grand_total = _invoice_aging_data(request.account)
 
     return render(request, "books/invoice_aging_report.html", {
         "buckets": buckets,
@@ -3225,14 +3240,14 @@ def _invoice_pdf_response(invoice):
 @login_required
 @permission_required("books.view_invoice", raise_exception=True)
 def invoice_pdf(request, id):
-    invoice = get_object_or_404(Invoice, id=id, owner=request.user)
+    invoice = get_object_or_404(Invoice, id=id, account=request.account)
     return _invoice_pdf_response(invoice)
 
 
 @login_required
 @permission_required("books.view_printrun", raise_exception=True)
 def print_run_list(request):
-    runs = PrintRun.objects.filter(owner=request.user).select_related("book", "book__category")
+    runs = PrintRun.objects.filter(account=request.account).select_related("book", "book__category")
     paginator = Paginator(runs, 10)
     page_obj = paginator.get_page(request.GET.get("page"))
 
@@ -3245,13 +3260,14 @@ def print_run_list(request):
 @login_required
 @permission_required("books.add_printrun", raise_exception=True)
 def print_run_create(request, book_id):
-    book = get_object_or_404(Book, id=book_id, owner=request.user)
+    book = get_object_or_404(Book, id=book_id, account=request.account)
 
     if request.method == "POST":
         form = PrintRunForm(request.POST)
         if form.is_valid():
             run = form.save(commit=False)
             run.owner = request.user
+            run.account = request.account
             run.book = book
             run.save()
             messages.success(request, gettext("Print run recorded."))
@@ -3266,7 +3282,7 @@ def print_run_create(request, book_id):
 @permission_required("books.change_printrun", raise_exception=True)
 @require_POST
 def print_run_complete(request, id):
-    run = get_object_or_404(PrintRun, id=id, owner=request.user)
+    run = get_object_or_404(PrintRun, id=id, account=request.account)
 
     if run.status != PrintRun.STATUS_PENDING:
         messages.error(request, gettext("This print run is already completed."))
@@ -3276,9 +3292,10 @@ def print_run_complete(request, id):
     run.completed_at = timezone.now()
     run.save(update_fields=["status", "completed_at"])
 
-    book = _adjust_stock(run.book_id, run.quantity, request.user)
+    book = _adjust_stock(run.book_id, run.quantity, request.user, request.account)
     StockAdjustment.objects.create(
         owner=request.user,
+        account=request.account,
         book=run.book,
         change=run.quantity,
         resulting_stock=book.stock_on_hand,
@@ -3294,7 +3311,7 @@ def print_run_complete(request, id):
 @login_required
 @permission_required("books.delete_printrun", raise_exception=True)
 def print_run_delete(request, id):
-    run = get_object_or_404(PrintRun, id=id, owner=request.user)
+    run = get_object_or_404(PrintRun, id=id, account=request.account)
 
     if run.status == PrintRun.STATUS_COMPLETED:
         messages.error(request, gettext("Completed print runs can't be deleted; the stock adjustment must be reversed manually."))
@@ -3315,20 +3332,21 @@ def print_run_delete(request, id):
 @login_required
 @permission_required("books.view_royaltyrate", raise_exception=True)
 def royalty_list(request):
-    rates = RoyaltyRate.objects.filter(owner=request.user).select_related("book", "author")
+    rates = RoyaltyRate.objects.filter(account=request.account).select_related("book", "author")
     return render(request, "books/royalty_list.html", {"rates": rates})
 
 
 @login_required
 @permission_required("books.add_royaltyrate", raise_exception=True)
 def royalty_create(request):
-    form = RoyaltyRateForm(user=request.user)
+    form = RoyaltyRateForm(account=request.account)
 
     if request.method == "POST":
-        form = RoyaltyRateForm(request.POST, user=request.user)
+        form = RoyaltyRateForm(request.POST, account=request.account)
         if form.is_valid():
             rate = form.save(commit=False)
             rate.owner = request.user
+            rate.account = request.account
             rate.save()
             messages.success(request, gettext("Royalty rate added."))
             return redirect("royalty_list")
@@ -3339,7 +3357,7 @@ def royalty_create(request):
 @login_required
 @permission_required("books.delete_royaltyrate", raise_exception=True)
 def royalty_delete(request, id):
-    rate = get_object_or_404(RoyaltyRate, id=id, owner=request.user)
+    rate = get_object_or_404(RoyaltyRate, id=id, account=request.account)
 
     if request.method == "POST":
         rate.delete()
@@ -3356,12 +3374,12 @@ def royalty_delete(request, id):
 @login_required
 @permission_required("books.view_royaltyrate", raise_exception=True)
 def royalty_report(request):
-    rates = RoyaltyRate.objects.filter(owner=request.user).select_related("book", "author")
+    rates = RoyaltyRate.objects.filter(account=request.account).select_related("book", "author")
 
     start_date = request.GET.get("start_date", "").strip()
     end_date = request.GET.get("end_date", "").strip()
 
-    sales_qs = Sale.objects.filter(owner=request.user)
+    sales_qs = Sale.objects.filter(account=request.account)
     if start_date:
         sales_qs = sales_qs.filter(sale_date__gte=start_date)
     if end_date:
@@ -3387,7 +3405,7 @@ def royalty_report(request):
 
     payment_totals = {}
     for item in (
-        RoyaltyPayment.objects.filter(owner=request.user)
+        RoyaltyPayment.objects.filter(account=request.account)
         .values("author__name", "currency")
         .annotate(total_paid=Sum("amount"))
         .order_by("author__name")
@@ -3409,20 +3427,21 @@ def royalty_report(request):
 @login_required
 @permission_required("books.view_royaltypayment", raise_exception=True)
 def royalty_payment_list(request):
-    payments = RoyaltyPayment.objects.filter(owner=request.user).select_related("author")
+    payments = RoyaltyPayment.objects.filter(account=request.account).select_related("author")
     return render(request, "books/royalty_payment_list.html", {"payments": payments})
 
 
 @login_required
 @permission_required("books.add_royaltypayment", raise_exception=True)
 def royalty_payment_create(request):
-    form = RoyaltyPaymentForm(user=request.user)
+    form = RoyaltyPaymentForm(account=request.account)
 
     if request.method == "POST":
-        form = RoyaltyPaymentForm(request.POST, user=request.user)
+        form = RoyaltyPaymentForm(request.POST, account=request.account)
         if form.is_valid():
             payment = form.save(commit=False)
             payment.owner = request.user
+            payment.account = request.account
             payment.save()
             messages.success(request, gettext("Royalty payment recorded."))
             return redirect("royalty_payment_list")
@@ -3433,7 +3452,7 @@ def royalty_payment_create(request):
 @login_required
 @permission_required("books.delete_royaltypayment", raise_exception=True)
 def royalty_payment_delete(request, id):
-    payment = get_object_or_404(RoyaltyPayment, id=id, owner=request.user)
+    payment = get_object_or_404(RoyaltyPayment, id=id, account=request.account)
 
     if request.method == "POST":
         payment.delete()
@@ -3454,7 +3473,7 @@ def royalty_payment_delete(request, id):
 @login_required
 @permission_required("books.view_location", raise_exception=True)
 def location_list(request):
-    locations = Location.objects.filter(owner=request.user).annotate(
+    locations = Location.objects.filter(account=request.account).annotate(
         total_stock=Sum("stock_levels__quantity"),
     )
     return render(request, "books/location_list.html", {"locations": locations})
@@ -3468,8 +3487,9 @@ def location_create(request):
         if form.is_valid():
             loc = form.save(commit=False)
             loc.owner = request.user
+            loc.account = request.account
             if loc.is_default:
-                Location.objects.filter(owner=request.user, is_default=True).update(is_default=False)
+                Location.objects.filter(account=request.account, is_default=True).update(is_default=False)
             loc.save()
             messages.success(request, gettext("Location created."))
             return redirect("location_list")
@@ -3481,13 +3501,13 @@ def location_create(request):
 @login_required
 @permission_required("books.change_location", raise_exception=True)
 def location_update(request, id):
-    loc = get_object_or_404(Location, id=id, owner=request.user)
+    loc = get_object_or_404(Location, id=id, account=request.account)
     if request.method == "POST":
         form = LocationForm(request.POST, instance=loc)
         if form.is_valid():
             updated = form.save(commit=False)
             if updated.is_default:
-                Location.objects.filter(owner=request.user, is_default=True).exclude(id=id).update(is_default=False)
+                Location.objects.filter(account=request.account, is_default=True).exclude(id=id).update(is_default=False)
             updated.save()
             messages.success(request, gettext("Location updated."))
             return redirect("location_list")
@@ -3499,7 +3519,7 @@ def location_update(request, id):
 @login_required
 @permission_required("books.delete_location", raise_exception=True)
 def location_delete(request, id):
-    loc = get_object_or_404(Location, id=id, owner=request.user)
+    loc = get_object_or_404(Location, id=id, account=request.account)
     if request.method == "POST":
         loc.delete()
         messages.success(request, gettext("Location deleted."))
@@ -3514,15 +3534,15 @@ def location_delete(request, id):
 @login_required
 @permission_required("books.view_stocklevel", raise_exception=True)
 def location_stock(request, id):
-    loc = get_object_or_404(Location, id=id, owner=request.user)
-    levels = StockLevel.objects.filter(location=loc, owner=request.user).select_related("book")
+    loc = get_object_or_404(Location, id=id, account=request.account)
+    levels = StockLevel.objects.filter(location=loc, account=request.account).select_related("book")
     return render(request, "books/location_stock.html", {"location": loc, "levels": levels})
 
 
 @login_required
 @permission_required("books.change_stocklevel", raise_exception=True)
 def stock_transfer(request):
-    form = StockTransferForm(request.POST or None, user=request.user)
+    form = StockTransferForm(request.POST or None, account=request.account)
     if request.method == "POST" and form.is_valid():
         book = form.cleaned_data["book"]
         from_loc = form.cleaned_data["from_location"]
@@ -3532,7 +3552,7 @@ def stock_transfer(request):
         if from_loc == to_loc:
             form.add_error("to_location", gettext("Source and destination must differ."))
         else:
-            from_level = StockLevel.objects.filter(owner=request.user, book=book, location=from_loc).first()
+            from_level = StockLevel.objects.filter(account=request.account, book=book, location=from_loc).first()
             available = from_level.quantity if from_level else 0
 
             if available < qty:
@@ -3542,8 +3562,8 @@ def stock_transfer(request):
                 from_level.save(update_fields=["quantity"])
 
                 to_level, _ = StockLevel.objects.get_or_create(
-                    owner=request.user, book=book, location=to_loc,
-                    defaults={"quantity": 0},
+                    account=request.account, book=book, location=to_loc,
+                    defaults={"quantity": 0, "owner": request.user},
                 )
                 to_level.quantity += qty
                 to_level.save(update_fields=["quantity"])
@@ -3563,7 +3583,7 @@ def stock_transfer(request):
 @login_required
 @permission_required("books.view_integration", raise_exception=True)
 def integration_list(request):
-    integrations = Integration.objects.filter(owner=request.user)
+    integrations = Integration.objects.filter(account=request.account)
     return render(request, "books/integration_list.html", {"integrations": integrations})
 
 
@@ -3575,6 +3595,7 @@ def integration_create(request):
         if form.is_valid():
             intg = form.save(commit=False)
             intg.owner = request.user
+            intg.account = request.account
             intg.save()
             messages.success(request, gettext("Integration saved."))
             return redirect("integration_list")
@@ -3586,7 +3607,7 @@ def integration_create(request):
 @login_required
 @permission_required("books.change_integration", raise_exception=True)
 def integration_update(request, id):
-    intg = get_object_or_404(Integration, id=id, owner=request.user)
+    intg = get_object_or_404(Integration, id=id, account=request.account)
     if request.method == "POST":
         form = IntegrationForm(request.POST, instance=intg)
         if form.is_valid():
@@ -3601,7 +3622,7 @@ def integration_update(request, id):
 @login_required
 @permission_required("books.delete_integration", raise_exception=True)
 def integration_delete(request, id):
-    intg = get_object_or_404(Integration, id=id, owner=request.user)
+    intg = get_object_or_404(Integration, id=id, account=request.account)
     if request.method == "POST":
         intg.delete()
         messages.success(request, gettext("Integration deleted."))
@@ -3613,8 +3634,10 @@ def integration_delete(request, id):
     })
 
 
-def _process_shopify_order(owner, payload):
+def _process_shopify_order(integration, payload):
     """Deduct stock for each line item in a Shopify order."""
+    owner = integration.owner
+    account = integration.account
     line_items = payload.get("line_items", [])
     synced = 0
 
@@ -3624,9 +3647,9 @@ def _process_shopify_order(owner, payload):
         if not sku or not qty:
             continue
 
-        book = Book.objects.filter(owner=owner, isbn=sku).first()
+        book = Book.objects.filter(account=account, isbn=sku).first()
         if book:
-            _adjust_stock(book.id, -qty, owner)
+            _adjust_stock(book.id, -qty, owner, account)
             synced += 1
 
     return synced
@@ -3663,7 +3686,7 @@ def shopify_webhook(request, integration_id):
     except json.JSONDecodeError:
         return HttpResponse(status=400)
 
-    synced = _process_shopify_order(intg.owner, payload)
+    synced = _process_shopify_order(intg, payload)
 
     intg.orders_synced = (intg.orders_synced or 0) + (1 if synced > 0 else 0)
     intg.last_synced_at = timezone.now()
@@ -3707,7 +3730,7 @@ def stripe_webhook(request, integration_id):
         metadata = _stripe_obj_get(session, "metadata", {})
         invoice_id = _stripe_obj_get(metadata, "invoice_id")
 
-        invoice = Invoice.objects.filter(id=invoice_id, owner=intg.owner).first()
+        invoice = Invoice.objects.filter(id=invoice_id, account=intg.account).first()
         if (
             invoice is not None
             and invoice.status != Invoice.STATUS_PAID
@@ -4145,7 +4168,7 @@ def platform_webhook(request):
 @login_required
 @permission_required("books.view_customer", raise_exception=True)
 def customer_list(request):
-    customers = Customer.objects.filter(owner=request.user).annotate(
+    customers = Customer.objects.filter(account=request.account).annotate(
         invoice_count=Count("invoices")
     ).order_by("name")
     q = request.GET.get("q", "").strip()
@@ -4165,15 +4188,15 @@ def customer_list(request):
         "q": q,
         "query_string": query_string,
         "result_count_text": gettext("%(count)s customer(s) found") % {"count": paginator.count},
-        "has_any_customers": Customer.objects.filter(owner=request.user).exists(),
+        "has_any_customers": Customer.objects.filter(account=request.account).exists(),
     })
 
 
 @login_required
 @permission_required("books.view_customer", raise_exception=True)
 def customer_detail(request, id):
-    customer = get_object_or_404(Customer, id=id, owner=request.user)
-    invoices = customer.invoices.filter(owner=request.user).prefetch_related("items").order_by("-invoice_date")
+    customer = get_object_or_404(Customer, id=id, account=request.account)
+    invoices = customer.invoices.filter(account=request.account).prefetch_related("items").order_by("-invoice_date")
 
     billed_by_currency = {}
     outstanding_by_currency = {}
@@ -4216,6 +4239,7 @@ def customer_create(request):
         if form.is_valid():
             customer = form.save(commit=False)
             customer.owner = request.user
+            customer.account = request.account
             customer.save()
             messages.success(request, gettext("Customer created."))
             return redirect("customer_list")
@@ -4225,7 +4249,7 @@ def customer_create(request):
 @login_required
 @permission_required("books.change_customer", raise_exception=True)
 def customer_update(request, id):
-    customer = get_object_or_404(Customer, id=id, owner=request.user)
+    customer = get_object_or_404(Customer, id=id, account=request.account)
     form = CustomerForm(instance=customer)
     if request.method == "POST":
         form = CustomerForm(request.POST, instance=customer)
@@ -4239,7 +4263,7 @@ def customer_update(request, id):
 @login_required
 @permission_required("books.delete_customer", raise_exception=True)
 def customer_delete(request, id):
-    customer = get_object_or_404(Customer, id=id, owner=request.user)
+    customer = get_object_or_404(Customer, id=id, account=request.account)
     if request.method == "POST":
         customer.delete()
         messages.success(request, gettext("Customer deleted."))
@@ -4255,8 +4279,8 @@ def customer_delete(request, id):
 # Profit / Loss Report
 # ---------------------------------------------------------------------------
 
-def _pl_data(user, start_date, end_date):
-    sales_qs = Sale.objects.filter(owner=user)
+def _pl_data(account, start_date, end_date):
+    sales_qs = Sale.objects.filter(account=account)
     if start_date:
         sales_qs = sales_qs.filter(sale_date__gte=start_date)
     if end_date:
@@ -4278,7 +4302,7 @@ def _pl_data(user, start_date, end_date):
         .annotate(amount=Sum(_RETURN_AMOUNT_EXPRESSION))
     }
 
-    reorders_qs = Reorder.objects.filter(owner=user, status=Reorder.STATUS_RECEIVED)
+    reorders_qs = Reorder.objects.filter(account=account, status=Reorder.STATUS_RECEIVED)
     if start_date:
         reorders_qs = reorders_qs.filter(received_at__date__gte=start_date)
     if end_date:
@@ -4290,13 +4314,13 @@ def _pl_data(user, start_date, end_date):
 
     book_ids = set(revenue_by_book)
     books = (
-        Book.objects.filter(id__in=book_ids, owner=user)
+        Book.objects.filter(id__in=book_ids, account=account)
         .select_related("category")
         .order_by("title")
     )
 
     royalties_by_book = {}
-    for rate in RoyaltyRate.objects.filter(book__in=books, owner=user):
+    for rate in RoyaltyRate.objects.filter(book__in=books, account=account):
         rev = Decimal(str(revenue_by_book.get(rate.book_id, 0)))
         royalties_by_book[rate.book_id] = (
             royalties_by_book.get(rate.book_id, Decimal(0)) + rev * rate.rate / 100
@@ -4342,7 +4366,7 @@ def _pl_data(user, start_date, end_date):
 def profit_loss_report(request):
     start_date = request.GET.get("start_date", "").strip()
     end_date = request.GET.get("end_date", "").strip()
-    rows, totals = _pl_data(request.user, start_date, end_date)
+    rows, totals = _pl_data(request.account, start_date, end_date)
 
     return render(request, "books/profit_loss_report.html", {
         "rows": rows,
@@ -4365,7 +4389,7 @@ def export_profit_loss_pdf(request):
 
     start_date = request.GET.get("start_date", "").strip()
     end_date = request.GET.get("end_date", "").strip()
-    rows, totals = _pl_data(request.user, start_date, end_date)
+    rows, totals = _pl_data(request.account, start_date, end_date)
 
     buffer = BytesIO()
     document = SimpleDocTemplate(
@@ -4573,9 +4597,9 @@ def customer_portal_dashboard(request):
     })
 
 
-def _get_stripe_integration(owner):
+def _get_stripe_integration(account):
     return Integration.objects.filter(
-        owner=owner, platform=Integration.PLATFORM_STRIPE, is_active=True,
+        account=account, platform=Integration.PLATFORM_STRIPE, is_active=True,
     ).first()
 
 
@@ -4591,7 +4615,7 @@ def customer_portal_invoice_detail(request, id):
 
     can_pay = (
         invoice.status != Invoice.STATUS_PAID
-        and _get_stripe_integration(invoice.owner) is not None
+        and _get_stripe_integration(invoice.account) is not None
     )
 
     return render(request, "customer_portal/invoice_detail.html", {
@@ -4614,7 +4638,7 @@ def customer_portal_invoice_pay(request, id):
     if invoice.status == Invoice.STATUS_PAID:
         return redirect("customer_portal_invoice_detail", id=invoice.id)
 
-    integration = _get_stripe_integration(invoice.owner)
+    integration = _get_stripe_integration(invoice.account)
     if integration is None:
         messages.error(request, gettext("Online payment isn't available for this invoice yet."))
         return redirect("customer_portal_invoice_detail", id=invoice.id)

@@ -1,7 +1,22 @@
 from django.shortcuts import redirect
 from django.urls import reverse
 
-from .models import Subscription
+from .models import Subscription, get_or_create_account_for_user
+
+
+class AccountContextMiddleware:
+    """Resolves request.account, the tenant for all account-scoped queries."""
+
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        if request.user.is_authenticated:
+            request.account = get_or_create_account_for_user(request.user)
+        else:
+            request.account = None
+
+        return self.get_response(request)
 
 EXEMPT_PATH_PREFIXES = (
     "/billing/",
