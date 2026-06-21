@@ -13,16 +13,32 @@
 </p>
 </div>
 
+<div class="d-flex gap-2">
+<a class="btn btn-outline-light" href="{% url 'export_checkout_history_csv' %}?{{ query_string }}">
+{% translate "CSV" %}
+</a>
+<a class="btn btn-outline-light" href="{% url 'export_checkout_history_excel' %}?{{ query_string }}">
+{% translate "Excel" %}
+</a>
+<a class="btn btn-outline-light" href="{% url 'export_checkout_history_pdf' %}?{{ query_string }}">
+{% translate "PDF" %}
+</a>
 {% if perms.books.add_sale %}
 <a class="btn btn-success" href="{% url 'checkout' %}">
 <i class="bi bi-plus-lg"></i> {% translate "New sale" %}
 </a>
 {% endif %}
 </div>
+</div>
 
 
 <form class="filter-panel mb-3" method="get">
 <div class="row g-3 align-items-end">
+
+<div class="col-md-3">
+<label class="form-label">{% translate "Search" %}</label>
+<input type="search" name="q" class="form-control" placeholder="{% translate 'Receipt # or customer…' %}" value="{{ filters.q }}">
+</div>
 
 <div class="col-md-3">
 <label class="form-label">{% translate "From" %}</label>

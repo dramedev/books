@@ -127,6 +127,7 @@
 <script>
 (function(){
     const cart = [];
+    const defaultTaxRate = parseFloat("{{ default_tax_rate|stringformat:'f' }}") || 0;
 
     const bookSearch = document.getElementById('bookSearch');
     const searchResults = document.getElementById('searchResults');
@@ -259,7 +260,7 @@
                 title: book.title,
                 quantity: 1,
                 unit_price: parseFloat(book.list_price || 0),
-                tax_rate: 0,
+                tax_rate: defaultTaxRate,
                 stock_on_hand: book.stock_on_hand,
             });
         }

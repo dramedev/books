@@ -30,6 +30,14 @@ class Account(models.Model):
     name = models.CharField(max_length=200, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
+    default_tax_rate = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        default=0,
+        verbose_name=_("Default tax rate (%)"),
+        help_text=_("Pre-fills the tax rate on each new checkout cart line."),
+    )
+
     def __str__(self):
         return self.name or f"Account #{self.pk}"
 

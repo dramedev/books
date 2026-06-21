@@ -832,6 +832,12 @@ FR = {
     "This transaction has been fully refunded.": "Cette transaction a été entièrement remboursée.",
     "This transaction has been partially refunded.": "Cette transaction a été partiellement remboursée.",
     "Partially refunded": "Partiellement remboursé",
+    "Account settings": "Paramètres du compte",
+    "Default tax rate (%)": "Taux de taxe par défaut (%)",
+    "Pre-fills the tax rate on each new checkout cart line.":
+        "Pré-remplit le taux de taxe sur chaque nouvelle ligne du panier de caisse.",
+    "Account settings updated.": "Paramètres du compte mis à jour.",
+    "Receipt # or customer…": "N° de reçu ou client…",
 }
 
 # ---------------------------------------------------------------------------
@@ -1644,6 +1650,12 @@ AR = {
     "This transaction has been fully refunded.": "تم استرداد هذه المعاملة بالكامل.",
     "This transaction has been partially refunded.": "تم استرداد هذه المعاملة جزئيًا.",
     "Partially refunded": "مسترد جزئيًا",
+    "Account settings": "إعدادات الحساب",
+    "Default tax rate (%)": "معدل الضريبة الافتراضي (%)",
+    "Pre-fills the tax rate on each new checkout cart line.":
+        "يعبئ معدل الضريبة مسبقًا في كل سطر جديد من سلة الدفع.",
+    "Account settings updated.": "تم تحديث إعدادات الحساب.",
+    "Receipt # or customer…": "رقم الإيصال أو العميل…",
 }
 
 

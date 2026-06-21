@@ -2044,3 +2044,18 @@ msgstr "تم استرداد هذه المعاملة جزئيًا."
 msgid "Partially refunded"
 msgstr "مسترد جزئيًا"
 
+msgid "Account settings"
+msgstr "إعدادات الحساب"
+
+msgid "Default tax rate (%)"
+msgstr "معدل الضريبة الافتراضي (%)"
+
+msgid "Pre-fills the tax rate on each new checkout cart line."
+msgstr "يعبئ معدل الضريبة مسبقًا في كل سطر جديد من سلة الدفع."
+
+msgid "Account settings updated."
+msgstr "تم تحديث إعدادات الحساب."
+
+msgid "Receipt # or customer…"
+msgstr "رقم الإيصال أو العميل…"
+

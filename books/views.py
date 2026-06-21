@@ -46,6 +46,7 @@ from .reorder_logic import (
 )
 from .forms import (
     AcceptInviteForm,
+    AccountSettingsForm,
     AuthorForm,
     BookForm,
     CategoryForm,
@@ -1852,6 +1853,7 @@ def checkout(request):
         "locations": locations,
         "payment_choices": SaleTransaction.PAYMENT_CHOICES,
         "currency_choices": CURRENCY_CHOICES,
+        "default_tax_rate": request.account.default_tax_rate,
     })
 
 
@@ -1996,9 +1998,7 @@ def checkout_receipt(request, id):
     return render(request, "books/checkout_receipt.html", {"transaction": sale_transaction})
 
 
-@login_required
-@permission_required("books.view_saletransaction", raise_exception=True)
-def checkout_history(request):
+def _transaction_filters(request):
     transactions = (
         SaleTransaction.objects.filter(account=request.account)
         .select_related("customer", "location")
@@ -2007,11 +2007,60 @@ def checkout_history(request):
 
     start_date = request.GET.get("start_date", "").strip()
     end_date = request.GET.get("end_date", "").strip()
+    search = request.GET.get("q", "").strip()
 
     if start_date:
         transactions = transactions.filter(created_at__date__gte=start_date)
     if end_date:
         transactions = transactions.filter(created_at__date__lte=end_date)
+    if search:
+        transactions = transactions.filter(
+            models.Q(receipt_number__icontains=search) | models.Q(customer__name__icontains=search)
+        )
+
+    return transactions.order_by("-created_at")
+
+
+def _transaction_export_headers():
+    return [
+        gettext("Receipt"),
+        gettext("Date"),
+        gettext("Customer"),
+        gettext("Location"),
+        gettext("Payment method"),
+        gettext("Subtotal"),
+        gettext("Tax"),
+        gettext("Total"),
+        gettext("Status"),
+    ]
+
+
+def _transaction_export_rows(transactions):
+    for tx in transactions:
+        if tx.is_fully_refunded:
+            status = gettext("Refunded")
+        elif tx.has_any_refund:
+            status = gettext("Partially refunded")
+        else:
+            status = ""
+
+        yield [
+            _csv_safe(tx.receipt_number),
+            tx.created_at.isoformat(),
+            _csv_safe(tx.customer.name) if tx.customer else "",
+            _csv_safe(tx.location.name) if tx.location else "",
+            tx.get_payment_method_display(),
+            tx.subtotal,
+            tx.tax_total,
+            tx.total,
+            status,
+        ]
+
+
+@login_required
+@permission_required("books.view_saletransaction", raise_exception=True)
+def checkout_history(request):
+    transactions = _transaction_filters(request)
 
     query_params = request.GET.copy()
     query_params.pop("page", None)
@@ -2028,6 +2077,106 @@ def checkout_history(request):
         "result_count_text": gettext("%(count)s transaction(s) found") % {"count": paginator.count},
         "has_any_transactions": SaleTransaction.objects.filter(account=request.account).exists(),
     })
+
+
+@login_required
+@permission_required("books.view_saletransaction", raise_exception=True)
+def export_checkout_history_csv(request):
+    response = HttpResponse(content_type="text/csv")
+    response["Content-Disposition"] = 'attachment; filename="rumi-press-transactions.csv"'
+
+    writer = csv.writer(response)
+    writer.writerow(_transaction_export_headers())
+
+    for row in _transaction_export_rows(_transaction_filters(request)):
+        writer.writerow(row)
+
+    return response
+
+
+@login_required
+@permission_required("books.view_saletransaction", raise_exception=True)
+def export_checkout_history_excel(request):
+    from openpyxl import Workbook
+
+    workbook = Workbook()
+    worksheet = workbook.active
+    worksheet.title = "Transactions"
+    worksheet.append(_transaction_export_headers())
+
+    for row in _transaction_export_rows(_transaction_filters(request)):
+        worksheet.append(row)
+
+    for column in worksheet.columns:
+        max_length = max(len(str(cell.value or "")) for cell in column)
+        worksheet.column_dimensions[column[0].column_letter].width = min(max_length + 2, 40)
+
+    buffer = BytesIO()
+    workbook.save(buffer)
+    buffer.seek(0)
+
+    response = HttpResponse(
+        buffer.getvalue(),
+        content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    )
+    response["Content-Disposition"] = 'attachment; filename="rumi-press-transactions.xlsx"'
+
+    return response
+
+
+@login_required
+@permission_required("books.view_saletransaction", raise_exception=True)
+def export_checkout_history_pdf(request):
+    from reportlab.lib import colors
+    from reportlab.lib.pagesizes import landscape, letter
+    from reportlab.lib.styles import getSampleStyleSheet
+    from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
+
+    _register_pdf_fonts()
+    body_font, bold_font = _pdf_fonts()
+
+    buffer = BytesIO()
+    document = SimpleDocTemplate(
+        buffer,
+        pagesize=landscape(letter),
+        leftMargin=24,
+        rightMargin=24,
+        topMargin=24,
+        bottomMargin=24,
+    )
+
+    styles = getSampleStyleSheet()
+    title_style = styles["Title"]
+    title_style.fontName = bold_font
+
+    elements = [
+        Paragraph(_pdf_text(gettext("Rumi Press Transactions")), title_style),
+        Spacer(1, 12),
+    ]
+
+    rows = [[_pdf_text(value) for value in _transaction_export_headers()]]
+    for row in _transaction_export_rows(_transaction_filters(request)):
+        rows.append([_pdf_text(value) for value in row])
+
+    table = Table(rows, repeatRows=1)
+    table.setStyle(TableStyle([
+        ("FONTNAME", (0, 0), (-1, -1), body_font),
+        ("FONTNAME", (0, 0), (-1, 0), bold_font),
+        ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#333333")),
+        ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+        ("GRID", (0, 0), (-1, -1), 0.5, colors.grey),
+        ("FONTSIZE", (0, 0), (-1, -1), 8),
+        ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, colors.HexColor("#f2f2f2")]),
+    ]))
+    elements.append(table)
+
+    document.build(elements)
+    buffer.seek(0)
+
+    response = HttpResponse(buffer.getvalue(), content_type="application/pdf")
+    response["Content-Disposition"] = 'attachment; filename="rumi-press-transactions.pdf"'
+
+    return response
 
 
 @login_required
@@ -4400,7 +4549,16 @@ def _send_invite_email(invitation, account_name, accept_url):
 def team_members(request):
     _require_account_admin(request)
 
-    if request.method == "POST":
+    settings_form = AccountSettingsForm(instance=request.account)
+
+    if request.method == "POST" and request.POST.get("action") == "update_settings":
+        settings_form = AccountSettingsForm(request.POST, instance=request.account)
+        if settings_form.is_valid():
+            settings_form.save()
+            messages.success(request, gettext("Account settings updated."))
+            return redirect("team_members")
+        form = InviteUserForm()
+    elif request.method == "POST":
         form = InviteUserForm(request.POST)
 
         if form.is_valid():
@@ -4436,6 +4594,7 @@ def team_members(request):
 
     return render(request, "books/team_members.html", {
         "form": form,
+        "settings_form": settings_form,
         "memberships": memberships,
         "pending_invitations": pending_invitations,
     })

@@ -519,6 +519,37 @@ class CheckoutTests(TestCase):
         response = self.client.get(reverse("checkout_history"), {"start_date": future})
         self.assertNotContains(response, sale_tx.receipt_number)
 
+    def test_history_search_by_receipt_number(self):
+        self._checkout([{"book_id": self.book_a.id, "quantity": 1, "unit_price": "20.00"}])
+        sale_tx = SaleTransaction.objects.get(account=self.account)
+
+        response = self.client.get(reverse("checkout_history"), {"q": sale_tx.receipt_number})
+        self.assertContains(response, sale_tx.receipt_number)
+
+        response = self.client.get(reverse("checkout_history"), {"q": "no-such-receipt"})
+        self.assertNotContains(response, sale_tx.receipt_number)
+
+    def test_history_export_csv_contains_receipt(self):
+        self._checkout([{"book_id": self.book_a.id, "quantity": 1, "unit_price": "20.00"}])
+        sale_tx = SaleTransaction.objects.get(account=self.account)
+
+        response = self.client.get(reverse("export_checkout_history_csv"))
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(sale_tx.receipt_number.encode(), response.content)
+
+    def test_history_export_pdf_succeeds(self):
+        self._checkout([{"book_id": self.book_a.id, "quantity": 1, "unit_price": "20.00"}])
+        response = self.client.get(reverse("export_checkout_history_pdf"))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response["Content-Type"], "application/pdf")
+
+    def test_checkout_uses_account_default_tax_rate(self):
+        self.account.default_tax_rate = Decimal("7.00")
+        self.account.save(update_fields=["default_tax_rate"])
+
+        response = self.client.get(reverse("checkout"))
+        self.assertContains(response, "7.00")
+
     def test_void_transaction_restores_stock_and_creates_returns(self):
         self._checkout([
             {"book_id": self.book_a.id, "quantity": 2, "unit_price": "20.00"},
@@ -3717,6 +3748,26 @@ class TeamInviteTests(TestCase):
         self.assertEqual(invitation.role, "Staff")
         self.assertEqual(len(mail.outbox), 1)
         self.assertIn(invitation.token, mail.outbox[0].body)
+
+    def test_admin_can_update_account_settings(self):
+        self.client.force_login(self.admin)
+        response = self.client.post(reverse("team_members"), {
+            "action": "update_settings", "default_tax_rate": "8.5",
+        })
+        self.assertRedirects(response, reverse("team_members"))
+
+        self.account.refresh_from_db()
+        self.assertEqual(self.account.default_tax_rate, Decimal("8.50"))
+
+    def test_non_admin_cannot_update_account_settings(self):
+        staff = get_user_model().objects.create_user(username="team_staff2", password="pass1234")
+        AccountMembership.objects.create(account=self.account, user=staff, role=AccountMembership.ROLE_STAFF)
+
+        self.client.force_login(staff)
+        response = self.client.post(reverse("team_members"), {
+            "action": "update_settings", "default_tax_rate": "8.5",
+        })
+        self.assertEqual(response.status_code, 403)
 
     def test_accept_invite_creates_membership_and_syncs_groups(self):
         invitation = AccountInvitation.objects.create(

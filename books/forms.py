@@ -3,7 +3,7 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.password_validation import validate_password
 from django.utils.translation import gettext_lazy as _
 
-from .models import AccountMembership, Author, Book, Category, Customer, Integration, Invoice, InvoiceItem, Location, PrintRun, Profile, Reorder, Return, RoyaltyPayment, RoyaltyRate, Sale, StockAdjustment, Supplier
+from .models import Account, AccountMembership, Author, Book, Category, Customer, Integration, Invoice, InvoiceItem, Location, PrintRun, Profile, Reorder, Return, RoyaltyPayment, RoyaltyRate, Sale, StockAdjustment, Supplier
 
 
 class BookForm(forms.ModelForm):
@@ -439,6 +439,18 @@ class RedeemAccessCodeForm(forms.Form):
         widget=forms.TextInput(attrs={"class": "form-control", "autofocus": True}),
     )
 
+
+
+class AccountSettingsForm(forms.ModelForm):
+
+    class Meta:
+        model = Account
+        fields = ["default_tax_rate"]
+        widgets = {
+            "default_tax_rate": forms.NumberInput(attrs={
+                "class": "form-control", "step": "0.01", "min": "0", "max": "100",
+            }),
+        }
 
 
 class InviteUserForm(forms.Form):

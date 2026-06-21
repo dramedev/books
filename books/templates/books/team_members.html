@@ -21,6 +21,7 @@
 
 <form method="post" class="row g-3 align-items-end">
 {% csrf_token %}
+<input type="hidden" name="action" value="invite">
 <div class="col-md-5">
 <label class="form-label" for="{{ form.email.id_for_label }}">{% translate "Email" %}</label>
 {{ form.email }}
@@ -37,6 +38,28 @@
 </div>
 <div class="col-md-3">
 <button class="btn btn-primary" type="submit">{% translate "Send invite" %}</button>
+</div>
+</form>
+</div>
+
+<div class="page-panel mb-4">
+<h2 class="mb-3">{% translate "Account settings" %}</h2>
+
+<form method="post" class="row g-3 align-items-end">
+{% csrf_token %}
+<input type="hidden" name="action" value="update_settings">
+<div class="col-md-3">
+<label class="form-label" for="{{ settings_form.default_tax_rate.id_for_label }}">{{ settings_form.default_tax_rate.label }}</label>
+{{ settings_form.default_tax_rate }}
+{% if settings_form.default_tax_rate.help_text %}
+<div class="form-text">{{ settings_form.default_tax_rate.help_text }}</div>
+{% endif %}
+{% for error in settings_form.default_tax_rate.errors %}
+<div class="text-danger small">{{ error }}</div>
+{% endfor %}
+</div>
+<div class="col-md-3">
+<button class="btn btn-outline-light" type="submit">{% translate "Save" %}</button>
 </div>
 </form>
 </div>
