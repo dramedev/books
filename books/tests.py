@@ -32,7 +32,7 @@ from .models import (
     AccessCode, AVATAR_MAX_SIZE_BYTES, Account, AccountInvitation, AccountMembership, Author, Book, Category,
     Customer, CustomerLoginToken, get_or_create_account_for_user,
     Integration, Invoice, InvoiceItem, Location, PrintRun, ProcessedShopifyOrder, Profile, Reorder, Return, RoyaltyPayment, RoyaltyRate,
-    Sale, SaleTransaction, StockAdjustment, Subscription, Supplier, validate_avatar_size,
+    Sale, SaleTransaction, StockAdjustment, StockLevel, Subscription, Supplier, validate_avatar_size,
 )
 from .permissions import sync_user_groups_for_role
 from .views import _adjust_stock, _invoice_aging_data, _next_receipt_number, _parse_publish_date, _pl_data, _safe_json
@@ -1269,6 +1269,102 @@ class AiChatToolTests(TestCase):
         result = ai_chat.execute_tool("get_business_insights", {}, self.user, self.account)
         self.assertEqual(len(result["insights"]), 1)
         self.assertEqual(result["insights"][0]["headline"], "Nothing urgent right now")
+
+    def test_get_recent_transactions_scoped_to_account(self):
+        tx = SaleTransaction.objects.create(owner=self.user, account=self.account, receipt_number="RCT-TOOL-0001")
+        Sale.objects.create(
+            owner=self.user, account=self.account, book=self.low_book, quantity=1,
+            unit_price=Decimal("10.00"), sale_date=date(2024, 1, 15), transaction=tx,
+        )
+
+        other_user = get_user_model().objects.create_user(username="tool_other", password="pass1234")
+        other_account = get_or_create_account_for_user(other_user)
+        SaleTransaction.objects.create(owner=other_user, account=other_account, receipt_number="RCT-OTHER-0001")
+
+        result = ai_chat.get_recent_transactions({}, self.account)
+        receipt_numbers = {item["receipt_number"] for item in result["transactions"]}
+        self.assertEqual(receipt_numbers, {"RCT-TOOL-0001"})
+
+    def test_get_transaction_by_receipt_returns_line_items(self):
+        tx = SaleTransaction.objects.create(owner=self.user, account=self.account, receipt_number="RCT-TOOL-0002")
+        Sale.objects.create(
+            owner=self.user, account=self.account, book=self.low_book, quantity=2,
+            unit_price=Decimal("10.00"), sale_date=date(2024, 1, 15), transaction=tx,
+        )
+
+        result = ai_chat.get_transaction_by_receipt({"receipt_number": "RCT-TOOL-0002"}, self.account)
+        self.assertEqual(result["receipt_number"], "RCT-TOOL-0002")
+        self.assertEqual(len(result["items"]), 1)
+        self.assertEqual(result["items"][0]["title"], "Low Stock Book")
+
+    def test_get_transaction_by_receipt_missing_returns_error(self):
+        result = ai_chat.get_transaction_by_receipt({"receipt_number": "RCT-NOPE"}, self.account)
+        self.assertIn("error", result)
+
+    def test_get_stock_by_location_scoped_and_filterable(self):
+        location = Location.objects.create(owner=self.user, account=self.account, name="Warehouse A")
+        StockLevel.objects.create(owner=self.user, account=self.account, book=self.low_book, location=location, quantity=4)
+        StockLevel.objects.create(owner=self.user, account=self.account, book=self.ok_book, location=location, quantity=20)
+
+        result = ai_chat.get_stock_by_location({}, self.account)
+        self.assertEqual(len(result["stock_levels"]), 2)
+
+        filtered = ai_chat.get_stock_by_location({"book_title": "Low Stock"}, self.account)
+        self.assertEqual(len(filtered["stock_levels"]), 1)
+        self.assertEqual(filtered["stock_levels"][0]["quantity"], 4)
+
+    def test_get_print_runs_filters_by_status(self):
+        PrintRun.objects.create(
+            owner=self.user, account=self.account, book=self.low_book, quantity=100,
+            cost_per_unit=Decimal("2.00"), run_date=date(2024, 1, 1), status=PrintRun.STATUS_COMPLETED,
+        )
+        PrintRun.objects.create(
+            owner=self.user, account=self.account, book=self.ok_book, quantity=50,
+            cost_per_unit=Decimal("3.00"), run_date=date(2024, 2, 1), status=PrintRun.STATUS_PENDING,
+        )
+
+        result = ai_chat.get_print_runs({}, self.account)
+        self.assertEqual(len(result["print_runs"]), 2)
+
+        completed_only = ai_chat.get_print_runs({"status": "completed"}, self.account)
+        self.assertEqual(len(completed_only["print_runs"]), 1)
+        self.assertEqual(completed_only["print_runs"][0]["title"], "Low Stock Book")
+
+    def test_get_returns_summary_within_day_window(self):
+        sale = Sale.objects.create(
+            owner=self.user, account=self.account, book=self.low_book, quantity=5,
+            unit_price=Decimal("10.00"), sale_date=date(2024, 1, 15),
+        )
+        Return.objects.create(
+            owner=self.user, account=self.account, sale=sale, quantity=1,
+            reason="Damaged", return_date=timezone.now().date(),
+        )
+        Return.objects.create(
+            owner=self.user, account=self.account, sale=sale, quantity=1,
+            reason="Old return", return_date=date(2020, 1, 1),
+        )
+
+        result = ai_chat.get_returns_summary({"days": 30}, self.account)
+        self.assertEqual(len(result["returns"]), 1)
+        self.assertEqual(result["returns"][0]["reason"], "Damaged")
+
+    def test_new_tools_gated_by_permission(self):
+        grant(self.user, "view_book")
+        self.user = get_user_model().objects.get(pk=self.user.pk)
+        tool_names = {tool["name"] for tool in ai_chat.build_tools_for_user(self.user)}
+        self.assertNotIn("get_recent_transactions", tool_names)
+        self.assertNotIn("get_stock_by_location", tool_names)
+        self.assertNotIn("get_print_runs", tool_names)
+        self.assertNotIn("get_returns_summary", tool_names)
+
+        grant(self.user, "view_saletransaction", "view_stocklevel", "view_printrun", "view_return")
+        self.user = get_user_model().objects.get(pk=self.user.pk)
+        tool_names = {tool["name"] for tool in ai_chat.build_tools_for_user(self.user)}
+        self.assertIn("get_recent_transactions", tool_names)
+        self.assertIn("get_transaction_by_receipt", tool_names)
+        self.assertIn("get_stock_by_location", tool_names)
+        self.assertIn("get_print_runs", tool_names)
+        self.assertIn("get_returns_summary", tool_names)
 
 
 class SetupRolesCommandTests(TestCase):

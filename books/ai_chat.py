@@ -8,7 +8,10 @@ from django.db.models.functions import Coalesce
 from django.utils import timezone
 
 from .analytics import PURCHASE_COST_EXPRESSION, REVENUE_EXPRESSION
-from .models import Book, Category, Customer, Invoice, RoyaltyPayment, RoyaltyRate, Sale, Supplier
+from .models import (
+    Book, Category, Customer, Invoice, PrintRun, Return, RoyaltyPayment, RoyaltyRate, Sale, SaleTransaction,
+    StockLevel, Supplier,
+)
 from .reorder_logic import (
     REORDER_COVER_DAYS, REORDER_VELOCITY_WINDOW_DAYS, suggested_reorder_quantity,
 )
@@ -55,6 +58,16 @@ unpaid invoices past their due date are "overdue".
 - Royalties: a per-book, per-author royalty rate (% of revenue); royalty \
 payments record what's actually been paid out, so an author can be owed \
 money even with no unpaid invoices involved.
+- Checkout: in-person point-of-sale flow - a cart of books rung up together \
+as one transaction with a receipt number, payment method, and optional \
+customer/location, vs. the Sales section's one-book-at-a-time entries. \
+Transactions can be fully or partially refunded ("voided").
+- Locations/Stock: stock can be tracked per physical location (multiple \
+warehouses/stores), not just a single account-wide total.
+- Print runs: production batches (book, quantity, cost per unit, run date, \
+pending/completed status).
+- Returns: individual sale returns with a reason and refund amount, separate \
+from a checkout-level void/refund.
 
 For general questions about how the app works, answer directly from this \
 description. For questions about the user's actual books, stock or sales, \
@@ -418,6 +431,103 @@ TOOL_SPECS = [
         ),
         "input_schema": {"type": "object", "properties": {}},
         "permission": "books.view_book",
+    },
+    {
+        "name": "get_recent_transactions",
+        "description": (
+            "List recent checkout/point-of-sale transactions (receipt "
+            "number, date, customer, location, payment method, total, "
+            "and refund status). Use this for questions like 'what did "
+            "I sell today' or 'show my recent checkout transactions'."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "limit": {
+                    "type": "integer",
+                    "description": "Maximum number of transactions to return (default 10).",
+                },
+            },
+        },
+        "permission": "books.view_saletransaction",
+    },
+    {
+        "name": "get_transaction_by_receipt",
+        "description": (
+            "Get full details of one checkout transaction by its receipt "
+            "number, including every line item and its refund status."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "receipt_number": {
+                    "type": "string",
+                    "description": "The receipt number to look up, e.g. 'RCT-2026-0001'.",
+                },
+            },
+            "required": ["receipt_number"],
+        },
+        "permission": "books.view_saletransaction",
+    },
+    {
+        "name": "get_stock_by_location",
+        "description": (
+            "Get stock quantities broken down by location (warehouse/store), "
+            "optionally filtered to one book. Use this for questions like "
+            "'how much stock do we have at each location' or 'where is "
+            "this book stocked'."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "book_title": {
+                    "type": "string",
+                    "description": "Optional book title (or partial title) to filter to.",
+                },
+            },
+        },
+        "permission": "books.view_stocklevel",
+    },
+    {
+        "name": "get_print_runs",
+        "description": (
+            "List print runs (book, quantity, cost per unit, total cost, "
+            "run date, status). Use this for questions about printing "
+            "history or production costs."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "status": {
+                    "type": "string",
+                    "enum": ["pending", "completed"],
+                    "description": "Optional status filter.",
+                },
+                "limit": {
+                    "type": "integer",
+                    "description": "Maximum number of print runs to return (default 10).",
+                },
+            },
+        },
+        "permission": "books.view_printrun",
+    },
+    {
+        "name": "get_returns_summary",
+        "description": (
+            "List recent sales returns (book, quantity, reason, refund "
+            "amount, date) within a day window. Use this for questions "
+            "about returns or refunds."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "days": {
+                    "type": "integer",
+                    "description": "How many days back to look (default 30).",
+                },
+            },
+        },
+        "permission": "books.view_return",
     },
 ]
 
@@ -950,6 +1060,134 @@ def get_business_insights(tool_input, account, user):
     return {"insights": insights}
 
 
+def get_recent_transactions(tool_input, account):
+    transactions = SaleTransaction.objects.filter(account=account).select_related("customer", "location")
+
+    limit = tool_input.get("limit") or 10
+    results = []
+    for tx in transactions[: limit]:
+        if tx.is_fully_refunded:
+            status = "refunded"
+        elif tx.has_any_refund:
+            status = "partially_refunded"
+        else:
+            status = "completed"
+
+        results.append({
+            "receipt_number": tx.receipt_number,
+            "date": tx.created_at.date().isoformat(),
+            "customer": tx.customer.name if tx.customer else None,
+            "location": tx.location.name if tx.location else None,
+            "payment_method": tx.get_payment_method_display(),
+            "total": str(tx.total),
+            "status": status,
+        })
+
+    return {"transactions": results}
+
+
+def get_transaction_by_receipt(tool_input, account):
+    receipt_number = (tool_input.get("receipt_number") or "").strip()
+    if not receipt_number:
+        return {"error": "receipt_number is required."}
+
+    tx = SaleTransaction.objects.filter(account=account, receipt_number__iexact=receipt_number).first()
+    if tx is None:
+        return {"error": f"No transaction found with receipt number '{receipt_number}'."}
+
+    items = []
+    for item in tx.line_items.all():
+        if item.quantity == 0:
+            status = "refunded"
+        elif item.returned_quantity > 0:
+            status = "partially_refunded"
+        else:
+            status = "completed"
+
+        items.append({
+            "title": item.book.title,
+            "quantity": item.original_quantity,
+            "unit_price": str(item.unit_price),
+            "subtotal": str(item.original_revenue),
+            "status": status,
+        })
+
+    return {
+        "receipt_number": tx.receipt_number,
+        "date": tx.created_at.date().isoformat(),
+        "customer": tx.customer.name if tx.customer else None,
+        "location": tx.location.name if tx.location else None,
+        "payment_method": tx.get_payment_method_display(),
+        "items": items,
+        "subtotal": str(tx.subtotal),
+        "tax_total": str(tx.tax_total),
+        "total": str(tx.total),
+    }
+
+
+def get_stock_by_location(tool_input, account):
+    book_title = (tool_input.get("book_title") or "").strip()
+
+    levels = StockLevel.objects.filter(account=account).select_related("book", "location")
+    if book_title:
+        levels = levels.filter(book__title__icontains=book_title)
+
+    results = [
+        {
+            "book": level.book.title,
+            "location": level.location.name,
+            "quantity": level.quantity,
+        }
+        for level in levels
+    ]
+
+    return {"stock_levels": results}
+
+
+def get_print_runs(tool_input, account):
+    runs = PrintRun.objects.filter(account=account).select_related("book")
+
+    status = (tool_input.get("status") or "").strip()
+    if status:
+        runs = runs.filter(status=status)
+
+    limit = tool_input.get("limit") or 10
+    results = [
+        {
+            "title": run.book.title,
+            "quantity": run.quantity,
+            "cost_per_unit": str(run.cost_per_unit),
+            "total_cost": str(run.total_cost),
+            "run_date": run.run_date.isoformat(),
+            "status": run.status,
+        }
+        for run in runs[: limit]
+    ]
+
+    return {"print_runs": results}
+
+
+def get_returns_summary(tool_input, account):
+    days = tool_input.get("days") or 30
+    cutoff = timezone.now().date() - timedelta(days=days)
+
+    returns = Return.objects.filter(account=account, return_date__gte=cutoff).select_related("sale", "sale__book")
+
+    results = [
+        {
+            "title": ret.sale.book.title,
+            "quantity": ret.quantity,
+            "reason": ret.reason,
+            "refund_amount": str(ret.refund_amount),
+            "currency": ret.sale.currency,
+            "return_date": ret.return_date.isoformat(),
+        }
+        for ret in returns
+    ]
+
+    return {"returns": results, "days": days}
+
+
 TOOL_FUNCTIONS = {
     "get_dashboard_overview": get_dashboard_overview,
     "list_books": list_books,
@@ -968,6 +1206,11 @@ TOOL_FUNCTIONS = {
     "get_category_performance": get_category_performance,
     "get_top_customers": get_top_customers,
     "get_business_insights": get_business_insights,
+    "get_recent_transactions": get_recent_transactions,
+    "get_transaction_by_receipt": get_transaction_by_receipt,
+    "get_stock_by_location": get_stock_by_location,
+    "get_print_runs": get_print_runs,
+    "get_returns_summary": get_returns_summary,
 }
 
 
