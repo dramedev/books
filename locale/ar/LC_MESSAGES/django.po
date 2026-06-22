@@ -2071,8 +2071,8 @@ msgstr "رقم الإيصال أو العميل…"
 msgid "Download PDF"
 msgstr "تنزيل PDF"
 
-msgid "Thank you for shopping with Rumi Press!"
-msgstr "شكرًا لتسوقك مع Rumi Press!"
+msgid "Thank you for your purchase!"
+msgstr "شكرًا لشرائك!"
 
 msgid "New Print Run"
 msgstr "تشغيل طباعة جديد"
@@ -2163,4 +2163,19 @@ msgstr "التوفر لدى الجملة"
 
 msgid "No wholesaler feed data for this book's ISBN yet."
 msgstr "لا توجد بيانات خلاصة مورّد جملة لرقم ISBN لهذا الكتاب حتى الآن."
+
+msgid "Logo"
+msgstr "الشعار"
+
+msgid "Shown on your invoices and receipts. Leave empty to show no logo."
+msgstr "يظهر على فواتيرك وإيصالاتك. اتركه خاليًا لعدم إظهار أي شعار."
+
+msgid "Brand color"
+msgstr "لون العلامة التجارية"
+
+msgid "Used for titles and accents on your invoices and receipts, e.g. #1f1f1f."
+msgstr "يُستخدم للعناوين واللمسات على فواتيرك وإيصالاتك، مثل #1f1f1f."
+
+msgid "Enter a valid hex color code (e.g. #1f1f1f)."
+msgstr "أدخل رمز لون سادس عشري صالح (مثل #1f1f1f)."
 

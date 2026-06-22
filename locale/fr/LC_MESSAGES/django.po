@@ -2071,8 +2071,8 @@ msgstr "N° de reçu ou client…"
 msgid "Download PDF"
 msgstr "Télécharger le PDF"
 
-msgid "Thank you for shopping with Rumi Press!"
-msgstr "Merci d'avoir fait vos achats chez Rumi Press !"
+msgid "Thank you for your purchase!"
+msgstr "Merci pour votre achat !"
 
 msgid "New Print Run"
 msgstr "Nouveau tirage"
@@ -2163,4 +2163,19 @@ msgstr "Disponibilité chez les grossistes"
 
 msgid "No wholesaler feed data for this book's ISBN yet."
 msgstr "Aucune donnée de flux grossiste pour l'ISBN de ce livre pour le moment."
+
+msgid "Logo"
+msgstr "Logo"
+
+msgid "Shown on your invoices and receipts. Leave empty to show no logo."
+msgstr "Affiché sur vos factures et reçus. Laissez vide pour n'afficher aucun logo."
+
+msgid "Brand color"
+msgstr "Couleur de marque"
+
+msgid "Used for titles and accents on your invoices and receipts, e.g. #1f1f1f."
+msgstr "Utilisée pour les titres et les accents sur vos factures et reçus, par ex. #1f1f1f."
+
+msgid "Enter a valid hex color code (e.g. #1f1f1f)."
+msgstr "Entrez un code couleur hexadécimal valide (ex. #1f1f1f)."
 

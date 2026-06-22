@@ -45,7 +45,7 @@
 <div class="page-panel mb-4">
 <h2 class="mb-3">{% translate "Account settings" %}</h2>
 
-<form method="post" class="row g-3 align-items-end">
+<form method="post" enctype="multipart/form-data" class="row g-3 align-items-end">
 {% csrf_token %}
 <input type="hidden" name="action" value="update_settings">
 <div class="col-md-3">
@@ -55,6 +55,31 @@
 <div class="form-text">{{ settings_form.default_tax_rate.help_text }}</div>
 {% endif %}
 {% for error in settings_form.default_tax_rate.errors %}
+<div class="text-danger small">{{ error }}</div>
+{% endfor %}
+</div>
+<div class="col-md-4">
+<label class="form-label" for="{{ settings_form.logo.id_for_label }}">{{ settings_form.logo.label }}</label>
+{% if request.account.logo %}
+<div class="mb-2">
+<img src="{{ request.account.logo.url }}" alt="" style="max-height:40px; max-width:160px;">
+</div>
+{% endif %}
+{{ settings_form.logo }}
+{% if settings_form.logo.help_text %}
+<div class="form-text">{{ settings_form.logo.help_text }}</div>
+{% endif %}
+{% for error in settings_form.logo.errors %}
+<div class="text-danger small">{{ error }}</div>
+{% endfor %}
+</div>
+<div class="col-md-2">
+<label class="form-label" for="{{ settings_form.brand_color.id_for_label }}">{{ settings_form.brand_color.label }}</label>
+{{ settings_form.brand_color }}
+{% if settings_form.brand_color.help_text %}
+<div class="form-text">{{ settings_form.brand_color.help_text }}</div>
+{% endif %}
+{% for error in settings_form.brand_color.errors %}
 <div class="text-danger small">{{ error }}</div>
 {% endfor %}
 </div>

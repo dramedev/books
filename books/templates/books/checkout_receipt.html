@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load i18n static %}
+{% load i18n %}
 
 
 {% block content %}
@@ -42,10 +42,11 @@
 {% endif %}
 
 <div class="page-panel" style="max-width:480px;">
-<div class="text-center mb-3" style="border-bottom:2px solid var(--accent); padding-bottom:12px;">
-<img src="{% static 'books/img/icon-192.png' %}" alt="Rumi Press" style="width:48px; height:48px; border-radius:8px;">
-<div class="fw-bold mt-2" style="color:var(--accent); font-size:1.2rem;">Rumi Press</div>
+{% if transaction.account.logo %}
+<div class="text-center mb-3" style="border-bottom:2px solid {{ transaction.account.brand_color|default:"#1f1f1f" }}; padding-bottom:12px;">
+<img src="{{ transaction.account.logo.url }}" alt="" style="max-height:48px; max-width:200px;">
 </div>
+{% endif %}
 
 {% if transaction.customer %}
 <p class="mb-1"><strong>{% translate "Customer" %}:</strong> {{ transaction.customer.name }}</p>
@@ -98,7 +99,7 @@
 </div>
 
 <div class="text-center mt-4" style="border-top:1px solid var(--border); padding-top:12px;">
-<p class="fw-bold mb-1" style="color:var(--accent);">{% translate "Thank you for shopping with Rumi Press!" %}</p>
+<p class="fw-bold mb-1" style="color:{{ transaction.account.brand_color|default:"#1f1f1f" }};">{% translate "Thank you for your purchase!" %}</p>
 {% if quote %}
 <p class="muted-text small mb-0">{{ quote }}</p>
 {% endif %}

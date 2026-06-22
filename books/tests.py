@@ -31,8 +31,9 @@ from .isbn_lookup import IsbnLookupError, lookup_isbn
 from .models import (
     AccessCode, AVATAR_MAX_SIZE_BYTES, Account, AccountInvitation, AccountMembership, Author, Book, Category,
     Customer, CustomerLoginToken, get_or_create_account_for_user,
-    Integration, Invoice, InvoiceItem, Location, PrintRun, ProcessedShopifyOrder, Profile, Reorder, Return, RoyaltyPayment, RoyaltyRate,
-    Sale, SaleTransaction, StockAdjustment, StockLevel, Subscription, Supplier, WholesalerFeedItem, validate_avatar_size,
+    Integration, Invoice, InvoiceItem, LOGO_MAX_SIZE_BYTES, Location, PrintRun, ProcessedShopifyOrder, Profile, Reorder, Return, RoyaltyPayment, RoyaltyRate,
+    Sale, SaleTransaction, StockAdjustment, StockLevel, Subscription, Supplier, WholesalerFeedItem,
+    validate_avatar_size, validate_hex_color, validate_logo_size,
 )
 from .permissions import sync_user_groups_for_role
 from .views import _adjust_stock, _invoice_aging_data, _next_receipt_number, _parse_publish_date, _pl_data, _safe_json
@@ -544,6 +545,26 @@ class CheckoutTests(TestCase):
         self.assertEqual(response["Content-Type"], "application/pdf")
 
     def test_receipt_pdf_renders(self):
+        self._checkout([{"book_id": self.book_a.id, "quantity": 1, "unit_price": "20.00"}])
+        sale_tx = SaleTransaction.objects.get(account=self.account)
+
+        response = self.client.get(reverse("checkout_receipt_pdf", args=[sale_tx.id]))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response["Content-Type"], "application/pdf")
+        self.assertTrue(response.content.startswith(b"%PDF"))
+
+    def test_receipt_pdf_renders_with_custom_logo_and_brand_color(self):
+        from io import BytesIO
+        from PIL import Image as PILImage
+        from django.core.files.uploadedfile import SimpleUploadedFile
+
+        buf = BytesIO()
+        PILImage.new("RGB", (10, 10), color=(0, 128, 255)).save(buf, format="PNG")
+        buf.seek(0)
+        self.account.logo = SimpleUploadedFile("logo.png", buf.read(), content_type="image/png")
+        self.account.brand_color = "#336699"
+        self.account.save()
+
         self._checkout([{"book_id": self.book_a.id, "quantity": 1, "unit_price": "20.00"}])
         sale_tx = SaleTransaction.objects.get(account=self.account)
 
@@ -2504,6 +2525,34 @@ class AvatarSizeValidationTests(TestCase):
         validate_avatar_size(SimpleNamespace(size=AVATAR_MAX_SIZE_BYTES))
 
 
+class LogoSizeAndHexColorValidationTests(TestCase):
+
+    def test_file_under_limit_passes(self):
+        validate_logo_size(SimpleNamespace(size=1024 * 1024))
+
+    def test_file_over_limit_raises(self):
+        with self.assertRaises(ValidationError):
+            validate_logo_size(SimpleNamespace(size=3 * 1024 * 1024))
+
+    def test_file_at_exact_limit_passes(self):
+        validate_logo_size(SimpleNamespace(size=LOGO_MAX_SIZE_BYTES))
+
+    def test_valid_hex_color_passes(self):
+        validate_hex_color("#1f1f1f")
+
+    def test_hex_color_without_hash_rejected(self):
+        with self.assertRaises(ValidationError):
+            validate_hex_color("1f1f1f")
+
+    def test_short_hex_color_rejected(self):
+        with self.assertRaises(ValidationError):
+            validate_hex_color("#fff")
+
+    def test_non_hex_characters_rejected(self):
+        with self.assertRaises(ValidationError):
+            validate_hex_color("#zzzzzz")
+
+
 class ProfileUpdateTests(TestCase):
 
     def setUp(self):
@@ -2653,6 +2702,43 @@ class ArabicPdfFontTests(TestCase):
     def test_arabic_invoice_pdf_title_uses_arabic_font(self):
         response = self._get_invoice_pdf_in_arabic()
         self.assertIn(b"NotoSansArabic", response.content)
+
+
+class InvoicePdfBrandingTests(TestCase):
+
+    def setUp(self):
+        User = get_user_model()
+        self.user = User.objects.create_user(username="brand_owner", password="pass1234")
+        self.account = get_or_create_account_for_user(self.user)
+        self.client.force_login(self.user)
+        grant(self.user, "view_invoice")
+        self.invoice = Invoice.objects.create(
+            owner=self.user, account=self.account,
+            customer_name="Jane Doe", invoice_date=date.today(), currency="USD",
+        )
+
+    def test_invoice_pdf_renders_without_logo_or_color(self):
+        response = self.client.get(reverse("invoice_pdf", args=[self.invoice.id]))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response["Content-Type"], "application/pdf")
+        self.assertTrue(response.content.startswith(b"%PDF"))
+
+    def test_invoice_pdf_renders_with_custom_logo_and_brand_color(self):
+        from io import BytesIO
+        from PIL import Image as PILImage
+        from django.core.files.uploadedfile import SimpleUploadedFile
+
+        buf = BytesIO()
+        PILImage.new("RGB", (10, 10), color=(200, 50, 50)).save(buf, format="PNG")
+        buf.seek(0)
+        self.account.logo = SimpleUploadedFile("logo.png", buf.read(), content_type="image/png")
+        self.account.brand_color = "#a30000"
+        self.account.save()
+
+        response = self.client.get(reverse("invoice_pdf", args=[self.invoice.id]))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response["Content-Type"], "application/pdf")
+        self.assertTrue(response.content.startswith(b"%PDF"))
 
 
 class SafeJsonTests(TestCase):
@@ -3899,6 +3985,60 @@ class TeamInviteTests(TestCase):
             "action": "update_settings", "default_tax_rate": "8.5",
         })
         self.assertEqual(response.status_code, 403)
+
+    @staticmethod
+    def _tiny_png():
+        from io import BytesIO
+        from PIL import Image as PILImage
+
+        buf = BytesIO()
+        PILImage.new("RGB", (10, 10), color=(255, 0, 0)).save(buf, format="PNG")
+        buf.seek(0)
+        return SimpleUploadedFile("logo.png", buf.read(), content_type="image/png")
+
+    def test_admin_can_upload_logo_and_brand_color(self):
+        self.client.force_login(self.admin)
+        response = self.client.post(reverse("team_members"), {
+            "action": "update_settings", "default_tax_rate": "0",
+            "brand_color": "#336699", "logo": self._tiny_png(),
+        })
+        self.assertRedirects(response, reverse("team_members"))
+
+        self.account.refresh_from_db()
+        self.assertEqual(self.account.brand_color, "#336699")
+        self.assertTrue(self.account.logo)
+
+    def test_invalid_brand_color_is_rejected(self):
+        self.client.force_login(self.admin)
+        response = self.client.post(reverse("team_members"), {
+            "action": "update_settings", "default_tax_rate": "0", "brand_color": "not-a-color",
+        })
+        self.assertEqual(response.status_code, 200)
+
+        self.account.refresh_from_db()
+        self.assertEqual(self.account.brand_color, "")
+
+    def test_oversized_logo_is_rejected(self):
+        import os
+        from io import BytesIO
+        from PIL import Image as PILImage
+
+        self.client.force_login(self.admin)
+
+        buf = BytesIO()
+        noise = PILImage.frombytes("RGB", (1000, 1000), os.urandom(1000 * 1000 * 3))
+        noise.save(buf, format="PNG")
+        buf.seek(0)
+        self.assertGreater(len(buf.getvalue()), LOGO_MAX_SIZE_BYTES)
+        oversized = SimpleUploadedFile("logo.png", buf.read(), content_type="image/png")
+
+        response = self.client.post(reverse("team_members"), {
+            "action": "update_settings", "default_tax_rate": "0", "logo": oversized,
+        })
+        self.assertEqual(response.status_code, 200)
+
+        self.account.refresh_from_db()
+        self.assertFalse(self.account.logo)
 
     def test_accept_invite_creates_membership_and_syncs_groups(self):
         invitation = AccountInvitation.objects.create(

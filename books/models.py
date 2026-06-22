@@ -1,3 +1,4 @@
+import re
 from decimal import Decimal, ROUND_HALF_UP
 
 from django.conf import settings
@@ -10,6 +11,9 @@ from .fields import EncryptedCharField
 
 
 AVATAR_MAX_SIZE_BYTES = 2 * 1024 * 1024
+LOGO_MAX_SIZE_BYTES = 2 * 1024 * 1024
+
+HEX_COLOR_RE = re.compile(r"^#[0-9a-fA-F]{6}$")
 
 
 def validate_avatar_size(file):
@@ -17,6 +21,18 @@ def validate_avatar_size(file):
         raise ValidationError(
             _("Image must be smaller than %(max_mb)s MB.") % {"max_mb": AVATAR_MAX_SIZE_BYTES // (1024 * 1024)}
         )
+
+
+def validate_logo_size(file):
+    if file.size > LOGO_MAX_SIZE_BYTES:
+        raise ValidationError(
+            _("Image must be smaller than %(max_mb)s MB.") % {"max_mb": LOGO_MAX_SIZE_BYTES // (1024 * 1024)}
+        )
+
+
+def validate_hex_color(value):
+    if not HEX_COLOR_RE.match(value):
+        raise ValidationError(_("Enter a valid hex color code (e.g. #1f1f1f)."))
 
 
 CURRENCY_CHOICES = [
@@ -36,6 +52,23 @@ class Account(models.Model):
         default=0,
         verbose_name=_("Default tax rate (%)"),
         help_text=_("Pre-fills the tax rate on each new checkout cart line."),
+    )
+
+    logo = models.ImageField(
+        upload_to="account_logos/",
+        blank=True,
+        null=True,
+        validators=[validate_logo_size],
+        verbose_name=_("Logo"),
+        help_text=_("Shown on your invoices and receipts. Leave empty to show no logo."),
+    )
+
+    brand_color = models.CharField(
+        max_length=7,
+        blank=True,
+        validators=[validate_hex_color],
+        verbose_name=_("Brand color"),
+        help_text=_("Used for titles and accents on your invoices and receipts, e.g. #1f1f1f."),
     )
 
     def __str__(self):

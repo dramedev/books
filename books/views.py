@@ -235,25 +235,29 @@ def _pdf_text(value):
     return text
 
 
-PDF_ACCENT_COLOR = "#b9802f"
+DEFAULT_DOCUMENT_COLOR = "#1f1f1f"
 
 
-def _pdf_leaf_drawing(size=22, color=PDF_ACCENT_COLOR):
-    """A small drawn leaf (pointed oval + center vein) used as a brand
-    accent in generated PDFs, instead of embedding the app's raster icon."""
-    from reportlab.graphics.shapes import Drawing, Line, Path
-    from reportlab.lib.colors import HexColor, white
+def _account_brand_color(account):
+    return account.brand_color or DEFAULT_DOCUMENT_COLOR
 
-    drawing = Drawing(size, size)
 
-    leaf = Path(fillColor=HexColor(color), strokeColor=HexColor(color), strokeWidth=0.5)
-    leaf.moveTo(size / 2, 2)
-    leaf.curveTo(size * 0.92, size * 0.32, size * 0.92, size * 0.72, size / 2, size - 2)
-    leaf.curveTo(size * 0.08, size * 0.72, size * 0.08, size * 0.32, size / 2, 2)
-    drawing.add(leaf)
-    drawing.add(Line(size / 2, 4, size / 2, size - 4, strokeColor=white, strokeWidth=0.6))
+def _pdf_logo_flowable(account, max_width=140, max_height=44):
+    """The account's uploaded logo, scaled to fit, or None if they haven't set one.
 
-    return drawing
+    RumiPress is the platform a business uses, not the brand their own
+    customers see on an invoice/receipt - so there is no RumiPress fallback
+    logo here, unlike a typical white-label default."""
+    if not account.logo:
+        return None
+
+    from reportlab.platypus import Image
+
+    try:
+        account.logo.open()
+        return Image(account.logo, width=max_width, height=max_height, kind="proportional", hAlign="CENTER")
+    except (FileNotFoundError, ValueError):
+        return None
 
 
 def _sale_export_rows(sales):
@@ -2195,34 +2199,31 @@ def _checkout_receipt_pdf_response(sale_transaction):
     _register_pdf_fonts()
     body_font, bold_font = _pdf_fonts()
 
+    account = sale_transaction.account
+    brand_color = colors.HexColor(_account_brand_color(account))
+
     items = sale_transaction.line_items.all()
 
     buffer = BytesIO()
     doc = SimpleDocTemplate(buffer, pagesize=letter, leftMargin=48, rightMargin=48, topMargin=48, bottomMargin=48)
     styles = getSampleStyleSheet()
     styles["Title"].fontName = bold_font
-    styles["Title"].textColor = colors.HexColor(PDF_ACCENT_COLOR)
+    styles["Title"].textColor = brand_color
     styles["Title"].alignment = 1
     styles["Normal"].fontName = body_font
 
     accent_style = ParagraphStyle(
         "Accent", parent=styles["Normal"], fontName=bold_font,
-        textColor=colors.HexColor(PDF_ACCENT_COLOR), alignment=1,
+        textColor=brand_color, alignment=1,
     )
 
-    header = Table(
-        [[_pdf_leaf_drawing(), Paragraph(_pdf_text("Rumi Press"), styles["Title"]), _pdf_leaf_drawing()]],
-        colWidths=[40, 340, 40],
-    )
-    header.setStyle(TableStyle([
-        ("ALIGN", (0, 0), (-1, -1), "CENTER"),
-        ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
-    ]))
+    elements = []
+    logo = _pdf_logo_flowable(account)
+    if logo is not None:
+        elements += [logo, Spacer(1, 8)]
 
-    elements = [
-        header,
-        Spacer(1, 8),
-        Paragraph(_pdf_text(f"{gettext('Receipt')} {sale_transaction.receipt_number}"), styles["Normal"]),
+    elements += [
+        Paragraph(_pdf_text(f"{gettext('Receipt')} {sale_transaction.receipt_number}"), accent_style),
         Paragraph(_pdf_text(str(sale_transaction.created_at)), styles["Normal"]),
     ]
 
@@ -2275,17 +2276,7 @@ def _checkout_receipt_pdf_response(sale_transaction):
     elements.append(Paragraph(_pdf_text(f"{gettext('Total')}: {sale_transaction.total}"), styles["Normal"]))
     elements.append(Spacer(1, 24))
 
-    footer = Table(
-        [[_pdf_leaf_drawing(16), Paragraph(
-            _pdf_text(gettext("Thank you for shopping with Rumi Press!")), accent_style,
-        ), _pdf_leaf_drawing(16)]],
-        colWidths=[24, 332, 24],
-    )
-    footer.setStyle(TableStyle([
-        ("ALIGN", (0, 0), (-1, -1), "CENTER"),
-        ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
-    ]))
-    elements.append(footer)
+    elements.append(Paragraph(_pdf_text(gettext("Thank you for your purchase!")), accent_style))
     elements.append(Spacer(1, 6))
     elements.append(Paragraph(_pdf_text(str(random.choice(LEARNING_QUOTES))), styles["Normal"]))
 
@@ -3941,15 +3932,24 @@ def _invoice_pdf_response(invoice):
     _register_pdf_fonts()
     body_font, bold_font = _pdf_fonts()
 
+    account = invoice.account
+    brand_color = colors.HexColor(_account_brand_color(account))
+
     items = invoice.items.all()
 
     buffer = BytesIO()
     doc = SimpleDocTemplate(buffer, pagesize=letter, leftMargin=48, rightMargin=48, topMargin=48, bottomMargin=48)
     styles = getSampleStyleSheet()
     styles["Title"].fontName = bold_font
+    styles["Title"].textColor = brand_color
     styles["Normal"].fontName = body_font
 
-    elements = [
+    elements = []
+    logo = _pdf_logo_flowable(account)
+    if logo is not None:
+        elements += [logo, Spacer(1, 8)]
+
+    elements += [
         Paragraph(_pdf_text(f"INVOICE – {invoice.invoice_number}"), styles["Title"]),
         Spacer(1, 8),
         Paragraph(_pdf_text(f"{gettext('Customer')}: {invoice.customer_name}"), styles["Normal"]),
@@ -4859,7 +4859,7 @@ def team_members(request):
     settings_form = AccountSettingsForm(instance=request.account)
 
     if request.method == "POST" and request.POST.get("action") == "update_settings":
-        settings_form = AccountSettingsForm(request.POST, instance=request.account)
+        settings_form = AccountSettingsForm(request.POST, request.FILES, instance=request.account)
         if settings_form.is_valid():
             settings_form.save()
             messages.success(request, gettext("Account settings updated."))

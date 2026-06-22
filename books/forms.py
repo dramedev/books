@@ -445,10 +445,14 @@ class AccountSettingsForm(forms.ModelForm):
 
     class Meta:
         model = Account
-        fields = ["default_tax_rate"]
+        fields = ["default_tax_rate", "logo", "brand_color"]
         widgets = {
             "default_tax_rate": forms.NumberInput(attrs={
                 "class": "form-control", "step": "0.01", "min": "0", "max": "100",
+            }),
+            "logo": forms.ClearableFileInput(attrs={"class": "form-control"}),
+            "brand_color": forms.TextInput(attrs={
+                "class": "form-control form-control-color", "type": "color",
             }),
         }
 

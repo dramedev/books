@@ -2071,8 +2071,8 @@ msgstr "Fiş no veya müşteri…"
 msgid "Download PDF"
 msgstr "PDF İndir"
 
-msgid "Thank you for shopping with Rumi Press!"
-msgstr "Rumi Press'ten alışveriş yaptığınız için teşekkür ederiz!"
+msgid "Thank you for your purchase!"
+msgstr "Alışverişiniz için teşekkür ederiz!"
 
 msgid "New Print Run"
 msgstr "Yeni Baskı"
@@ -2163,4 +2163,19 @@ msgstr "Toptan Stok Durumu"
 
 msgid "No wholesaler feed data for this book's ISBN yet."
 msgstr "Bu kitabın ISBN'i için henüz toptancı besleme verisi yok."
+
+msgid "Logo"
+msgstr "Logo"
+
+msgid "Shown on your invoices and receipts. Leave empty to show no logo."
+msgstr "Faturalarınızda ve fişlerinizde gösterilir. Logo göstermemek için boş bırakın."
+
+msgid "Brand color"
+msgstr "Marka rengi"
+
+msgid "Used for titles and accents on your invoices and receipts, e.g. #1f1f1f."
+msgstr "Faturalarınızdaki ve fişlerinizdeki başlıklar ve vurgular için kullanılır, örn. #1f1f1f."
+
+msgid "Enter a valid hex color code (e.g. #1f1f1f)."
+msgstr "Geçerli bir onaltılık renk kodu girin (örn. #1f1f1f)."
 

@@ -842,7 +842,7 @@ FR = {
     "Account settings updated.": "Paramètres du compte mis à jour.",
     "Receipt # or customer…": "N° de reçu ou client…",
     "Download PDF": "Télécharger le PDF",
-    "Thank you for shopping with Rumi Press!": "Merci d'avoir fait vos achats chez Rumi Press !",
+    "Thank you for your purchase!": "Merci pour votre achat !",
     "New Print Run": "Nouveau tirage",
     "New Print Run (pick a book)": "Nouveau tirage (choisir un livre)",
     "Open a book and use \"New Print Run\" to start one.": "Ouvrez un livre et utilisez « Nouveau tirage » pour en démarrer un.",
@@ -879,6 +879,13 @@ FR = {
     "Wholesale Availability": "Disponibilité chez les grossistes",
     "No wholesaler feed data for this book's ISBN yet.":
         "Aucune donnée de flux grossiste pour l'ISBN de ce livre pour le moment.",
+    "Logo": "Logo",
+    "Shown on your invoices and receipts. Leave empty to show no logo.":
+        "Affiché sur vos factures et reçus. Laissez vide pour n'afficher aucun logo.",
+    "Brand color": "Couleur de marque",
+    "Used for titles and accents on your invoices and receipts, e.g. #1f1f1f.":
+        "Utilisée pour les titres et les accents sur vos factures et reçus, par ex. #1f1f1f.",
+    "Enter a valid hex color code (e.g. #1f1f1f).": "Entrez un code couleur hexadécimal valide (ex. #1f1f1f).",
 }
 
 # ---------------------------------------------------------------------------
@@ -1701,7 +1708,7 @@ AR = {
     "Account settings updated.": "تم تحديث إعدادات الحساب.",
     "Receipt # or customer…": "رقم الإيصال أو العميل…",
     "Download PDF": "تنزيل PDF",
-    "Thank you for shopping with Rumi Press!": "شكرًا لتسوقك مع Rumi Press!",
+    "Thank you for your purchase!": "شكرًا لشرائك!",
     "New Print Run": "تشغيل طباعة جديد",
     "New Print Run (pick a book)": "تشغيل طباعة جديد (اختر كتابًا)",
     "Open a book and use \"New Print Run\" to start one.": "افتح كتابًا واستخدم «تشغيل طباعة جديد» لبدء واحد.",
@@ -1738,6 +1745,13 @@ AR = {
     "Wholesale Availability": "التوفر لدى الجملة",
     "No wholesaler feed data for this book's ISBN yet.":
         "لا توجد بيانات خلاصة مورّد جملة لرقم ISBN لهذا الكتاب حتى الآن.",
+    "Logo": "الشعار",
+    "Shown on your invoices and receipts. Leave empty to show no logo.":
+        "يظهر على فواتيرك وإيصالاتك. اتركه خاليًا لعدم إظهار أي شعار.",
+    "Brand color": "لون العلامة التجارية",
+    "Used for titles and accents on your invoices and receipts, e.g. #1f1f1f.":
+        "يُستخدم للعناوين واللمسات على فواتيرك وإيصالاتك، مثل #1f1f1f.",
+    "Enter a valid hex color code (e.g. #1f1f1f).": "أدخل رمز لون سادس عشري صالح (مثل #1f1f1f).",
 }
 
 
@@ -2433,7 +2447,7 @@ TR = {
     'Account settings updated.': 'Hesap ayarları güncellendi.',
     'Receipt # or customer…': 'Fiş no veya müşteri…',
     'Download PDF': 'PDF İndir',
-    'Thank you for shopping with Rumi Press!': "Rumi Press'ten alışveriş yaptığınız için teşekkür ederiz!",
+    'Thank you for your purchase!': 'Alışverişiniz için teşekkür ederiz!',
     'New Print Run': 'Yeni Baskı',
     'New Print Run (pick a book)': 'Yeni Baskı (kitap seçin)',
     'Open a book and use "New Print Run" to start one.': 'Bir kitap açın ve başlatmak için "Yeni Baskı"yı kullanın.',
@@ -2464,6 +2478,13 @@ TR = {
     'feed item': 'besleme öğesini',
     'Wholesale Availability': 'Toptan Stok Durumu',
     "No wholesaler feed data for this book's ISBN yet.": "Bu kitabın ISBN'i için henüz toptancı besleme verisi yok.",
+    "Logo": "Logo",
+    "Shown on your invoices and receipts. Leave empty to show no logo.":
+        "Faturalarınızda ve fişlerinizde gösterilir. Logo göstermemek için boş bırakın.",
+    "Brand color": "Marka rengi",
+    "Used for titles and accents on your invoices and receipts, e.g. #1f1f1f.":
+        "Faturalarınızdaki ve fişlerinizdeki başlıklar ve vurgular için kullanılır, örn. #1f1f1f.",
+    "Enter a valid hex color code (e.g. #1f1f1f).": "Geçerli bir onaltılık renk kodu girin (örn. #1f1f1f).",
 }
 
 def escape(s):
