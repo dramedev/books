@@ -2209,3 +2209,336 @@ msgstr "31-60 gün geciken"
 msgid "60+ days overdue"
 msgstr "60+ gün geciken"
 
+msgid "%(count)d invoice(s) skipped (incompatible status)."
+msgstr "%(count)d fatura atlandı (uyumsuz durum)."
+
+msgid "%(count)d invoice(s) updated."
+msgstr "%(count)d fatura güncellendi."
+
+msgid "'%(title)s' currently has %(stock)s unit(s) on hand."
+msgstr "'%(title)s' şu anda elde %(stock)s adet bulunuyor."
+
+msgid "Account"
+msgstr "Hesap"
+
+msgid "Adjustment"
+msgstr "Düzeltme"
+
+msgid "Admin"
+msgstr "Yönetici"
+
+msgid "All books"
+msgstr "Tüm kitaplar"
+
+msgid "All channels"
+msgstr "Tüm kanallar"
+
+msgid "All statuses"
+msgstr "Tüm durumlar"
+
+msgid "Amazon"
+msgstr "Amazon"
+
+msgid "An account must keep at least one Admin."
+msgstr "Bir hesapta en az bir yönetici bulunmalıdır."
+
+msgid "An account with this email already exists. Joining a second team isn't supported yet — ask the account owner to invite a different email, or contact support."
+msgstr "Bu e-posta ile bir hesap zaten mevcut. İkinci bir takıma katılma henüz desteklenmiyor — hesap sahibinden farklı bir e-posta davet etmesini isteyin veya destek ile iletişime geçin."
+
+msgid "Back to Dashboard"
+msgstr "Kontrol Paneline Geri Dön"
+
+msgid "Back to Login"
+msgstr "Girişe Geri Dön"
+
+msgid "Change Password"
+msgstr "Parolayı Değiştir"
+
+msgid "Channel Breakdown"
+msgstr "Kanal Dağılımı"
+
+msgid "Clear selection"
+msgstr "Seçimi temizle"
+
+msgid "Completed"
+msgstr "Tamamlandı"
+
+msgid "Completed at"
+msgstr "Tamamlanma tarihi"
+
+msgid "Completed print runs can't be deleted; the stock adjustment must be reversed manually."
+msgstr "Tamamlanmış baskılar silinemez; stok düzeltmesinin manuel olarak geri alınması gerekir."
+
+msgid "Cover image URL"
+msgstr "Kapak görseli URL'si"
+
+msgid "Create"
+msgstr "Oluştur"
+
+msgid "Draft"
+msgstr "Taslak"
+
+msgid "Email Address"
+msgstr "E-posta Adresi"
+
+msgid "Email address"
+msgstr "E-posta adresi"
+
+msgid "Email address updated."
+msgstr "E-posta adresi güncellendi."
+
+msgid "Enter a search term above."
+msgstr "Yukarıya bir arama terimi girin."
+
+msgid "Expired"
+msgstr "Süresi Doldu"
+
+msgid "Expires"
+msgstr "Son Kullanma"
+
+msgid "File is too large (maximum 5 MB)."
+msgstr "Dosya çok büyük (maksimum 5 MB)."
+
+msgid "Go to login"
+msgstr "Girişe git"
+
+msgid "Image must be smaller than %(max_mb)s MB."
+msgstr "Görsel %(max_mb)s MB'den küçük olmalıdır."
+
+msgid "Invalid role."
+msgstr "Geçersiz rol."
+
+msgid "Invitation cancelled."
+msgstr "Davet iptal edildi."
+
+msgid "Invitation sent to %(email)s."
+msgstr "%(email)s adresine davet gönderildi."
+
+msgid "Invitation unavailable"
+msgstr "Davet kullanılamıyor"
+
+msgid "Invite people to manage this account alongside you."
+msgstr "Bu hesabı sizinle birlikte yönetmesi için kişiler davet edin."
+
+msgid "Invite someone"
+msgstr "Birini davet et"
+
+msgid "Invoice"
+msgstr "Fatura"
+
+msgid "Invoice number"
+msgstr "Fatura numarası"
+
+msgid "Join"
+msgstr "Katıl"
+
+msgid "Join the team"
+msgstr "Takıma katıl"
+
+msgid "Leave blank to keep the current value."
+msgstr "Mevcut değeri korumak için boş bırakın."
+
+msgid "Mark Complete"
+msgstr "Tamamlandı Olarak İşaretle"
+
+msgid "Mark Selected Paid"
+msgstr "Seçilenleri Ödendi İşaretle"
+
+msgid "Mark Selected Sent"
+msgstr "Seçilenleri Gönderildi İşaretle"
+
+msgid "Member removed."
+msgstr "Üye kaldırıldı."
+
+msgid "Members"
+msgstr "Üyeler"
+
+msgid "No"
+msgstr "Hayır"
+
+msgid "No locations yet."
+msgstr "Henüz konum yok."
+
+msgid "No matches found."
+msgstr "Eşleşme bulunamadı."
+
+msgid "No stock history for this book yet."
+msgstr "Bu kitap için henüz stok geçmişi yok."
+
+msgid "Overdue"
+msgstr "Geciken"
+
+msgid "Overdue invoices"
+msgstr "Geciken faturalar"
+
+msgid "Page navigation"
+msgstr "Sayfa gezinmesi"
+
+msgid "Page not found"
+msgstr "Sayfa bulunamadı"
+
+msgid "Paid"
+msgstr "Ödendi"
+
+msgid "Password updated."
+msgstr "Parola güncellendi."
+
+msgid "Pending invitations"
+msgstr "Bekleyen davetler"
+
+msgid "Please wait a moment before looking up another ISBN."
+msgstr "Başka bir ISBN aramadan önce lütfen bir an bekleyin."
+
+msgid "Please wait a moment before sending another message."
+msgstr "Başka bir mesaj göndermeden önce lütfen bir an bekleyin."
+
+msgid "Print run completed (%(date)s)"
+msgstr "Baskı tamamlandı (%(date)s)"
+
+msgid "Print run marked complete; stock updated."
+msgstr "Baskı tamamlandı olarak işaretlendi; stok güncellendi."
+
+msgid "Receipt number"
+msgstr "Fiş numarası"
+
+msgid "Record Print Run"
+msgstr "Baskı Kaydet"
+
+msgid "Remove"
+msgstr "Kaldır"
+
+msgid "Results for \"%(query)s\""
+msgstr "\"%(query)s\" için sonuçlar"
+
+msgid "Return date"
+msgstr "İade tarihi"
+
+msgid "Role"
+msgstr "Rol"
+
+msgid "Role updated."
+msgstr "Rol güncellendi."
+
+msgid "Row %(n)s: a valid published date (YYYY-MM-DD) is required for new books."
+msgstr "Satır %(n)s: yeni kitaplar için geçerli bir yayın tarihi (YYYY-AA-GG) gereklidir."
+
+msgid "Row %(n)s: category is required for new books."
+msgstr "Satır %(n)s: yeni kitaplar için kategori gereklidir."
+
+msgid "Rumi Press Invoices"
+msgstr "Rumi Press Faturaları"
+
+msgid "Rumi Press Transactions"
+msgstr "Rumi Press İşlemleri"
+
+msgid "Sale"
+msgstr "Satış"
+
+msgid "Sales by Channel"
+msgstr "Kanala Göre Satışlar"
+
+msgid "Save Photo"
+msgstr "Fotoğrafı Kaydet"
+
+msgid "Search Results"
+msgstr "Arama Sonuçları"
+
+msgid "Search books, customers, invoices"
+msgstr "Kitap, müşteri, fatura ara"
+
+msgid "Search books, customers, invoices…"
+msgstr "Kitap, müşteri, fatura ara…"
+
+msgid "Select all"
+msgstr "Tümünü seç"
+
+msgid "Select at least one invoice and an action."
+msgstr "En az bir fatura ve bir işlem seçin."
+
+msgid "Send invite"
+msgstr "Davet gönder"
+
+msgid "Sent"
+msgstr "Gönderildi"
+
+msgid "Share"
+msgstr "Paylaş"
+
+msgid "Shopify"
+msgstr "Shopify"
+
+msgid "Something went wrong"
+msgstr "Bir şeyler ters gitti"
+
+msgid "Staff"
+msgstr "Personel"
+
+msgid "Stock History"
+msgstr "Stok Geçmişi"
+
+msgid "Stock quantity"
+msgstr "Stok miktarı"
+
+msgid "Tax rate (%)"
+msgstr "Vergi oranı (%)"
+
+msgid "Team"
+msgstr "Takım"
+
+msgid "The page you're looking for doesn't exist or may have moved."
+msgstr "Aradığınız sayfa mevcut değil veya taşınmış olabilir."
+
+msgid "This invitation link is invalid, has already been used, or has expired. Ask the account owner to send a new one."
+msgstr "Bu davet bağlantısı geçersiz, zaten kullanılmış veya süresi dolmuş. Hesap sahibinden yeni bir bağlantı göndermesini isteyin."
+
+msgid "This print run is already completed."
+msgstr "Bu baskı zaten tamamlanmış."
+
+msgid "Too Many Login Attempts"
+msgstr "Çok Fazla Giriş Denemesi"
+
+msgid "Too many incorrect attempts. Please request a new code."
+msgstr "Çok fazla hatalı deneme. Lütfen yeni bir kod isteyin."
+
+msgid "Too many incorrect attempts. Please try again later."
+msgstr "Çok fazla hatalı deneme. Lütfen daha sonra tekrar deneyin."
+
+msgid "Transaction"
+msgstr "İşlem"
+
+msgid "Type"
+msgstr "Tür"
+
+msgid "Unspecified"
+msgstr "Belirtilmemiş"
+
+msgid "Update Email"
+msgstr "E-postayı Güncelle"
+
+msgid "Upgraded"
+msgstr "Yükseltildi"
+
+msgid "User"
+msgstr "Kullanıcı"
+
+msgid "Viewer"
+msgstr "Görüntüleyici"
+
+msgid "We hit an unexpected error. Please try again in a moment."
+msgstr "Beklenmeyen bir hatayla karşılaştık. Lütfen bir an sonra tekrar deneyin."
+
+msgid "Welcome back"
+msgstr "Tekrar hoş geldiniz"
+
+msgid "Welcome! Your account is ready."
+msgstr "Hoş geldiniz! Hesabınız hazır."
+
+msgid "Yes"
+msgstr "Evet"
+
+msgid "You've been invited to join as %(role)s, using %(email)s. Choose a username and password to continue."
+msgstr "%(email)s e-postası ile %(role)s olarak katılmaya davet edildiniz. Devam etmek için bir kullanıcı adı ve parola seçin."
+
+msgid "Your account has been temporarily locked due to too many failed login attempts. Please try again later."
+msgstr "Çok fazla başarısız giriş denemesi nedeniyle hesabınız geçici olarak kilitlendi. Lütfen daha sonra tekrar deneyin."
+

@@ -2209,3 +2209,336 @@ msgstr "Retard de 31 à 60 jours"
 msgid "60+ days overdue"
 msgstr "Retard de plus de 60 jours"
 
+msgid "%(count)d invoice(s) skipped (incompatible status)."
+msgstr "%(count)d facture(s) ignorée(s) (statut incompatible)."
+
+msgid "%(count)d invoice(s) updated."
+msgstr "%(count)d facture(s) mise(s) à jour."
+
+msgid "'%(title)s' currently has %(stock)s unit(s) on hand."
+msgstr "'%(title)s' a actuellement %(stock)s unité(s) en stock."
+
+msgid "Account"
+msgstr "Compte"
+
+msgid "Adjustment"
+msgstr "Ajustement"
+
+msgid "Admin"
+msgstr "Administrateur"
+
+msgid "All books"
+msgstr "Tous les livres"
+
+msgid "All channels"
+msgstr "Tous les canaux"
+
+msgid "All statuses"
+msgstr "Tous les statuts"
+
+msgid "Amazon"
+msgstr "Amazon"
+
+msgid "An account must keep at least one Admin."
+msgstr "Un compte doit conserver au moins un administrateur."
+
+msgid "An account with this email already exists. Joining a second team isn't supported yet — ask the account owner to invite a different email, or contact support."
+msgstr "Un compte avec cet e-mail existe déjà. Rejoindre une deuxième équipe n'est pas encore pris en charge — demandez au propriétaire du compte d'inviter une autre adresse e-mail, ou contactez le support."
+
+msgid "Back to Dashboard"
+msgstr "Retour au tableau de bord"
+
+msgid "Back to Login"
+msgstr "Retour à la connexion"
+
+msgid "Change Password"
+msgstr "Changer le mot de passe"
+
+msgid "Channel Breakdown"
+msgstr "Répartition par canal"
+
+msgid "Clear selection"
+msgstr "Effacer la sélection"
+
+msgid "Completed"
+msgstr "Terminé"
+
+msgid "Completed at"
+msgstr "Terminé le"
+
+msgid "Completed print runs can't be deleted; the stock adjustment must be reversed manually."
+msgstr "Les tirages terminés ne peuvent pas être supprimés ; l'ajustement de stock doit être annulé manuellement."
+
+msgid "Cover image URL"
+msgstr "URL de l'image de couverture"
+
+msgid "Create"
+msgstr "Créer"
+
+msgid "Draft"
+msgstr "Brouillon"
+
+msgid "Email Address"
+msgstr "Adresse e-mail"
+
+msgid "Email address"
+msgstr "Adresse e-mail"
+
+msgid "Email address updated."
+msgstr "Adresse e-mail mise à jour."
+
+msgid "Enter a search term above."
+msgstr "Saisissez un terme de recherche ci-dessus."
+
+msgid "Expired"
+msgstr "Expiré"
+
+msgid "Expires"
+msgstr "Expire"
+
+msgid "File is too large (maximum 5 MB)."
+msgstr "Le fichier est trop volumineux (maximum 5 Mo)."
+
+msgid "Go to login"
+msgstr "Aller à la connexion"
+
+msgid "Image must be smaller than %(max_mb)s MB."
+msgstr "L'image doit être inférieure à %(max_mb)s Mo."
+
+msgid "Invalid role."
+msgstr "Rôle invalide."
+
+msgid "Invitation cancelled."
+msgstr "Invitation annulée."
+
+msgid "Invitation sent to %(email)s."
+msgstr "Invitation envoyée à %(email)s."
+
+msgid "Invitation unavailable"
+msgstr "Invitation indisponible"
+
+msgid "Invite people to manage this account alongside you."
+msgstr "Invitez des personnes à gérer ce compte avec vous."
+
+msgid "Invite someone"
+msgstr "Inviter quelqu'un"
+
+msgid "Invoice"
+msgstr "Facture"
+
+msgid "Invoice number"
+msgstr "Numéro de facture"
+
+msgid "Join"
+msgstr "Rejoindre"
+
+msgid "Join the team"
+msgstr "Rejoindre l'équipe"
+
+msgid "Leave blank to keep the current value."
+msgstr "Laissez vide pour conserver la valeur actuelle."
+
+msgid "Mark Complete"
+msgstr "Marquer comme terminé"
+
+msgid "Mark Selected Paid"
+msgstr "Marquer la sélection comme payée"
+
+msgid "Mark Selected Sent"
+msgstr "Marquer la sélection comme envoyée"
+
+msgid "Member removed."
+msgstr "Membre retiré."
+
+msgid "Members"
+msgstr "Membres"
+
+msgid "No"
+msgstr "Non"
+
+msgid "No locations yet."
+msgstr "Aucun emplacement pour le moment."
+
+msgid "No matches found."
+msgstr "Aucune correspondance trouvée."
+
+msgid "No stock history for this book yet."
+msgstr "Aucun historique de stock pour ce livre pour le moment."
+
+msgid "Overdue"
+msgstr "En retard"
+
+msgid "Overdue invoices"
+msgstr "Factures en retard"
+
+msgid "Page navigation"
+msgstr "Navigation des pages"
+
+msgid "Page not found"
+msgstr "Page non trouvée"
+
+msgid "Paid"
+msgstr "Payée"
+
+msgid "Password updated."
+msgstr "Mot de passe mis à jour."
+
+msgid "Pending invitations"
+msgstr "Invitations en attente"
+
+msgid "Please wait a moment before looking up another ISBN."
+msgstr "Veuillez attendre un instant avant de rechercher un autre ISBN."
+
+msgid "Please wait a moment before sending another message."
+msgstr "Veuillez attendre un instant avant d'envoyer un autre message."
+
+msgid "Print run completed (%(date)s)"
+msgstr "Tirage terminé (%(date)s)"
+
+msgid "Print run marked complete; stock updated."
+msgstr "Tirage marqué comme terminé ; stock mis à jour."
+
+msgid "Receipt number"
+msgstr "Numéro de reçu"
+
+msgid "Record Print Run"
+msgstr "Enregistrer un tirage"
+
+msgid "Remove"
+msgstr "Retirer"
+
+msgid "Results for \"%(query)s\""
+msgstr "Résultats pour \"%(query)s\""
+
+msgid "Return date"
+msgstr "Date de retour"
+
+msgid "Role"
+msgstr "Rôle"
+
+msgid "Role updated."
+msgstr "Rôle mis à jour."
+
+msgid "Row %(n)s: a valid published date (YYYY-MM-DD) is required for new books."
+msgstr "Ligne %(n)s : une date de publication valide (AAAA-MM-JJ) est requise pour les nouveaux livres."
+
+msgid "Row %(n)s: category is required for new books."
+msgstr "Ligne %(n)s : la catégorie est requise pour les nouveaux livres."
+
+msgid "Rumi Press Invoices"
+msgstr "Factures Rumi Press"
+
+msgid "Rumi Press Transactions"
+msgstr "Transactions Rumi Press"
+
+msgid "Sale"
+msgstr "Vente"
+
+msgid "Sales by Channel"
+msgstr "Ventes par canal"
+
+msgid "Save Photo"
+msgstr "Enregistrer la photo"
+
+msgid "Search Results"
+msgstr "Résultats de recherche"
+
+msgid "Search books, customers, invoices"
+msgstr "Rechercher des livres, clients, factures"
+
+msgid "Search books, customers, invoices…"
+msgstr "Rechercher des livres, clients, factures…"
+
+msgid "Select all"
+msgstr "Tout sélectionner"
+
+msgid "Select at least one invoice and an action."
+msgstr "Sélectionnez au moins une facture et une action."
+
+msgid "Send invite"
+msgstr "Envoyer l'invitation"
+
+msgid "Sent"
+msgstr "Envoyée"
+
+msgid "Share"
+msgstr "Partager"
+
+msgid "Shopify"
+msgstr "Shopify"
+
+msgid "Something went wrong"
+msgstr "Une erreur est survenue"
+
+msgid "Staff"
+msgstr "Personnel"
+
+msgid "Stock History"
+msgstr "Historique du stock"
+
+msgid "Stock quantity"
+msgstr "Quantité en stock"
+
+msgid "Tax rate (%)"
+msgstr "Taux de taxe (%)"
+
+msgid "Team"
+msgstr "Équipe"
+
+msgid "The page you're looking for doesn't exist or may have moved."
+msgstr "La page que vous recherchez n'existe pas ou a peut-être été déplacée."
+
+msgid "This invitation link is invalid, has already been used, or has expired. Ask the account owner to send a new one."
+msgstr "Ce lien d'invitation est invalide, a déjà été utilisé, ou a expiré. Demandez au propriétaire du compte d'en envoyer un nouveau."
+
+msgid "This print run is already completed."
+msgstr "Ce tirage est déjà terminé."
+
+msgid "Too Many Login Attempts"
+msgstr "Trop de tentatives de connexion"
+
+msgid "Too many incorrect attempts. Please request a new code."
+msgstr "Trop de tentatives incorrectes. Veuillez demander un nouveau code."
+
+msgid "Too many incorrect attempts. Please try again later."
+msgstr "Trop de tentatives incorrectes. Veuillez réessayer plus tard."
+
+msgid "Transaction"
+msgstr "Transaction"
+
+msgid "Type"
+msgstr "Type"
+
+msgid "Unspecified"
+msgstr "Non spécifié"
+
+msgid "Update Email"
+msgstr "Mettre à jour l'e-mail"
+
+msgid "Upgraded"
+msgstr "Mis à niveau"
+
+msgid "User"
+msgstr "Utilisateur"
+
+msgid "Viewer"
+msgstr "Lecteur"
+
+msgid "We hit an unexpected error. Please try again in a moment."
+msgstr "Nous avons rencontré une erreur inattendue. Veuillez réessayer dans un instant."
+
+msgid "Welcome back"
+msgstr "Bon retour"
+
+msgid "Welcome! Your account is ready."
+msgstr "Bienvenue ! Votre compte est prêt."
+
+msgid "Yes"
+msgstr "Oui"
+
+msgid "You've been invited to join as %(role)s, using %(email)s. Choose a username and password to continue."
+msgstr "Vous avez été invité(e) à rejoindre en tant que %(role)s, avec %(email)s. Choisissez un nom d'utilisateur et un mot de passe pour continuer."
+
+msgid "Your account has been temporarily locked due to too many failed login attempts. Please try again later."
+msgstr "Votre compte a été temporairement verrouillé en raison de trop nombreuses tentatives de connexion échouées. Veuillez réessayer plus tard."
+

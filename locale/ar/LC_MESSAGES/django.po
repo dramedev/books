@@ -2209,3 +2209,336 @@ msgstr "متأخرة من 31 إلى 60 يومًا"
 msgid "60+ days overdue"
 msgstr "متأخرة أكثر من 60 يومًا"
 
+msgid "%(count)d invoice(s) skipped (incompatible status)."
+msgstr "تم تجاهل %(count)d فاتورة (حالة غير متوافقة)."
+
+msgid "%(count)d invoice(s) updated."
+msgstr "تم تحديث %(count)d فاتورة."
+
+msgid "'%(title)s' currently has %(stock)s unit(s) on hand."
+msgstr "'%(title)s' لديه حاليًا %(stock)s وحدة متوفرة."
+
+msgid "Account"
+msgstr "الحساب"
+
+msgid "Adjustment"
+msgstr "تعديل"
+
+msgid "Admin"
+msgstr "مسؤول"
+
+msgid "All books"
+msgstr "كل الكتب"
+
+msgid "All channels"
+msgstr "كل القنوات"
+
+msgid "All statuses"
+msgstr "كل الحالات"
+
+msgid "Amazon"
+msgstr "أمازون"
+
+msgid "An account must keep at least one Admin."
+msgstr "يجب أن يحتفظ الحساب بمسؤول واحد على الأقل."
+
+msgid "An account with this email already exists. Joining a second team isn't supported yet — ask the account owner to invite a different email, or contact support."
+msgstr "يوجد حساب بهذا البريد الإلكتروني مسبقًا. الانضمام إلى فريق ثانٍ غير مدعوم حاليًا — اطلب من صاحب الحساب دعوة بريد إلكتروني مختلف، أو تواصل مع الدعم."
+
+msgid "Back to Dashboard"
+msgstr "العودة إلى لوحة التحكم"
+
+msgid "Back to Login"
+msgstr "العودة إلى تسجيل الدخول"
+
+msgid "Change Password"
+msgstr "تغيير كلمة المرور"
+
+msgid "Channel Breakdown"
+msgstr "التوزيع حسب القناة"
+
+msgid "Clear selection"
+msgstr "إلغاء التحديد"
+
+msgid "Completed"
+msgstr "مكتمل"
+
+msgid "Completed at"
+msgstr "تم الإكمال في"
+
+msgid "Completed print runs can't be deleted; the stock adjustment must be reversed manually."
+msgstr "لا يمكن حذف عمليات الطباعة المكتملة؛ يجب عكس تعديل المخزون يدويًا."
+
+msgid "Cover image URL"
+msgstr "رابط صورة الغلاف"
+
+msgid "Create"
+msgstr "إنشاء"
+
+msgid "Draft"
+msgstr "مسودة"
+
+msgid "Email Address"
+msgstr "عنوان البريد الإلكتروني"
+
+msgid "Email address"
+msgstr "عنوان البريد الإلكتروني"
+
+msgid "Email address updated."
+msgstr "تم تحديث عنوان البريد الإلكتروني."
+
+msgid "Enter a search term above."
+msgstr "أدخل كلمة بحث أعلاه."
+
+msgid "Expired"
+msgstr "منتهي الصلاحية"
+
+msgid "Expires"
+msgstr "تنتهي الصلاحية"
+
+msgid "File is too large (maximum 5 MB)."
+msgstr "الملف كبير جدًا (الحد الأقصى 5 ميغابايت)."
+
+msgid "Go to login"
+msgstr "الانتقال إلى تسجيل الدخول"
+
+msgid "Image must be smaller than %(max_mb)s MB."
+msgstr "يجب أن تكون الصورة أصغر من %(max_mb)s ميغابايت."
+
+msgid "Invalid role."
+msgstr "دور غير صالح."
+
+msgid "Invitation cancelled."
+msgstr "تم إلغاء الدعوة."
+
+msgid "Invitation sent to %(email)s."
+msgstr "تم إرسال الدعوة إلى %(email)s."
+
+msgid "Invitation unavailable"
+msgstr "الدعوة غير متاحة"
+
+msgid "Invite people to manage this account alongside you."
+msgstr "ادعُ أشخاصًا لإدارة هذا الحساب معك."
+
+msgid "Invite someone"
+msgstr "دعوة شخص"
+
+msgid "Invoice"
+msgstr "الفاتورة"
+
+msgid "Invoice number"
+msgstr "رقم الفاتورة"
+
+msgid "Join"
+msgstr "انضمام"
+
+msgid "Join the team"
+msgstr "الانضمام إلى الفريق"
+
+msgid "Leave blank to keep the current value."
+msgstr "اتركه خاليًا للاحتفاظ بالقيمة الحالية."
+
+msgid "Mark Complete"
+msgstr "وضع علامة مكتمل"
+
+msgid "Mark Selected Paid"
+msgstr "وضع علامة مدفوع على المحدد"
+
+msgid "Mark Selected Sent"
+msgstr "وضع علامة مرسل على المحدد"
+
+msgid "Member removed."
+msgstr "تمت إزالة العضو."
+
+msgid "Members"
+msgstr "الأعضاء"
+
+msgid "No"
+msgstr "لا"
+
+msgid "No locations yet."
+msgstr "لا توجد مواقع حتى الآن."
+
+msgid "No matches found."
+msgstr "لم يتم العثور على نتائج مطابقة."
+
+msgid "No stock history for this book yet."
+msgstr "لا يوجد سجل مخزون لهذا الكتاب حتى الآن."
+
+msgid "Overdue"
+msgstr "متأخر"
+
+msgid "Overdue invoices"
+msgstr "الفواتير المتأخرة"
+
+msgid "Page navigation"
+msgstr "التنقل بين الصفحات"
+
+msgid "Page not found"
+msgstr "الصفحة غير موجودة"
+
+msgid "Paid"
+msgstr "مدفوعة"
+
+msgid "Password updated."
+msgstr "تم تحديث كلمة المرور."
+
+msgid "Pending invitations"
+msgstr "الدعوات المعلقة"
+
+msgid "Please wait a moment before looking up another ISBN."
+msgstr "يرجى الانتظار لحظة قبل البحث عن ISBN آخر."
+
+msgid "Please wait a moment before sending another message."
+msgstr "يرجى الانتظار لحظة قبل إرسال رسالة أخرى."
+
+msgid "Print run completed (%(date)s)"
+msgstr "تم إكمال الطباعة (%(date)s)"
+
+msgid "Print run marked complete; stock updated."
+msgstr "تم وضع علامة على الطباعة كمكتملة؛ تم تحديث المخزون."
+
+msgid "Receipt number"
+msgstr "رقم الإيصال"
+
+msgid "Record Print Run"
+msgstr "تسجيل عملية طباعة"
+
+msgid "Remove"
+msgstr "إزالة"
+
+msgid "Results for \"%(query)s\""
+msgstr "نتائج لـ \"%(query)s\""
+
+msgid "Return date"
+msgstr "تاريخ الإرجاع"
+
+msgid "Role"
+msgstr "الدور"
+
+msgid "Role updated."
+msgstr "تم تحديث الدور."
+
+msgid "Row %(n)s: a valid published date (YYYY-MM-DD) is required for new books."
+msgstr "الصف %(n)s: مطلوب تاريخ نشر صالح (YYYY-MM-DD) للكتب الجديدة."
+
+msgid "Row %(n)s: category is required for new books."
+msgstr "الصف %(n)s: الفئة مطلوبة للكتب الجديدة."
+
+msgid "Rumi Press Invoices"
+msgstr "فواتير Rumi Press"
+
+msgid "Rumi Press Transactions"
+msgstr "معاملات Rumi Press"
+
+msgid "Sale"
+msgstr "بيع"
+
+msgid "Sales by Channel"
+msgstr "المبيعات حسب القناة"
+
+msgid "Save Photo"
+msgstr "حفظ الصورة"
+
+msgid "Search Results"
+msgstr "نتائج البحث"
+
+msgid "Search books, customers, invoices"
+msgstr "البحث في الكتب والعملاء والفواتير"
+
+msgid "Search books, customers, invoices…"
+msgstr "البحث في الكتب والعملاء والفواتير…"
+
+msgid "Select all"
+msgstr "تحديد الكل"
+
+msgid "Select at least one invoice and an action."
+msgstr "حدد فاتورة واحدة على الأقل وإجراءً."
+
+msgid "Send invite"
+msgstr "إرسال الدعوة"
+
+msgid "Sent"
+msgstr "مُرسلة"
+
+msgid "Share"
+msgstr "مشاركة"
+
+msgid "Shopify"
+msgstr "Shopify"
+
+msgid "Something went wrong"
+msgstr "حدث خطأ ما"
+
+msgid "Staff"
+msgstr "موظف"
+
+msgid "Stock History"
+msgstr "سجل المخزون"
+
+msgid "Stock quantity"
+msgstr "كمية المخزون"
+
+msgid "Tax rate (%)"
+msgstr "معدل الضريبة (%)"
+
+msgid "Team"
+msgstr "الفريق"
+
+msgid "The page you're looking for doesn't exist or may have moved."
+msgstr "الصفحة التي تبحث عنها غير موجودة أو قد تم نقلها."
+
+msgid "This invitation link is invalid, has already been used, or has expired. Ask the account owner to send a new one."
+msgstr "رابط الدعوة هذا غير صالح، أو تم استخدامه مسبقًا، أو انتهت صلاحيته. اطلب من صاحب الحساب إرسال رابط جديد."
+
+msgid "This print run is already completed."
+msgstr "هذه عملية الطباعة مكتملة بالفعل."
+
+msgid "Too Many Login Attempts"
+msgstr "محاولات تسجيل دخول كثيرة جدًا"
+
+msgid "Too many incorrect attempts. Please request a new code."
+msgstr "محاولات خاطئة كثيرة جدًا. يرجى طلب رمز جديد."
+
+msgid "Too many incorrect attempts. Please try again later."
+msgstr "محاولات خاطئة كثيرة جدًا. يرجى المحاولة مرة أخرى لاحقًا."
+
+msgid "Transaction"
+msgstr "المعاملة"
+
+msgid "Type"
+msgstr "النوع"
+
+msgid "Unspecified"
+msgstr "غير محدد"
+
+msgid "Update Email"
+msgstr "تحديث البريد الإلكتروني"
+
+msgid "Upgraded"
+msgstr "تمت الترقية"
+
+msgid "User"
+msgstr "المستخدم"
+
+msgid "Viewer"
+msgstr "مشاهد"
+
+msgid "We hit an unexpected error. Please try again in a moment."
+msgstr "حدث خطأ غير متوقع. يرجى المحاولة مرة أخرى بعد لحظة."
+
+msgid "Welcome back"
+msgstr "مرحبًا بعودتك"
+
+msgid "Welcome! Your account is ready."
+msgstr "مرحبًا! حسابك جاهز."
+
+msgid "Yes"
+msgstr "نعم"
+
+msgid "You've been invited to join as %(role)s, using %(email)s. Choose a username and password to continue."
+msgstr "تمت دعوتك للانضمام بصفة %(role)s، باستخدام %(email)s. اختر اسم مستخدم وكلمة مرور للمتابعة."
+
+msgid "Your account has been temporarily locked due to too many failed login attempts. Please try again later."
+msgstr "تم قفل حسابك مؤقتًا بسبب وجود عدد كبير جدًا من محاولات تسجيل الدخول الفاشلة. يرجى المحاولة مرة أخرى لاحقًا."
+
