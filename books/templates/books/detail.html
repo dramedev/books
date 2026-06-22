@@ -20,6 +20,12 @@
 </a>
 {% endif %}
 
+{% if perms.books.add_printrun %}
+<a class="btn btn-outline-light" href="{% url 'print_run_create' book.id %}">
+{% translate "New Print Run" %}
+</a>
+{% endif %}
+
 {% if perms.books.change_book %}
 <a class="btn btn-warning" href="{% url 'book_update' book.id %}">
 {% translate "Edit" %}

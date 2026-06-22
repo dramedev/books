@@ -2065,3 +2065,12 @@ msgstr "تنزيل PDF"
 msgid "Thank you for shopping with Rumi Press!"
 msgstr "شكرًا لتسوقك مع Rumi Press!"
 
+msgid "New Print Run"
+msgstr "تشغيل طباعة جديد"
+
+msgid "New Print Run (pick a book)"
+msgstr "تشغيل طباعة جديد (اختر كتابًا)"
+
+msgid "Open a book and use \"New Print Run\" to start one."
+msgstr "افتح كتابًا واستخدم «تشغيل طباعة جديد» لبدء واحد."
+

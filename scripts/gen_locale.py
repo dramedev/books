@@ -840,6 +840,9 @@ FR = {
     "Receipt # or customer…": "N° de reçu ou client…",
     "Download PDF": "Télécharger le PDF",
     "Thank you for shopping with Rumi Press!": "Merci d'avoir fait vos achats chez Rumi Press !",
+    "New Print Run": "Nouveau tirage",
+    "New Print Run (pick a book)": "Nouveau tirage (choisir un livre)",
+    "Open a book and use \"New Print Run\" to start one.": "Ouvrez un livre et utilisez « Nouveau tirage » pour en démarrer un.",
 }
 
 # ---------------------------------------------------------------------------
@@ -1660,6 +1663,9 @@ AR = {
     "Receipt # or customer…": "رقم الإيصال أو العميل…",
     "Download PDF": "تنزيل PDF",
     "Thank you for shopping with Rumi Press!": "شكرًا لتسوقك مع Rumi Press!",
+    "New Print Run": "تشغيل طباعة جديد",
+    "New Print Run (pick a book)": "تشغيل طباعة جديد (اختر كتابًا)",
+    "Open a book and use \"New Print Run\" to start one.": "افتح كتابًا واستخدم «تشغيل طباعة جديد» لبدء واحد.",
 }
 
 

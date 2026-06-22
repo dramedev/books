@@ -2722,7 +2722,7 @@ class PrintRunCompleteTests(TestCase):
         User = get_user_model()
         self.user = User.objects.create_user(username="owner", password="pass1234")
         self.client.force_login(self.user)
-        grant(self.user, "view_printrun", "add_printrun", "change_printrun", "delete_printrun")
+        grant(self.user, "view_book", "view_printrun", "add_printrun", "change_printrun", "delete_printrun")
 
         cat = Category.objects.create(owner=self.user, name="Fiction")
         self.book = Book.objects.create(
@@ -2765,6 +2765,20 @@ class PrintRunCompleteTests(TestCase):
         self.book.refresh_from_db()
         self.assertEqual(self.book.stock_on_hand, 50)
         self.assertEqual(StockAdjustment.objects.filter(book=self.book).count(), 1)
+
+    def test_book_detail_shows_new_print_run_link_with_permission(self):
+        response = self.client.get(reverse("book_detail", args=[self.book.id]))
+        self.assertContains(response, reverse("print_run_create", args=[self.book.id]))
+
+    def test_book_detail_hides_new_print_run_link_without_permission(self):
+        other = get_user_model().objects.create_user(username="nopower_pr", password="pass1234")
+        account = get_or_create_account_for_user(self.user)
+        AccountMembership.objects.create(account=account, user=other, role=AccountMembership.ROLE_VIEWER)
+        sync_user_groups_for_role(other, AccountMembership.ROLE_VIEWER)
+        self.client.force_login(other)
+
+        response = self.client.get(reverse("book_detail", args=[self.book.id]))
+        self.assertNotContains(response, reverse("print_run_create", args=[self.book.id]))
 
     def test_completed_print_run_cannot_be_deleted(self):
         self.client.post(reverse("print_run_complete", args=[self.run.id]))

@@ -8,6 +8,12 @@
 <h1 class="mb-1">{% translate "Print Runs" %}</h1>
 <p class="muted-text mb-0">{% translate "Track production print runs and their costs." %}</p>
 </div>
+
+{% if perms.books.add_printrun %}
+<a class="btn btn-success" href="{% url 'book_list' %}">
+{% translate "New Print Run (pick a book)" %}
+</a>
+{% endif %}
 </div>
 
 <div class="table-responsive">
@@ -53,7 +59,12 @@
 </td>
 </tr>
 {% empty %}
-<tr><td colspan="9" class="text-center muted-text py-4">{% translate "No print runs recorded yet." %}</td></tr>
+<tr><td colspan="9" class="text-center muted-text py-4">
+{% translate "No print runs recorded yet." %}
+{% if perms.books.add_printrun %}
+{% translate "Open a book and use \"New Print Run\" to start one." %}
+{% endif %}
+</td></tr>
 {% endfor %}
 </table>
 </div>
