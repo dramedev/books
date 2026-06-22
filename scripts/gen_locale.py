@@ -886,6 +886,16 @@ FR = {
     "Used for titles and accents on your invoices and receipts, e.g. #1f1f1f.":
         "Utilisée pour les titres et les accents sur vos factures et reçus, par ex. #1f1f1f.",
     "Enter a valid hex color code (e.g. #1f1f1f).": "Entrez un code couleur hexadécimal valide (ex. #1f1f1f).",
+    "Invoice Aging Report": "Rapport d'ancienneté des factures",
+    "Outstanding invoices grouped by how overdue they are.":
+        "Factures impayées regroupées selon leur retard.",
+    "invoice(s)": "facture(s)",
+    "Days Overdue": "Jours de retard",
+    "No outstanding invoices. All caught up.": "Aucune facture impayée. Tout est à jour.",
+    "Current (not yet due)": "En cours (pas encore échue)",
+    "1–30 days overdue": "Retard de 1 à 30 jours",
+    "31–60 days overdue": "Retard de 31 à 60 jours",
+    "60+ days overdue": "Retard de plus de 60 jours",
 }
 
 # ---------------------------------------------------------------------------
@@ -1752,6 +1762,16 @@ AR = {
     "Used for titles and accents on your invoices and receipts, e.g. #1f1f1f.":
         "يُستخدم للعناوين واللمسات على فواتيرك وإيصالاتك، مثل #1f1f1f.",
     "Enter a valid hex color code (e.g. #1f1f1f).": "أدخل رمز لون سادس عشري صالح (مثل #1f1f1f).",
+    "Invoice Aging Report": "تقرير تقادم الفواتير",
+    "Outstanding invoices grouped by how overdue they are.":
+        "الفواتير غير المسددة مجمّعة حسب مدة تأخرها.",
+    "invoice(s)": "فاتورة",
+    "Days Overdue": "أيام التأخير",
+    "No outstanding invoices. All caught up.": "لا توجد فواتير غير مسددة. كل شيء على ما يرام.",
+    "Current (not yet due)": "حالية (لم يحن أجلها)",
+    "1–30 days overdue": "متأخرة من 1 إلى 30 يومًا",
+    "31–60 days overdue": "متأخرة من 31 إلى 60 يومًا",
+    "60+ days overdue": "متأخرة أكثر من 60 يومًا",
 }
 
 
@@ -2485,6 +2505,16 @@ TR = {
     "Used for titles and accents on your invoices and receipts, e.g. #1f1f1f.":
         "Faturalarınızdaki ve fişlerinizdeki başlıklar ve vurgular için kullanılır, örn. #1f1f1f.",
     "Enter a valid hex color code (e.g. #1f1f1f).": "Geçerli bir onaltılık renk kodu girin (örn. #1f1f1f).",
+    "Invoice Aging Report": "Fatura Yaşlandırma Raporu",
+    "Outstanding invoices grouped by how overdue they are.":
+        "Ödenmemiş faturalar geciktikleri süreye göre gruplandırılmıştır.",
+    "invoice(s)": "fatura",
+    "Days Overdue": "Geciken Gün Sayısı",
+    "No outstanding invoices. All caught up.": "Ödenmemiş fatura yok. Her şey güncel.",
+    "Current (not yet due)": "Güncel (vadesi henüz gelmedi)",
+    "1–30 days overdue": "1-30 gün geciken",
+    "31–60 days overdue": "31-60 gün geciken",
+    "60+ days overdue": "60+ gün geciken",
 }
 
 def escape(s):

@@ -2179,3 +2179,30 @@ msgstr "Utilisée pour les titres et les accents sur vos factures et reçus, par
 msgid "Enter a valid hex color code (e.g. #1f1f1f)."
 msgstr "Entrez un code couleur hexadécimal valide (ex. #1f1f1f)."
 
+msgid "Invoice Aging Report"
+msgstr "Rapport d'ancienneté des factures"
+
+msgid "Outstanding invoices grouped by how overdue they are."
+msgstr "Factures impayées regroupées selon leur retard."
+
+msgid "invoice(s)"
+msgstr "facture(s)"
+
+msgid "Days Overdue"
+msgstr "Jours de retard"
+
+msgid "No outstanding invoices. All caught up."
+msgstr "Aucune facture impayée. Tout est à jour."
+
+msgid "Current (not yet due)"
+msgstr "En cours (pas encore échue)"
+
+msgid "1–30 days overdue"
+msgstr "Retard de 1 à 30 jours"
+
+msgid "31–60 days overdue"
+msgstr "Retard de 31 à 60 jours"
+
+msgid "60+ days overdue"
+msgstr "Retard de plus de 60 jours"
+
