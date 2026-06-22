@@ -1294,6 +1294,15 @@ msgstr "%(count)s livre(s) supprimé(s)."
 msgid "No books selected."
 msgstr "Aucun livre sélectionné."
 
+msgid "Delete selected"
+msgstr "Supprimer la sélection"
+
+msgid "Delete selected books? This cannot be undone."
+msgstr "Supprimer les livres sélectionnés ? Cette action est irréversible."
+
+msgid "selected"
+msgstr "sélectionné(s)"
+
 msgid "Invoices"
 msgstr "Factures"
 

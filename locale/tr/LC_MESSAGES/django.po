@@ -1,0 +1,2166 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: RumiPress\n"
+"Report-Msgid-Bugs-To: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Language: tr\n"
+
+msgid "Dashboard"
+msgstr "Kontrol Paneli"
+
+msgid "Catalog"
+msgstr "Katalog"
+
+msgid "Books"
+msgstr "Kitaplar"
+
+msgid "Stock"
+msgstr "Stok"
+
+msgid "Categories"
+msgstr "Kategoriler"
+
+msgid "Authors"
+msgstr "Yazarlar"
+
+msgid "Sales"
+msgstr "Satışlar"
+
+msgid "Reports"
+msgstr "Raporlar"
+
+msgid "Help"
+msgstr "Yardım"
+
+msgid "About"
+msgstr "Hakkında"
+
+msgid "Logout"
+msgstr "Çıkış Yap"
+
+msgid "Theme"
+msgstr "Tema"
+
+msgid "Login"
+msgstr "Giriş"
+
+msgid "Signing in…"
+msgstr "Giriş yapılıyor…"
+
+msgid "Language"
+msgstr "Dil"
+
+msgid "RumiPress Assistant"
+msgstr "RumiPress Asistanı"
+
+msgid "Ask a question..."
+msgstr "Bir soru sorun..."
+
+msgid "Toggle navigation"
+msgstr "Gezinmeyi aç/kapat"
+
+msgid "Open AI assistant"
+msgstr "Yapay zekâ asistanını aç"
+
+msgid "Thinking..."
+msgstr "Düşünülüyor..."
+
+msgid "Sorry, something went wrong."
+msgstr "Üzgünüz, bir şeyler ters gitti."
+
+msgid "About Rumi Press"
+msgstr "Rumi Press Hakkında"
+
+msgid "What each part of the system does."
+msgstr "Sistemin her bölümünün ne işe yaradığı."
+
+msgid "Profile"
+msgstr "Profil"
+
+msgid "A quick overview of the whole catalog: total books, total units sold, low stock count, total revenue and profit, a revenue/profit-by-category chart, a sales trend chart, the books currently low on stock, the top sellers, and the most recent sales."
+msgstr "Tüm kataloğa hızlı bir genel bakış: toplam kitap sayısı, toplam satılan birim, düşük stok sayısı, toplam gelir ve kâr, kategoriye göre gelir/kâr grafiği, satış eğilimi grafiği, şu anda stoğu az olan kitaplar, en çok satanlar ve en son satışlar."
+
+msgid "The catalog of titles: ISBN, title, subtitle, authors, publisher, publish date, category and distribution expense. Search, filter by category/publisher, sort, and export the list to CSV, Excel or PDF."
+msgstr "Başlık kataloğu: ISBN, başlık, alt başlık, yazarlar, yayıncı, yayın tarihi, kategori ve dağıtım gideri. Arama yapın, kategoriye/yayıncıya göre filtreleyin, sıralayın ve listeyi CSV, Excel veya PDF olarak dışa aktarın."
+
+msgid "Stock on hand and reorder thresholds for every book. Books at or below their threshold are flagged \"Low stock\" and can be filtered to a low-stock-only view."
+msgstr "Her kitap için eldeki stok ve yeniden sipariş eşikleri. Eşiğinde veya altında olan kitaplar \"Düşük stok\" olarak işaretlenir ve yalnızca düşük stok görünümüne filtrelenebilir."
+
+msgid "Groupings used to organize books for filtering and reporting. Each category shows how many books belong to it, and can be added, edited or deleted (categories still in use can't be deleted)."
+msgstr "Kitapları filtreleme ve raporlama için düzenlemek üzere kullanılan gruplamalar. Her kategori kaç kitabın kendisine ait olduğunu gösterir ve eklenebilir, düzenlenebilir veya silinebilir (hâlâ kullanılan kategoriler silinemez)."
+
+msgid "The list of authors linked to books, with a count of how many books each author has. Authors can be added, edited or removed once they are no longer linked to any book."
+msgstr "Kitaplara bağlı yazarların listesi, her yazarın kaç kitabı olduğunun sayısıyla birlikte. Yazarlar, artık herhangi bir kitaba bağlı olmadıklarında eklenebilir, düzenlenebilir veya kaldırılabilir."
+
+msgid "Every sale transaction: book, quantity, unit price, revenue, date and channel. Recording a sale reduces the book's stock on hand and shows a remaining-stock notification; a sale is refused if it would exceed available stock. The list can be exported to CSV, Excel or PDF."
+msgstr "Her satış işlemi: kitap, miktar, birim fiyat, gelir, tarih ve kanal. Bir satışın kaydedilmesi kitabın eldeki stoğunu azaltır ve kalan stok bildirimini gösterir; mevcut stoğu aşacak bir satış kabul edilmez. Liste CSV, Excel veya PDF olarak dışa aktarılabilir."
+
+msgid "A filterable distribution report: total books, expense, revenue and profit, with charts for expenses and revenue/profit by category and a sales trend over time. Results can be exported to CSV, Excel or PDF."
+msgstr "Filtrelenebilir bir dağıtım raporu: toplam kitap, gider, gelir ve kâr; kategoriye göre gider ve gelir/kâr grafikleri ile zaman içindeki satış eğilimiyle birlikte. Sonuçlar CSV, Excel veya PDF olarak dışa aktarılabilir."
+
+msgid "Each user can upload a profile photo, shown in the sidebar. Access to each section above is controlled by permissions, so what you see depends on your assigned role."
+msgstr "Her kullanıcı, kenar çubuğunda gösterilen bir profil fotoğrafı yükleyebilir. Yukarıdaki her bölüme erişim izinlerle kontrol edilir, dolayısıyla gördükleriniz size atanan role bağlıdır."
+
+msgid "Edit"
+msgstr "Düzenle"
+
+msgid "Delete"
+msgstr "Sil"
+
+msgid "View"
+msgstr "Görüntüle"
+
+msgid "Save"
+msgstr "Kaydet"
+
+msgid "Cancel"
+msgstr "İptal"
+
+msgid "Name"
+msgstr "Ad"
+
+msgid "Actions"
+msgstr "İşlemler"
+
+msgid "Add Author"
+msgstr "Yazar Ekle"
+
+msgid "Add Category"
+msgstr "Kategori Ekle"
+
+msgid "Add Book"
+msgstr "Kitap Ekle"
+
+msgid "Scan"
+msgstr "Tara"
+
+msgid "Scan barcode"
+msgstr "Barkod tara"
+
+msgid "Stop scanning"
+msgstr "Taramayı durdur"
+
+msgid "Could not load the barcode scanner. Check your connection and try again."
+msgstr "Barkod tarayıcı yüklenemedi. Bağlantınızı kontrol edip tekrar deneyin."
+
+msgid "Scanning — point camera at barcode..."
+msgstr "Taranıyor — kamerayı barkoda doğrultun..."
+
+msgid "Detected:"
+msgstr "Algılandı:"
+
+msgid "Camera access denied or unavailable."
+msgstr "Kamera erişimi reddedildi veya kullanılamıyor."
+
+msgid "Look up"
+msgstr "Sorgula"
+
+msgid "Look up book details"
+msgstr "Kitap bilgilerini sorgula"
+
+msgid "Looking up book details…"
+msgstr "Kitap bilgileri sorgulanıyor…"
+
+msgid "Lookup failed."
+msgstr "Sorgulama başarısız oldu."
+
+msgid "Lookup failed. Check your connection and try again."
+msgstr "Sorgulama başarısız oldu. Bağlantınızı kontrol edip tekrar deneyin."
+
+msgid "No book found for this ISBN."
+msgstr "Bu ISBN için kitap bulunamadı."
+
+msgid "Book details filled in — please review."
+msgstr "Kitap bilgileri dolduruldu — lütfen gözden geçirin."
+
+msgid "ISBN is required."
+msgstr "ISBN gereklidir."
+
+msgid "Cover preview"
+msgstr "Kapak önizlemesi"
+
+msgid "Add Sale"
+msgstr "Satış Ekle"
+
+msgid "No authors yet."
+msgstr "Henüz yazar yok."
+
+msgid "No authors match the current search."
+msgstr "Mevcut aramayla eşleşen yazar yok."
+
+msgid "%(count)s author(s) found"
+msgstr "%(count)s yazar bulundu"
+
+msgid "No categories yet."
+msgstr "Henüz kategori yok."
+
+msgid "No categories match the current search."
+msgstr "Mevcut aramayla eşleşen kategori yok."
+
+msgid "%(count)s category(ies) found"
+msgstr "%(count)s kategori bulundu"
+
+msgid "Contains"
+msgstr "İçeriyor"
+
+msgid "book(s)"
+msgstr "kitap"
+
+msgid "Manage the authors linked to your books."
+msgstr "Kitaplarınıza bağlı yazarları yönetin."
+
+msgid "Manage the catalog, filter records, and open reports."
+msgstr "Kataloğu yönetin, kayıtları filtreleyin ve raporları açın."
+
+msgid "Group books for reporting and filtering."
+msgstr "Raporlama ve filtreleme için kitapları gruplandırın."
+
+msgid "Delete %(object_type)s"
+msgstr "%(object_type)s sil"
+
+msgid "Are you sure you want to delete <strong>%(object_name)s</strong>?"
+msgstr "<strong>%(object_name)s</strong> öğesini silmek istediğinizden emin misiniz?"
+
+msgid "book"
+msgstr "kitabı"
+
+msgid "category"
+msgstr "kategoriyi"
+
+msgid "author"
+msgstr "yazarı"
+
+msgid "sale"
+msgstr "satışı"
+
+msgid "reorder"
+msgstr "yeniden siparişi"
+
+msgid "Author Form"
+msgstr "Yazar Formu"
+
+msgid "Category Form"
+msgstr "Kategori Formu"
+
+msgid "Book Form"
+msgstr "Kitap Formu"
+
+msgid "Sale Form"
+msgstr "Satış Formu"
+
+msgid "Profile Photo"
+msgstr "Profil Fotoğrafı"
+
+msgid "ISBN"
+msgstr "ISBN"
+
+msgid "Category name"
+msgstr "Kategori adı"
+
+msgid "Author name"
+msgstr "Yazar adı"
+
+msgid "Channel (optional)"
+msgstr "Kanal (isteğe bağlı)"
+
+msgid "Password"
+msgstr "Parola"
+
+msgid "Confirm password"
+msgstr "Parolayı onayla"
+
+msgid "Username"
+msgstr "Kullanıcı adı"
+
+msgid "Email"
+msgstr "E-posta"
+
+msgid "Verification code"
+msgstr "Doğrulama kodu"
+
+msgid "Verify"
+msgstr "Doğrula"
+
+msgid "Verify your email"
+msgstr "E-postanızı doğrulayın"
+
+msgid "Resend code"
+msgstr "Kodu yeniden gönder"
+
+msgid "Access code"
+msgstr "Erişim kodu"
+
+msgid "Activate"
+msgstr "Etkinleştir"
+
+msgid "Activate your account"
+msgstr "Hesabınızı etkinleştirin"
+
+msgid "Create an account"
+msgstr "Hesap oluştur"
+
+msgid "Sign up"
+msgstr "Kaydol"
+
+msgid "Already have an account?"
+msgstr "Zaten bir hesabınız var mı?"
+
+msgid "Log in"
+msgstr "Giriş yap"
+
+msgid "Don't have an account?"
+msgstr "Hesabınız yok mu?"
+
+msgid "Create one"
+msgstr "Bir hesap oluşturun"
+
+msgid "Your username and password did not match."
+msgstr "Kullanıcı adınız ve parolanız eşleşmedi."
+
+msgid "We sent a 6-digit verification code to <strong>%(email)s</strong>. Enter it below to continue."
+msgstr "<strong>%(email)s</strong> adresine 6 haneli bir doğrulama kodu gönderdik. Devam etmek için aşağıya girin."
+
+msgid "Your email is verified. Enter the access code you received from the RumiPress owner to activate your account and start using RumiPress."
+msgstr "E-postanız doğrulandı. Hesabınızı etkinleştirmek ve RumiPress'i kullanmaya başlamak için RumiPress sahibinden aldığınız erişim kodunu girin."
+
+msgid "Overview of catalog, stock, and sales performance."
+msgstr "Katalog, stok ve satış performansına genel bakış."
+
+msgid "Full Report"
+msgstr "Tam Rapor"
+
+msgid "Total books"
+msgstr "Toplam kitap"
+
+msgid "Total units sold"
+msgstr "Toplam satılan birim"
+
+msgid "Low stock items"
+msgstr "Düşük stoklu ürünler"
+
+msgid "Total revenue"
+msgstr "Toplam gelir"
+
+msgid "Total profit"
+msgstr "Toplam kâr"
+
+msgid "Low Stock"
+msgstr "Düşük Stok"
+
+msgid "Top Sellers"
+msgstr "En Çok Satanlar"
+
+msgid "Recent Sales"
+msgstr "Son Satışlar"
+
+msgid "Title"
+msgstr "Başlık"
+
+msgid "Threshold"
+msgstr "Eşik"
+
+msgid "Low"
+msgstr "Düşük"
+
+msgid "Nothing is below its reorder threshold."
+msgstr "Yeniden sipariş eşiğinin altında hiçbir şey yok."
+
+msgid "View all %(low_stock_count)s low stock books"
+msgstr "Düşük stoklu %(low_stock_count)s kitabın tümünü görüntüle"
+
+msgid "Category"
+msgstr "Kategori"
+
+msgid "Units sold"
+msgstr "Satılan birim"
+
+msgid "No sales recorded yet."
+msgstr "Henüz satış kaydedilmedi."
+
+msgid "No sales match the current filters."
+msgstr "Mevcut filtrelerle eşleşen satış yok."
+
+msgid "units"
+msgstr "birim"
+
+msgid "%(count)s sale(s) found"
+msgstr "%(count)s satış bulundu"
+
+msgid "Book: %(title)s"
+msgstr "Kitap: %(title)s"
+
+msgid "Channel: %(channel)s"
+msgstr "Kanal: %(channel)s"
+
+msgid "Date"
+msgstr "Tarih"
+
+msgid "Book"
+msgstr "Kitap"
+
+msgid "Quantity"
+msgstr "Miktar"
+
+msgid "Revenue"
+msgstr "Gelir"
+
+msgid "Channel"
+msgstr "Kanal"
+
+msgid "View all sales"
+msgstr "Tüm satışları görüntüle"
+
+msgid "Revenue & Profit by Category"
+msgstr "Kategoriye Göre Gelir ve Kâr"
+
+msgid "Sales Trend"
+msgstr "Satış Eğilimi"
+
+msgid "Units Sold"
+msgstr "Satılan Birim"
+
+msgid "Profit"
+msgstr "Kâr"
+
+msgid "Total purchase cost"
+msgstr "Toplam satın alma maliyeti"
+
+msgid "Purchase Cost"
+msgstr "Satın Alma Maliyeti"
+
+msgid "Stock Value"
+msgstr "Stok Değeri"
+
+msgid "Total inventory value"
+msgstr "Toplam envanter değeri"
+
+msgid "Suggested Qty"
+msgstr "Önerilen Miktar"
+
+msgid "Reorder Suggestions"
+msgstr "Yeniden Sipariş Önerileri"
+
+msgid "Suggestions"
+msgstr "Öneriler"
+
+msgid "Books that are low on stock or projected to run out soon, based on recent sales."
+msgstr "Son satışlara göre stoğu az olan veya yakında tükenmesi beklenen kitaplar."
+
+msgid "Avg. daily sales"
+msgstr "Ort. günlük satış"
+
+msgid "Days of stock left"
+msgstr "Kalan stok günü"
+
+msgid "Suggested quantity"
+msgstr "Önerilen miktar"
+
+msgid "No reorder suggestions right now."
+msgstr "Şu anda yeniden sipariş önerisi yok."
+
+msgid "Adjust"
+msgstr "Düzelt"
+
+msgid "Adjust Stock"
+msgstr "Stok Düzelt"
+
+msgid "Adjustment History"
+msgstr "Düzeltme Geçmişi"
+
+msgid "Stock Adjustments"
+msgstr "Stok Düzeltmeleri"
+
+msgid "History of manual stock corrections."
+msgstr "Manuel stok düzeltmelerinin geçmişi."
+
+msgid "Back to Stock"
+msgstr "Stoğa Geri Dön"
+
+msgid "Change"
+msgstr "Değişim"
+
+msgid "Resulting stock"
+msgstr "Sonuç stok"
+
+msgid "Use a positive number to add stock, negative to remove."
+msgstr "Stok eklemek için pozitif, çıkarmak için negatif bir sayı kullanın."
+
+msgid "Change cannot be zero."
+msgstr "Değişim sıfır olamaz."
+
+msgid "This would reduce stock below zero (current stock: %(stock)s)."
+msgstr "Bu, stoğu sıfırın altına düşürür (mevcut stok: %(stock)s)."
+
+msgid "Stock adjustment recorded."
+msgstr "Stok düzeltmesi kaydedildi."
+
+msgid "No stock adjustments recorded yet."
+msgstr "Henüz stok düzeltmesi kaydedilmedi."
+
+msgid "No stock adjustments match the current filters."
+msgstr "Mevcut filtrelerle eşleşen stok düzeltmesi yok."
+
+msgid "%(count)s adjustment(s) found"
+msgstr "%(count)s düzeltme bulundu"
+
+msgid "All reasons"
+msgstr "Tüm nedenler"
+
+msgid "Damaged"
+msgstr "Hasarlı"
+
+msgid "Lost"
+msgstr "Kayıp"
+
+msgid "Found"
+msgstr "Bulundu"
+
+msgid "Correction"
+msgstr "Düzeltme"
+
+msgid "Print run"
+msgstr "Baskı"
+
+msgid "Other"
+msgstr "Diğer"
+
+msgid "Back to Books"
+msgstr "Kitaplara Geri Dön"
+
+msgid "Details"
+msgstr "Detaylar"
+
+msgid "Publisher"
+msgstr "Yayıncı"
+
+msgid "Published"
+msgstr "Yayın tarihi"
+
+msgid "Distribution Expense"
+msgstr "Dağıtım Gideri"
+
+msgid "Inventory & Sales"
+msgstr "Envanter ve Satışlar"
+
+msgid "Stock on hand"
+msgstr "Eldeki stok"
+
+msgid "Reorder threshold"
+msgstr "Yeniden sipariş eşiği"
+
+msgid "Unit Price"
+msgstr "Birim Fiyat"
+
+msgid "No sales recorded for this book yet."
+msgstr "Bu kitap için henüz satış kaydedilmedi."
+
+msgid "CSV"
+msgstr "CSV"
+
+msgid "Excel"
+msgstr "Excel"
+
+msgid "PDF"
+msgstr "PDF"
+
+msgid "Search"
+msgstr "Ara"
+
+msgid "Title, author, publisher, ISBN"
+msgstr "Başlık, yazar, yayıncı, ISBN"
+
+msgid "All categories"
+msgstr "Tüm kategoriler"
+
+msgid "All publishers"
+msgstr "Tüm yayıncılar"
+
+msgid "Sort"
+msgstr "Sırala"
+
+msgid "Title A-Z"
+msgstr "Başlık A-Z"
+
+msgid "Title Z-A"
+msgstr "Başlık Z-A"
+
+msgid "Oldest first"
+msgstr "Önce en eski"
+
+msgid "Newest first"
+msgstr "Önce en yeni"
+
+msgid "Lowest expense"
+msgstr "En düşük gider"
+
+msgid "Highest expense"
+msgstr "En yüksek gider"
+
+msgid "Apply"
+msgstr "Uygula"
+
+msgid "Reset"
+msgstr "Sıfırla"
+
+msgid "Author"
+msgstr "Yazar"
+
+msgid "Expense"
+msgstr "Gider"
+
+msgid "No books match the current filters."
+msgstr "Mevcut filtrelerle eşleşen kitap yok."
+
+msgid "No books in your catalog yet."
+msgstr "Kataloğunuzda henüz kitap yok."
+
+msgid "Add your first book"
+msgstr "İlk kitabınızı ekleyin"
+
+msgid "%(count)s book(s) found"
+msgstr "%(count)s kitap bulundu"
+
+msgid "Search: \"%(q)s\""
+msgstr "Arama: \"%(q)s\""
+
+msgid "Category: %(name)s"
+msgstr "Kategori: %(name)s"
+
+msgid "Author: %(name)s"
+msgstr "Yazar: %(name)s"
+
+msgid "Publisher: %(name)s"
+msgstr "Yayıncı: %(name)s"
+
+msgid "Book pages"
+msgstr "Kitap sayfaları"
+
+msgid "Previous"
+msgstr "Önceki"
+
+msgid "Next"
+msgstr "Sonraki"
+
+msgid "Page %(number)s of %(total)s"
+msgstr "Sayfa %(number)s / %(total)s"
+
+msgid "Track book sales and revenue."
+msgstr "Kitap satışlarını ve gelirini takip edin."
+
+msgid "Sale pages"
+msgstr "Satış sayfaları"
+
+msgid "Review stock on hand and reorder thresholds."
+msgstr "Eldeki stoğu ve yeniden sipariş eşiklerini gözden geçirin."
+
+msgid "Show all"
+msgstr "Tümünü göster"
+
+msgid "Low stock only"
+msgstr "Yalnızca düşük stok"
+
+msgid "Title, category"
+msgstr "Başlık, kategori"
+
+msgid "Status"
+msgstr "Durum"
+
+msgid "Low stock"
+msgstr "Düşük stok"
+
+msgid "OK"
+msgstr "Tamam"
+
+msgid "No books to show."
+msgstr "Gösterilecek kitap yok."
+
+msgid "Reorders"
+msgstr "Yeniden Siparişler"
+
+msgid "Track stock reorders from pending to received."
+msgstr "Stok yeniden siparişlerini beklemeden teslim alınana kadar takip edin."
+
+msgid "All"
+msgstr "Tümü"
+
+msgid "Pending"
+msgstr "Beklemede"
+
+msgid "Ordered"
+msgstr "Sipariş Edildi"
+
+msgid "Received"
+msgstr "Teslim Alındı"
+
+msgid "Cancelled"
+msgstr "İptal Edildi"
+
+msgid "Note"
+msgstr "Not"
+
+msgid "No reorders yet."
+msgstr "Henüz yeniden sipariş yok."
+
+msgid "No reorders match the current filters."
+msgstr "Mevcut filtrelerle eşleşen yeniden sipariş yok."
+
+msgid "Add reorder for…"
+msgstr "Şunun için yeniden sipariş ekle…"
+
+msgid "Add Reorder"
+msgstr "Yeniden Sipariş Ekle"
+
+msgid "%(count)s reorder(s) found"
+msgstr "%(count)s yeniden sipariş bulundu"
+
+msgid "Supplier: %(name)s"
+msgstr "Tedarikçi: %(name)s"
+
+msgid "Mark as ordered"
+msgstr "Sipariş edildi olarak işaretle"
+
+msgid "Mark as received"
+msgstr "Teslim alındı olarak işaretle"
+
+msgid "Cancel reorder"
+msgstr "Yeniden siparişi iptal et"
+
+msgid "Reorder pages"
+msgstr "Yeniden sipariş sayfaları"
+
+msgid "Reorder Form"
+msgstr "Yeniden Sipariş Formu"
+
+msgid "'%(title)s' currently has %(stock)s in stock (threshold %(threshold)s)."
+msgstr "'%(title)s' şu anda %(stock)s stokta (eşik %(threshold)s)."
+
+msgid "Note (optional)"
+msgstr "Not (isteğe bağlı)"
+
+msgid "Reorder"
+msgstr "Yeniden Sipariş"
+
+msgid "Reorder created."
+msgstr "Yeniden sipariş oluşturuldu."
+
+msgid "Reorder marked as ordered."
+msgstr "Yeniden sipariş, sipariş edildi olarak işaretlendi."
+
+msgid "Reorder received and stock updated."
+msgstr "Yeniden sipariş teslim alındı ve stok güncellendi."
+
+msgid "Reorder cancelled."
+msgstr "Yeniden sipariş iptal edildi."
+
+msgid "This reorder can't be updated from its current status."
+msgstr "Bu yeniden sipariş mevcut durumundan güncellenemez."
+
+msgid "Reorder deleted."
+msgstr "Yeniden sipariş silindi."
+
+msgid "Only cancelled reorders can be deleted."
+msgstr "Yalnızca iptal edilmiş yeniden siparişler silinebilir."
+
+msgid "Created"
+msgstr "Oluşturuldu"
+
+msgid "Supplier"
+msgstr "Tedarikçi"
+
+msgid "Unit Cost"
+msgstr "Birim Maliyet"
+
+msgid "Total Cost"
+msgstr "Toplam Maliyet"
+
+msgid "Suppliers"
+msgstr "Tedarikçiler"
+
+msgid "Add Supplier"
+msgstr "Tedarikçi Ekle"
+
+msgid "Manage the suppliers used for stock reorders."
+msgstr "Stok yeniden siparişleri için kullanılan tedarikçileri yönetin."
+
+msgid "No suppliers yet."
+msgstr "Henüz tedarikçi yok."
+
+msgid "No suppliers match the current search."
+msgstr "Mevcut aramayla eşleşen tedarikçi yok."
+
+msgid "Name, contact, email, phone"
+msgstr "Ad, kişi, e-posta, telefon"
+
+msgid "%(count)s supplier(s) found"
+msgstr "%(count)s tedarikçi bulundu"
+
+msgid "reorder(s)"
+msgstr "yeniden sipariş"
+
+msgid "Contact name"
+msgstr "İletişim adı"
+
+msgid "Contact name (optional)"
+msgstr "İletişim adı (isteğe bağlı)"
+
+msgid "Phone"
+msgstr "Telefon"
+
+msgid "Notes"
+msgstr "Notlar"
+
+msgid "Notes (optional)"
+msgstr "Notlar (isteğe bağlı)"
+
+msgid "No supplier"
+msgstr "Tedarikçi yok"
+
+msgid "Supplier created."
+msgstr "Tedarikçi oluşturuldu."
+
+msgid "Supplier updated."
+msgstr "Tedarikçi güncellendi."
+
+msgid "Supplier deleted."
+msgstr "Tedarikçi silindi."
+
+msgid "Remove this supplier from its reorders before deleting it."
+msgstr "Silmeden önce bu tedarikçiyi yeniden siparişlerinden kaldırın."
+
+msgid "This supplier is linked to reorders and cannot be deleted yet."
+msgstr "Bu tedarikçi yeniden siparişlere bağlı ve henüz silinemez."
+
+msgid "supplier"
+msgstr "tedarikçiyi"
+
+msgid "Supplier Form"
+msgstr "Tedarikçi Formu"
+
+msgid "Returns"
+msgstr "İadeler"
+
+msgid "Sales returns and refunds."
+msgstr "Satış iadeleri ve geri ödemeler."
+
+msgid "Back to Sales"
+msgstr "Satışlara Geri Dön"
+
+msgid "Reason"
+msgstr "Neden"
+
+msgid "Reason (optional)"
+msgstr "Neden (isteğe bağlı)"
+
+msgid "Refund amount"
+msgstr "Geri ödeme tutarı"
+
+msgid "No returns recorded yet."
+msgstr "Henüz iade kaydedilmedi."
+
+msgid "No returns match the current filters."
+msgstr "Mevcut filtrelerle eşleşen iade yok."
+
+msgid "%(count)s return(s) found"
+msgstr "%(count)s iade bulundu"
+
+msgid "Refunded"
+msgstr "Geri Ödendi"
+
+msgid "Return pages"
+msgstr "İade sayfaları"
+
+msgid "Return"
+msgstr "İade"
+
+msgid "Return Form"
+msgstr "İade Formu"
+
+msgid "'%(title)s' sale on %(date)s has %(quantity)s unit(s) available to return."
+msgstr "'%(title)s' için %(date)s tarihli satışta iade edilebilecek %(quantity)s birim var."
+
+msgid "This sale has already been fully returned."
+msgstr "Bu satış zaten tamamen iade edildi."
+
+msgid "Cannot return more than the %(quantity)s sold."
+msgstr "Satılan %(quantity)s adetten fazlası iade edilemez."
+
+msgid "Return recorded and stock updated."
+msgstr "İade kaydedildi ve stok güncellendi."
+
+msgid "Return deleted."
+msgstr "İade silindi."
+
+msgid "return"
+msgstr "iadeyi"
+
+msgid "Distribution Report"
+msgstr "Dağıtım Raporu"
+
+msgid "Review distribution expenses by category."
+msgstr "Kategoriye göre dağıtım giderlerini gözden geçirin."
+
+msgid "Year"
+msgstr "Yıl"
+
+msgid "From"
+msgstr "Başlangıç"
+
+msgid "To"
+msgstr "Bitiş"
+
+msgid "All years"
+msgstr "Tüm yıllar"
+
+msgid "Books in report"
+msgstr "Rapordaki kitaplar"
+
+msgid "Total expense"
+msgstr "Toplam gider"
+
+msgid "Distribution Expenses"
+msgstr "Dağıtım Giderleri"
+
+msgid "Expenses by Category"
+msgstr "Kategoriye Göre Giderler"
+
+msgid "Subtitle"
+msgstr "Alt başlık"
+
+msgid "Published date"
+msgstr "Yayın tarihi"
+
+msgid "Distribution expense"
+msgstr "Dağıtım gideri"
+
+msgid "Unit price"
+msgstr "Birim fiyat"
+
+msgid "Unit cost"
+msgstr "Birim maliyet"
+
+msgid "Sale date"
+msgstr "Satış tarihi"
+
+msgid "Avatar"
+msgstr "Avatar"
+
+msgid "Published Date"
+msgstr "Yayın Tarihi"
+
+msgid "Rumi Press Books"
+msgstr "Rumi Press Kitapları"
+
+msgid "Rumi Press Sales"
+msgstr "Rumi Press Satışları"
+
+msgid "Rumi Press Reorders"
+msgstr "Rumi Press Yeniden Siparişleri"
+
+msgid "Good morning"
+msgstr "Günaydın"
+
+msgid "Good afternoon"
+msgstr "İyi günler"
+
+msgid "Good evening"
+msgstr "İyi akşamlar"
+
+msgid "Book created."
+msgstr "Kitap oluşturuldu."
+
+msgid "Book updated."
+msgstr "Kitap güncellendi."
+
+msgid "Book deleted."
+msgstr "Kitap silindi."
+
+msgid "Category created."
+msgstr "Kategori oluşturuldu."
+
+msgid "Category updated."
+msgstr "Kategori güncellendi."
+
+msgid "Category deleted."
+msgstr "Kategori silindi."
+
+msgid "Author created."
+msgstr "Yazar oluşturuldu."
+
+msgid "Author updated."
+msgstr "Yazar güncellendi."
+
+msgid "Author deleted."
+msgstr "Yazar silindi."
+
+msgid "Sale recorded."
+msgstr "Satış kaydedildi."
+
+msgid "Sale updated."
+msgstr "Satış güncellendi."
+
+msgid "Sale deleted."
+msgstr "Satış silindi."
+
+msgid "Profile photo updated."
+msgstr "Profil fotoğrafı güncellendi."
+
+msgid "Move or delete this category's books before deleting the category."
+msgstr "Kategoriyi silmeden önce bu kategorinin kitaplarını taşıyın veya silin."
+
+msgid "This category contains books and cannot be deleted yet."
+msgstr "Bu kategori kitaplar içeriyor ve henüz silinemez."
+
+msgid "Remove this author from their books before deleting them."
+msgstr "Silmeden önce bu yazarı kitaplarından kaldırın."
+
+msgid "This author is linked to books and cannot be deleted yet."
+msgstr "Bu yazar kitaplara bağlı ve henüz silinemez."
+
+msgid "Cannot record sale: '%(title)s' only has %(stock)s in stock."
+msgstr "Satış kaydedilemiyor: '%(title)s' stokta yalnızca %(stock)s adet var."
+
+msgid "Cannot update sale: '%(title)s' only has %(stock)s available."
+msgstr "Satış güncellenemiyor: '%(title)s' için yalnızca %(stock)s adet mevcut."
+
+msgid "Low stock: '%(title)s' has %(stock)s remaining (reorder threshold %(threshold)s)."
+msgstr "Düşük stok: '%(title)s' için %(stock)s adet kaldı (yeniden sipariş eşiği %(threshold)s)."
+
+msgid "'%(title)s' now has %(stock)s in stock."
+msgstr "'%(title)s' artık stokta %(stock)s adet."
+
+msgid "Sorry, something went wrong talking to the AI assistant. Please try again."
+msgstr "Üzgünüz, yapay zekâ asistanıyla iletişimde bir sorun oluştu. Lütfen tekrar deneyin."
+
+msgid "A new verification code has been sent to your email."
+msgstr "E-postanıza yeni bir doğrulama kodu gönderildi."
+
+msgid "That code is invalid or has expired."
+msgstr "Bu kod geçersiz veya süresi dolmuş."
+
+msgid "That access code is invalid, used, or expired."
+msgstr "Bu erişim kodu geçersiz, kullanılmış veya süresi dolmuş."
+
+msgid "Your account is active. Welcome to RumiPress!"
+msgstr "Hesabınız etkin. RumiPress'e hoş geldiniz!"
+
+msgid "That username is already taken."
+msgstr "Bu kullanıcı adı zaten alınmış."
+
+msgid "An account with that email already exists."
+msgstr "Bu e-postaya sahip bir hesap zaten mevcut."
+
+msgid "The two password fields didn't match."
+msgstr "İki parola alanı eşleşmedi."
+
+msgid "\"The beautiful thing about learning is that no one can take it away from you.\" — B.B. King"
+msgstr "\"Öğrenmenin güzel yanı, hiç kimsenin onu sizden alamamasıdır.\" — B.B. King"
+
+msgid "\"Live as if you were to die tomorrow. Learn as if you were to live forever.\" — Mahatma Gandhi"
+msgstr "\"Yarın ölecekmiş gibi yaşa. Sonsuza dek yaşayacakmış gibi öğren.\" — Mahatma Gandhi"
+
+msgid "\"An investment in knowledge always pays the best interest.\" — Benjamin Franklin"
+msgstr "\"Bilgiye yapılan yatırım her zaman en iyi getiriyi sağlar.\" — Benjamin Franklin"
+
+msgid "\"The capacity to learn is a gift; the ability to learn is a skill; the willingness to learn is a choice.\" — Brian Herbert"
+msgstr "\"Öğrenme kapasitesi bir hediyedir; öğrenme yeteneği bir beceridir; öğrenme isteği bir seçimdir.\" — Brian Herbert"
+
+msgid "\"Develop a passion for learning. If you do, you will never cease to grow.\" — Anthony J. D'Angelo"
+msgstr "\"Öğrenmeye karşı bir tutku geliştirin. Bunu yaparsanız, gelişmeyi asla bırakmazsınız.\" — Anthony J. D'Angelo"
+
+msgid "\"Each small task of everyday life is part of the total harmony of the universe.\" — Saint Therese"
+msgstr "\"Günlük yaşamın her küçük görevi, evrenin bütünsel uyumunun bir parçasıdır.\" — Saint Therese"
+
+msgid "\"Growth is painful. Change is painful. But nothing is as painful as staying stuck somewhere you don't belong.\" — N.R. Narayana Murthy"
+msgstr "\"Büyümek zordur. Değişmek zordur. Ama ait olmadığınız bir yerde sıkışıp kalmak kadar zor bir şey yoktur.\" — N.R. Narayana Murthy"
+
+msgid "\"The expert in anything was once a beginner.\" — Helen Hayes"
+msgstr "\"Her uzman bir zamanlar acemiydi.\" — Helen Hayes"
+
+msgid "\"Success is the sum of small efforts repeated day in and day out.\" — Robert Collier"
+msgstr "\"Başarı, gün be gün tekrarlanan küçük çabaların toplamıdır.\" — Robert Collier"
+
+msgid "\"You don't have to be great to start, but you have to start to be great.\" — Zig Ziglar"
+msgstr "\"Başlamak için harika olmanıza gerek yok, ama harika olmak için başlamanız gerekir.\" — Zig Ziglar"
+
+msgid "\"A room without books is like a body without a soul.\" — Marcus Tullius Cicero"
+msgstr "\"Kitapsız bir oda, ruhsuz bir beden gibidir.\" — Marcus Tullius Cicero"
+
+msgid "\"Books are a uniquely portable magic.\" — Stephen King"
+msgstr "\"Kitaplar, eşsiz biçimde taşınabilir bir büyüdür.\" — Stephen King"
+
+msgid "\"Today a reader, tomorrow a leader.\" — Margaret Fuller"
+msgstr "\"Bugün okuyucu, yarın lider.\" — Margaret Fuller"
+
+msgid "\"Reading is to the mind what exercise is to the body.\" — Joseph Addison"
+msgstr "\"Okumak, akıl için bedene egzersizin yaptığını yapar.\" — Joseph Addison"
+
+msgid "\"Once you learn to read, you will be forever free.\" — Frederick Douglass"
+msgstr "\"Okumayı öğrendiğinizde, sonsuza dek özgür olursunuz.\" — Frederick Douglass"
+
+msgid "\"I have always imagined that Paradise will be a kind of library.\" — Jorge Luis Borges"
+msgstr "\"Cenneti hep bir tür kütüphane olarak hayal ettim.\" — Jorge Luis Borges"
+
+msgid "\"So many books, so little time.\" — Frank Zappa"
+msgstr "\"Bu kadar çok kitap, bu kadar az zaman.\" — Frank Zappa"
+
+msgid "\"There is no friend as loyal as a book.\" — Ernest Hemingway"
+msgstr "\"Bir kitap kadar sadık bir dost yoktur.\" — Ernest Hemingway"
+
+msgid "\"A reader lives a thousand lives before he dies. The man who never reads lives only one.\" — George R.R. Martin"
+msgstr "\"Bir okuyucu ölmeden önce bin hayat yaşar. Hiç okumayan bir adam ise yalnızca birini yaşar.\" — George R.R. Martin"
+
+msgid "\"Books are mirrors: you only see in them what you already have inside you.\" — Carlos Ruiz Zafón"
+msgstr "\"Kitaplar aynadır: onlarda yalnızca içinizde zaten var olanı görürsünüz.\" — Carlos Ruiz Zafón"
+
+msgid "\"Every book has a destination, and every reader has a journey.\" — Book Distribution Philosophy"
+msgstr "\"Her kitabın bir varış noktası, her okuyucunun bir yolculuğu vardır.\" — Kitap Dağıtım Felsefesi"
+
+msgid "\"We do not simply move books; we move knowledge, ideas, and imagination.\" — Book Distribution Philosophy"
+msgstr "\"Sadece kitap taşımıyoruz; bilgi, fikir ve hayal gücü taşıyoruz.\" — Kitap Dağıtım Felsefesi"
+
+msgid "\"A warehouse full of books is a warehouse full of possibilities.\" — Book Distribution Philosophy"
+msgstr "\"Kitap dolu bir depo, olasılıklarla dolu bir depodur.\" — Kitap Dağıtım Felsefesi"
+
+msgid "\"Every delivered book is a new story beginning somewhere.\" — Book Distribution Philosophy"
+msgstr "\"Teslim edilen her kitap, bir yerde başlayan yeni bir hikâyedir.\" — Kitap Dağıtım Felsefesi"
+
+msgid "\"Behind every order is a reader waiting for discovery.\" — Book Distribution Philosophy"
+msgstr "\"Her siparişin ardında, keşfi bekleyen bir okuyucu vardır.\" — Kitap Dağıtım Felsefesi"
+
+msgid "\"Distribution turns printed pages into shared experiences.\" — Book Distribution Philosophy"
+msgstr "\"Dağıtım, basılı sayfaları paylaşılan deneyimlere dönüştürür.\" — Kitap Dağıtım Felsefesi"
+
+msgid "\"Every package carries imagination, knowledge, and opportunity.\" — Book Distribution Philosophy"
+msgstr "\"Her paket; hayal gücü, bilgi ve fırsat taşır.\" — Kitap Dağıtım Felsefesi"
+
+msgid "\"A distributor is the bridge between authors and readers.\" — Book Distribution Philosophy"
+msgstr "\"Bir dağıtımcı, yazarlar ile okuyucular arasındaki köprüdür.\" — Kitap Dağıtım Felsefesi"
+
+msgid "\"The journey of knowledge begins with accessibility.\" — Book Distribution Philosophy"
+msgstr "\"Bilginin yolculuğu erişilebilirlikle başlar.\" — Kitap Dağıtım Felsefesi"
+
+msgid "\"Books travel so minds can explore.\" — Book Distribution Philosophy"
+msgstr "\"Zihinler keşfedebilsin diye kitaplar yolculuk eder.\" — Kitap Dağıtım Felsefesi"
+
+msgid "\"The goal as a company is to have customer service that is not just the best but legendary.\" — Sam Walton"
+msgstr "\"Bir şirket olarak hedefimiz, sadece en iyi değil, efsanevi bir müşteri hizmeti sunmaktır.\" — Sam Walton"
+
+msgid "\"Quality is the best business plan.\" — John Lasseter"
+msgstr "\"Kalite, en iyi iş planıdır.\" — John Lasseter"
+
+msgid "\"Great things in business are never done by one person. They are done by a team of people.\" — Steve Jobs"
+msgstr "\"İş dünyasında büyük şeyler tek bir kişi tarafından değil, bir ekip tarafından gerçekleştirilir.\" — Steve Jobs"
+
+msgid "\"Efficiency is doing better what is already being done.\" — Peter Drucker"
+msgstr "\"Verimlilik, zaten yapılmakta olan şeyi daha iyi yapmaktır.\" — Peter Drucker"
+
+msgid "\"The best way to predict the future is to create it.\" — Peter Drucker"
+msgstr "\"Geleceği tahmin etmenin en iyi yolu onu yaratmaktır.\" — Peter Drucker"
+
+msgid "Import Books"
+msgstr "Kitapları İçe Aktar"
+
+msgid "Upload a CSV file to create or update books in bulk."
+msgstr "Toplu olarak kitap oluşturmak veya güncellemek için bir CSV dosyası yükleyin."
+
+msgid "Import results"
+msgstr "İçe aktarma sonuçları"
+
+msgid "Updated"
+msgstr "Güncellendi"
+
+msgid "Skipped"
+msgstr "Atlandı"
+
+msgid "Row errors:"
+msgstr "Satır hataları:"
+
+msgid "Upload CSV"
+msgstr "CSV Yükle"
+
+msgid "CSV file"
+msgstr "CSV dosyası"
+
+msgid "Maximum file size: 5 MB. Encoding: UTF-8."
+msgstr "Maksimum dosya boyutu: 5 MB. Kodlama: UTF-8."
+
+msgid "Import"
+msgstr "İçe Aktar"
+
+msgid "Format guide"
+msgstr "Biçim kılavuzu"
+
+msgid "The first row must be a header. Supported columns:"
+msgstr "İlk satır başlık olmalıdır. Desteklenen sütunlar:"
+
+msgid "Column"
+msgstr "Sütun"
+
+msgid "Required"
+msgstr "Gerekli"
+
+msgid "Used to match existing books for update"
+msgstr "Güncelleme için mevcut kitapları eşleştirmek üzere kullanılır"
+
+msgid "Comma-separated names"
+msgstr "Virgülle ayrılmış adlar"
+
+msgid "Created automatically if new"
+msgstr "Yeniyse otomatik olarak oluşturulur"
+
+msgid "Decimal number"
+msgstr "Ondalık sayı"
+
+msgid "Download template"
+msgstr "Şablonu indir"
+
+msgid "Please upload a .csv file."
+msgstr "Lütfen bir .csv dosyası yükleyin."
+
+msgid "File must be UTF-8 encoded."
+msgstr "Dosya UTF-8 kodlamasında olmalıdır."
+
+msgid "Row %(n)s: title is required."
+msgstr "Satır %(n)s: başlık gereklidir."
+
+msgid "Reset your password"
+msgstr "Parolanızı sıfırlayın"
+
+msgid "Enter your email address and we'll send you a link to reset your password."
+msgstr "E-posta adresinizi girin, parolanızı sıfırlamanız için size bir bağlantı gönderelim."
+
+msgid "Send reset link"
+msgstr "Sıfırlama bağlantısı gönder"
+
+msgid "Back to login"
+msgstr "Girişe geri dön"
+
+msgid "Check your email"
+msgstr "E-postanızı kontrol edin"
+
+msgid "If an account exists for that address, we've sent a password reset link. Check your inbox (and spam folder)."
+msgstr "Bu adrese ait bir hesap varsa, bir parola sıfırlama bağlantısı gönderdik. Gelen kutunuzu (ve spam klasörünüzü) kontrol edin."
+
+msgid "Set a new password"
+msgstr "Yeni bir parola belirleyin"
+
+msgid "Enter your new password below."
+msgstr "Yeni parolanızı aşağıya girin."
+
+msgid "New password"
+msgstr "Yeni parola"
+
+msgid "Confirm new password"
+msgstr "Yeni parolayı onayla"
+
+msgid "Set new password"
+msgstr "Yeni parolayı belirle"
+
+msgid "Link expired"
+msgstr "Bağlantının süresi doldu"
+
+msgid "This password reset link is invalid or has already been used. Please request a new one."
+msgstr "Bu parola sıfırlama bağlantısı geçersiz veya zaten kullanılmış. Lütfen yeni bir bağlantı isteyin."
+
+msgid "Request new link"
+msgstr "Yeni bağlantı iste"
+
+msgid "Password changed"
+msgstr "Parola değiştirildi"
+
+msgid "Your password has been set. You can now log in with your new password."
+msgstr "Parolanız belirlendi. Şimdi yeni parolanızla giriş yapabilirsiniz."
+
+msgid "Forgot your password?"
+msgstr "Parolanızı mı unuttunuz?"
+
+msgid "Billing"
+msgstr "Faturalandırma"
+
+msgid "Production"
+msgstr "Üretim"
+
+msgid "Operations"
+msgstr "Operasyonlar"
+
+msgid "Royalties"
+msgstr "Telif Hakları"
+
+msgid "%(count)s book(s) deleted."
+msgstr "%(count)s kitap silindi."
+
+msgid "No books selected."
+msgstr "Kitap seçilmedi."
+
+msgid "Delete selected"
+msgstr "Seçilenleri Sil"
+
+msgid "Delete selected books? This cannot be undone."
+msgstr "Seçilen kitaplar silinsin mi? Bu işlem geri alınamaz."
+
+msgid "selected"
+msgstr "seçili"
+
+msgid "Invoices"
+msgstr "Faturalar"
+
+msgid "Create and manage customer invoices."
+msgstr "Müşteri faturalarını oluşturun ve yönetin."
+
+msgid "New Invoice"
+msgstr "Yeni Fatura"
+
+msgid "Number"
+msgstr "Numara"
+
+msgid "Customer"
+msgstr "Müşteri"
+
+msgid "Due"
+msgstr "Vade"
+
+msgid "Currency"
+msgstr "Para Birimi"
+
+msgid "Total"
+msgstr "Toplam"
+
+msgid "No invoices yet."
+msgstr "Henüz fatura yok."
+
+msgid "No invoices match the current filters."
+msgstr "Mevcut filtrelerle eşleşen fatura yok."
+
+msgid "Create your first invoice"
+msgstr "İlk faturanızı oluşturun"
+
+msgid "Invoice number, customer, email"
+msgstr "Fatura numarası, müşteri, e-posta"
+
+msgid "Date: %(start)s – %(end)s"
+msgstr "Tarih: %(start)s – %(end)s"
+
+msgid "any"
+msgstr "herhangi"
+
+msgid "%(count)s invoice(s) found"
+msgstr "%(count)s fatura bulundu"
+
+msgid "Create Invoice"
+msgstr "Fatura Oluştur"
+
+msgid "Mark as sent"
+msgstr "Gönderildi olarak işaretle"
+
+msgid "Mark as paid"
+msgstr "Ödendi olarak işaretle"
+
+msgid "Invoice details"
+msgstr "Fatura detayları"
+
+msgid "Address"
+msgstr "Adres"
+
+msgid "Line items"
+msgstr "Kalemler"
+
+msgid "Qty"
+msgstr "Adet"
+
+msgid "Tax %"
+msgstr "Vergi %"
+
+msgid "Subtotal"
+msgstr "Ara Toplam"
+
+msgid "Tax"
+msgstr "Vergi"
+
+msgid "Grand Total"
+msgstr "Genel Toplam"
+
+msgid "No items yet. Add one below."
+msgstr "Henüz kalem yok. Aşağıdan bir kalem ekleyin."
+
+msgid "Add item"
+msgstr "Kalem ekle"
+
+msgid "Add"
+msgstr "Ekle"
+
+msgid "Invoice %(number)s created."
+msgstr "%(number)s numaralı fatura oluşturuldu."
+
+msgid "Item added."
+msgstr "Kalem eklendi."
+
+msgid "Item removed."
+msgstr "Kalem kaldırıldı."
+
+msgid "Cannot update invoice from its current status."
+msgstr "Fatura mevcut durumundan güncellenemez."
+
+msgid "Invoice marked as %(status)s."
+msgstr "Fatura %(status)s olarak işaretlendi."
+
+msgid "Invoice deleted."
+msgstr "Fatura silindi."
+
+msgid "invoice"
+msgstr "faturayı"
+
+msgid "No book (custom item)"
+msgstr "Kitap yok (özel kalem)"
+
+msgid "Tax Rate (%)"
+msgstr "Vergi Oranı (%)"
+
+msgid "Tax Amount"
+msgstr "Vergi Tutarı"
+
+msgid "Customer name"
+msgstr "Müşteri adı"
+
+msgid "Customer email"
+msgstr "Müşteri e-postası"
+
+msgid "Customer address"
+msgstr "Müşteri adresi"
+
+msgid "Invoice date"
+msgstr "Fatura tarihi"
+
+msgid "Due date"
+msgstr "Vade tarihi"
+
+msgid "Description"
+msgstr "Açıklama"
+
+msgid "Tax rate"
+msgstr "Vergi oranı"
+
+msgid "Print Runs"
+msgstr "Baskılar"
+
+msgid "Track production print runs and their costs."
+msgstr "Üretim baskılarını ve maliyetlerini takip edin."
+
+msgid "Cost / Unit"
+msgstr "Maliyet / Birim"
+
+msgid "No print runs recorded yet."
+msgstr "Henüz baskı kaydedilmedi."
+
+msgid "Print run recorded."
+msgstr "Baskı kaydedildi."
+
+msgid "Print run deleted."
+msgstr "Baskı silindi."
+
+msgid "print run"
+msgstr "baskıyı"
+
+msgid "Add Royalty Rate"
+msgstr "Telif Oranı Ekle"
+
+msgid "Run date"
+msgstr "Baskı tarihi"
+
+msgid "Cost per unit"
+msgstr "Birim maliyet"
+
+msgid "Royalty Rates"
+msgstr "Telif Oranları"
+
+msgid "Author royalty rates per book."
+msgstr "Kitap başına yazar telif oranları."
+
+msgid "Royalty Report"
+msgstr "Telif Raporu"
+
+msgid "Add Rate"
+msgstr "Oran Ekle"
+
+msgid "Rate (%)"
+msgstr "Oran (%)"
+
+msgid "Effective From"
+msgstr "Geçerlilik Başlangıcı"
+
+msgid "Effective from"
+msgstr "Geçerlilik başlangıcı"
+
+msgid "No royalty rates defined yet."
+msgstr "Henüz telif oranı tanımlanmadı."
+
+msgid "Royalties owed to authors based on sales revenue."
+msgstr "Satış gelirine göre yazarlara ödenmesi gereken telifler."
+
+msgid "Rates"
+msgstr "Oranlar"
+
+msgid "Total Revenue"
+msgstr "Toplam Gelir"
+
+msgid "Royalty Owed"
+msgstr "Ödenecek Telif"
+
+msgid "No royalty rates defined. Add rates first."
+msgstr "Telif oranı tanımlanmadı. Önce oran ekleyin."
+
+msgid "Royalty rate added."
+msgstr "Telif oranı eklendi."
+
+msgid "Royalty rate deleted."
+msgstr "Telif oranı silindi."
+
+msgid "royalty rate"
+msgstr "telif oranını"
+
+msgid "Royalty Payments"
+msgstr "Telif Ödemeleri"
+
+msgid "Payments made to authors against royalties owed."
+msgstr "Yazarlara ödenmesi gereken teliflere karşılık yapılan ödemeler."
+
+msgid "Payments"
+msgstr "Ödemeler"
+
+msgid "Record Payment"
+msgstr "Ödeme Kaydet"
+
+msgid "Amount"
+msgstr "Tutar"
+
+msgid "Payment Date"
+msgstr "Ödeme Tarihi"
+
+msgid "Payment date"
+msgstr "Ödeme tarihi"
+
+msgid "No royalty payments recorded yet."
+msgstr "Henüz telif ödemesi kaydedilmedi."
+
+msgid "Record Royalty Payment"
+msgstr "Telif Ödemesi Kaydet"
+
+msgid "Payments Made"
+msgstr "Yapılan Ödemeler"
+
+msgid "Total Paid"
+msgstr "Toplam Ödenen"
+
+msgid "Royalty payment recorded."
+msgstr "Telif ödemesi kaydedildi."
+
+msgid "Royalty payment deleted."
+msgstr "Telif ödemesi silindi."
+
+msgid "royalty payment"
+msgstr "telif ödemesini"
+
+msgid "Customer Portal"
+msgstr "Müşteri Portalı"
+
+msgid "Customer Portal Login"
+msgstr "Müşteri Portalı Girişi"
+
+msgid "If an account exists for that email, we've sent a login link. Check your inbox (and spam folder)."
+msgstr "Bu e-postaya ait bir hesap varsa, bir giriş bağlantısı gönderdik. Gelen kutunuzu (ve spam klasörünüzü) kontrol edin."
+
+msgid "Enter your email address and we'll send you a link to access your invoices."
+msgstr "E-posta adresinizi girin, faturalarınıza erişmeniz için size bir bağlantı gönderelim."
+
+msgid "Send login link"
+msgstr "Giriş bağlantısı gönder"
+
+msgid "This login link is invalid or has already been used. Please request a new one."
+msgstr "Bu giriş bağlantısı geçersiz veya zaten kullanılmış. Lütfen yeni bir bağlantı isteyin."
+
+msgid "Welcome, %(name)s"
+msgstr "Hoş geldiniz, %(name)s"
+
+msgid "Back to dashboard"
+msgstr "Kontrol paneline geri dön"
+
+msgid "Trialing"
+msgstr "Deneme Sürümünde"
+
+msgid "Past due"
+msgstr "Vadesi Geçmiş"
+
+msgid "Canceled"
+msgstr "İptal Edildi"
+
+msgid "Incomplete"
+msgstr "Tamamlanmadı"
+
+msgid "Unpaid"
+msgstr "Ödenmedi"
+
+msgid "Subscription required"
+msgstr "Abonelik gerekli"
+
+msgid "Your last payment didn't go through. Update your payment method to keep using RumiPress."
+msgstr "Son ödemeniz gerçekleşmedi. RumiPress'i kullanmaya devam etmek için ödeme yönteminizi güncelleyin."
+
+msgid "Your subscription has ended. Start a new one to keep using RumiPress."
+msgstr "Aboneliğiniz sona erdi. RumiPress'i kullanmaya devam etmek için yeni bir abonelik başlatın."
+
+msgid "You need an active subscription to use RumiPress."
+msgstr "RumiPress'i kullanmak için etkin bir aboneliğe sahip olmanız gerekir."
+
+msgid "Manage billing"
+msgstr "Faturalandırmayı yönet"
+
+msgid "Start subscription"
+msgstr "Aboneliği başlat"
+
+msgid "Start your subscription"
+msgstr "Aboneliğinizi başlatın"
+
+msgid "A free trial starts today. We need a few details to set up billing."
+msgstr "Ücretsiz deneme bugün başlıyor. Faturalandırmayı kurmak için bazı bilgilere ihtiyacımız var."
+
+msgid "Continue to payment"
+msgstr "Ödemeye devam et"
+
+msgid "Update payment method"
+msgstr "Ödeme yöntemini güncelle"
+
+msgid "National ID number"
+msgstr "T.C. Kimlik Numarası"
+
+msgid "Your subscription is active. Welcome to RumiPress!"
+msgstr "Aboneliğiniz etkin. RumiPress'e hoş geldiniz!"
+
+msgid "Your subscription couldn't be activated. Please try again or contact us."
+msgstr "Aboneliğiniz etkinleştirilemedi. Lütfen tekrar deneyin veya bizimle iletişime geçin."
+
+msgid "Couldn't confirm your subscription. Please try again or contact us."
+msgstr "Aboneliğiniz doğrulanamadı. Lütfen tekrar deneyin veya bizimle iletişime geçin."
+
+msgid "Your payment method has been updated."
+msgstr "Ödeme yönteminiz güncellendi."
+
+msgid "Couldn't start your subscription. Please try again or contact us."
+msgstr "Aboneliğiniz başlatılamadı. Lütfen tekrar deneyin veya bizimle iletişime geçin."
+
+msgid "Couldn't open billing management. Please try again or contact us."
+msgstr "Faturalandırma yönetimi açılamadı. Lütfen tekrar deneyin veya bizimle iletişime geçin."
+
+msgid "Locations"
+msgstr "Konumlar"
+
+msgid "Manage warehouse and store locations."
+msgstr "Depo ve mağaza konumlarını yönetin."
+
+msgid "Add location"
+msgstr "Konum ekle"
+
+msgid "Transfer stock"
+msgstr "Stok transferi"
+
+msgid "Default"
+msgstr "Varsayılan"
+
+msgid "Total stock"
+msgstr "Toplam stok"
+
+msgid "Back to locations"
+msgstr "Konumlara geri dön"
+
+msgid "Stock held at this location."
+msgstr "Bu konumda tutulan stok."
+
+msgid "No stock recorded at this location."
+msgstr "Bu konumda kayıtlı stok yok."
+
+msgid "Move copies between locations."
+msgstr "Kopyaları konumlar arasında taşıyın."
+
+msgid "Transfer"
+msgstr "Transfer"
+
+msgid "Location created."
+msgstr "Konum oluşturuldu."
+
+msgid "Location updated."
+msgstr "Konum güncellendi."
+
+msgid "Location deleted."
+msgstr "Konum silindi."
+
+msgid "Source and destination must differ."
+msgstr "Kaynak ve hedef farklı olmalıdır."
+
+msgid "Not enough stock at source location (available: %(n)s)."
+msgstr "Kaynak konumda yeterli stok yok (mevcut: %(n)s)."
+
+msgid "Transferred %(qty)s copies of «%(book)s» from %(from)s to %(to)s."
+msgstr "«%(book)s» kitabının %(qty)s kopyası %(from)s'den %(to)s'e transfer edildi."
+
+msgid "Edit location"
+msgstr "Konumu düzenle"
+
+msgid "location"
+msgstr "konumu"
+
+msgid "Default location"
+msgstr "Varsayılan konum"
+
+msgid "From location"
+msgstr "Kaynak konum"
+
+msgid "To location"
+msgstr "Hedef konum"
+
+msgid "Integrations"
+msgstr "Entegrasyonlar"
+
+msgid "Connect RumiPress to Shopify, Amazon, and more."
+msgstr "RumiPress'i Shopify, Amazon ve daha fazlasına bağlayın."
+
+msgid "Add integration"
+msgstr "Entegrasyon ekle"
+
+msgid "Platform"
+msgstr "Platform"
+
+msgid "Store / Seller ID"
+msgstr "Mağaza / Satıcı Kimliği"
+
+msgid "Active"
+msgstr "Etkin"
+
+msgid "Orders synced"
+msgstr "Senkronize edilen siparişler"
+
+msgid "Last synced"
+msgstr "Son senkronizasyon"
+
+msgid "Shopify webhook URL:"
+msgstr "Shopify webhook URL'si:"
+
+msgid "(replace 0 with the integration ID)"
+msgstr "(0'ı entegrasyon kimliğiyle değiştirin)"
+
+msgid "No integrations yet."
+msgstr "Henüz entegrasyon yok."
+
+msgid "Edit integration"
+msgstr "Entegrasyonu düzenle"
+
+msgid "Integration saved."
+msgstr "Entegrasyon kaydedildi."
+
+msgid "Integration updated."
+msgstr "Entegrasyon güncellendi."
+
+msgid "Integration deleted."
+msgstr "Entegrasyon silindi."
+
+msgid "integration"
+msgstr "entegrasyonu"
+
+msgid "Store URL"
+msgstr "Mağaza URL'si"
+
+msgid "API key"
+msgstr "API anahtarı"
+
+msgid "API secret"
+msgstr "API gizli anahtarı"
+
+msgid "Webhook secret"
+msgstr "Webhook gizli anahtarı"
+
+msgid "Stripe"
+msgstr "Stripe"
+
+msgid "Shopify: your-store.myshopify.com — Amazon: Seller ID — Stripe: not used"
+msgstr "Shopify: magazaniz.myshopify.com — Amazon: Satıcı Kimliği — Stripe: kullanılmıyor"
+
+msgid "Stripe: your secret key (sk_...)"
+msgstr "Stripe: gizli anahtarınız (sk_...)"
+
+msgid "Used to verify incoming webhook payloads. Set this in your platform's webhook settings. Stripe: your endpoint's signing secret (whsec_...)"
+msgstr "Gelen webhook verilerini doğrulamak için kullanılır. Bunu platformunuzun webhook ayarlarında belirtin. Stripe: uç noktanızın imzalama gizli anahtarı (whsec_...)"
+
+msgid "Stripe webhook URL:"
+msgstr "Stripe webhook URL'si:"
+
+msgid "(replace 0 with the integration ID; subscribe it to the checkout.session.completed event)"
+msgstr "(0'ı entegrasyon kimliğiyle değiştirin; checkout.session.completed olayına abone edin)"
+
+msgid "Pay Now"
+msgstr "Şimdi Öde"
+
+msgid "Payment received — it may take a moment to reflect on this invoice."
+msgstr "Ödeme alındı — bu faturaya yansıması biraz zaman alabilir."
+
+msgid "Online payment isn't available for this invoice yet."
+msgstr "Bu fatura için çevrimiçi ödeme henüz kullanılamıyor."
+
+msgid "Couldn't start payment. Please try again or contact us."
+msgstr "Ödeme başlatılamadı. Lütfen tekrar deneyin veya bizimle iletişime geçin."
+
+msgid "P&L Report"
+msgstr "Kâr/Zarar Raporu"
+
+msgid "Profit / Loss Report"
+msgstr "Kâr / Zarar Raporu"
+
+msgid "Revenue minus purchase costs, distribution expenses, and royalties."
+msgstr "Satın alma maliyetleri, dağıtım giderleri ve telifler çıkarıldıktan sonraki gelir."
+
+msgid "Net Revenue"
+msgstr "Net Gelir"
+
+msgid "Net Profit"
+msgstr "Net Kâr"
+
+msgid "Distribution"
+msgstr "Dağıtım"
+
+msgid "Export PDF"
+msgstr "PDF Olarak Dışa Aktar"
+
+msgid "No sales found for the selected period. Adjust the date range and try again."
+msgstr "Seçilen dönem için satış bulunamadı. Tarih aralığını ayarlayıp tekrar deneyin."
+
+msgid "TOTAL"
+msgstr "TOPLAM"
+
+msgid "Customers"
+msgstr "Müşteriler"
+
+msgid "Add Customer"
+msgstr "Müşteri Ekle"
+
+msgid "Edit Customer"
+msgstr "Müşteriyi Düzenle"
+
+msgid "Saved customer records for quick invoice creation."
+msgstr "Hızlı fatura oluşturma için kaydedilmiş müşteri kayıtları."
+
+msgid "Selecting a customer auto-fills the fields below."
+msgstr "Bir müşteri seçmek aşağıdaki alanları otomatik doldurur."
+
+msgid "No customers yet. Add one to speed up invoice creation."
+msgstr "Henüz müşteri yok. Fatura oluşturmayı hızlandırmak için bir müşteri ekleyin."
+
+msgid "No customers match the current search."
+msgstr "Mevcut aramayla eşleşen müşteri yok."
+
+msgid "Name, email, phone"
+msgstr "Ad, e-posta, telefon"
+
+msgid "%(count)s customer(s) found"
+msgstr "%(count)s müşteri bulundu"
+
+msgid "Customer: %(name)s"
+msgstr "Müşteri: %(name)s"
+
+msgid "— Select saved customer (optional) —"
+msgstr "— Kayıtlı müşteri seçin (isteğe bağlı) —"
+
+msgid "Customer created."
+msgstr "Müşteri oluşturuldu."
+
+msgid "Customer updated."
+msgstr "Müşteri güncellendi."
+
+msgid "Customer deleted."
+msgstr "Müşteri silindi."
+
+msgid "customer"
+msgstr "müşteriyi"
+
+msgid "Back to Customers"
+msgstr "Müşterilere Geri Dön"
+
+msgid "Last portal login"
+msgstr "Son portal girişi"
+
+msgid "Contact"
+msgstr "İletişim"
+
+msgid "Billing Summary"
+msgstr "Faturalandırma Özeti"
+
+msgid "Total billed"
+msgstr "Toplam faturalanan"
+
+msgid "Outstanding balance"
+msgstr "Bekleyen bakiye"
+
+msgid "No invoices for this customer yet."
+msgstr "Bu müşteri için henüz fatura yok."
+
+msgid "%(count)s overdue"
+msgstr "%(count)s gecikmiş"
+
+msgid "Mark Sent"
+msgstr "Gönderildi İşaretle"
+
+msgid "Mark Paid"
+msgstr "Ödendi İşaretle"
+
+msgid "All authors"
+msgstr "Tüm yazarlar"
+
+msgid "3M"
+msgstr "3A"
+
+msgid "6M"
+msgstr "6A"
+
+msgid "12M"
+msgstr "12A"
+
+msgid "Units"
+msgstr "Birim"
+
+msgid "Checkout"
+msgstr "Kasa"
+
+msgid "Scan or search for books, add them to the cart, then complete the sale."
+msgstr "Kitapları tarayın veya arayın, sepete ekleyin ve satışı tamamlayın."
+
+msgid "Search by title or ISBN"
+msgstr "Başlık veya ISBN ile ara"
+
+msgid "Type a title or ISBN…"
+msgstr "Bir başlık veya ISBN yazın…"
+
+msgid "Cart"
+msgstr "Sepet"
+
+msgid "Price"
+msgstr "Fiyat"
+
+msgid "Cart is empty."
+msgstr "Sepet boş."
+
+msgid "Complete sale"
+msgstr "Satışı tamamla"
+
+msgid "Customer (optional)"
+msgstr "Müşteri (isteğe bağlı)"
+
+msgid "Walk-in customer"
+msgstr "Mağaza içi müşteri"
+
+msgid "Location"
+msgstr "Konum"
+
+msgid "Payment method"
+msgstr "Ödeme yöntemi"
+
+msgid "in stock"
+msgstr "stokta"
+
+msgid "out of stock"
+msgstr "stokta yok"
+
+msgid "Checkout failed."
+msgstr "Kasa işlemi başarısız oldu."
+
+msgid "Checkout failed. Check your connection and try again."
+msgstr "Kasa işlemi başarısız oldu. Bağlantınızı kontrol edip tekrar deneyin."
+
+msgid "Receipt"
+msgstr "Fiş"
+
+msgid "Print"
+msgstr "Yazdır"
+
+msgid "New sale"
+msgstr "Yeni satış"
+
+msgid "List price"
+msgstr "Liste fiyatı"
+
+msgid "Default retail price, used to pre-fill checkout and sale forms."
+msgstr "Kasa ve satış formlarını önceden doldurmak için kullanılan varsayılan perakende fiyatı."
+
+msgid "Cash"
+msgstr "Nakit"
+
+msgid "Card"
+msgstr "Kart"
+
+msgid "Invalid quantity, price or tax rate."
+msgstr "Geçersiz miktar, fiyat veya vergi oranı."
+
+msgid "Invalid request."
+msgstr "Geçersiz istek."
+
+msgid "Invalid payment method."
+msgstr "Geçersiz ödeme yöntemi."
+
+msgid "Invalid currency."
+msgstr "Geçersiz para birimi."
+
+msgid "One of the books in the cart could not be found."
+msgstr "Sepetteki kitaplardan biri bulunamadı."
+
+msgid "Not enough stock for '%(title)s' (available: %(n)s)."
+msgstr "'%(title)s' için yeterli stok yok (mevcut: %(n)s)."
+
+msgid "Transaction history"
+msgstr "İşlem geçmişi"
+
+msgid "Past checkout receipts."
+msgstr "Geçmiş kasa fişleri."
+
+msgid "View receipt"
+msgstr "Fişi görüntüle"
+
+msgid "No transactions match the current filters."
+msgstr "Mevcut filtrelerle eşleşen işlem yok."
+
+msgid "No checkout transactions yet."
+msgstr "Henüz kasa işlemi yok."
+
+msgid "%(count)s transaction(s) found"
+msgstr "%(count)s işlem bulundu"
+
+msgid "Void transaction"
+msgstr "İşlemi iptal et"
+
+msgid "Void this transaction and restore stock for every item?"
+msgstr "Bu işlem iptal edilsin ve her ürün için stok geri yüklensin mi?"
+
+msgid "Transaction voided"
+msgstr "İşlem iptal edildi"
+
+msgid "Transaction voided and stock restored."
+msgstr "İşlem iptal edildi ve stok geri yüklendi."
+
+msgid "This transaction was already fully refunded."
+msgstr "Bu işlem zaten tamamen geri ödendi."
+
+msgid "This transaction has been fully refunded."
+msgstr "Bu işlem tamamen geri ödendi."
+
+msgid "This transaction has been partially refunded."
+msgstr "Bu işlem kısmen geri ödendi."
+
+msgid "Partially refunded"
+msgstr "Kısmen geri ödendi"
+
+msgid "Account settings"
+msgstr "Hesap ayarları"
+
+msgid "Default tax rate (%)"
+msgstr "Varsayılan vergi oranı (%)"
+
+msgid "Pre-fills the tax rate on each new checkout cart line."
+msgstr "Her yeni kasa sepeti satırında vergi oranını önceden doldurur."
+
+msgid "Account settings updated."
+msgstr "Hesap ayarları güncellendi."
+
+msgid "Receipt # or customer…"
+msgstr "Fiş no veya müşteri…"
+
+msgid "Download PDF"
+msgstr "PDF İndir"
+
+msgid "Thank you for shopping with Rumi Press!"
+msgstr "Rumi Press'ten alışveriş yaptığınız için teşekkür ederiz!"
+
+msgid "New Print Run"
+msgstr "Yeni Baskı"
+
+msgid "New Print Run (pick a book)"
+msgstr "Yeni Baskı (kitap seçin)"
+
+msgid "Open a book and use \"New Print Run\" to start one."
+msgstr "Bir kitap açın ve başlatmak için \"Yeni Baskı\"yı kullanın."
+
+msgid "Wholesaler Feed"
+msgstr "Toptancı Beslemesi"
+
+msgid "Wholesale prices and stock availability uploaded from supplier catalog feeds."
+msgstr "Tedarikçi katalog beslemelerinden yüklenen toptan fiyatlar ve stok durumu."
+
+msgid "Upload Feed"
+msgstr "Besleme Yükle"
+
+msgid "ISBN or title"
+msgstr "ISBN veya başlık"
+
+msgid "All suppliers"
+msgstr "Tüm tedarikçiler"
+
+msgid "%(count)s feed item(s) found"
+msgstr "%(count)s besleme öğesi bulundu"
+
+msgid "Wholesale price"
+msgstr "Toptan fiyat"
+
+msgid "Last updated"
+msgstr "Son güncelleme"
+
+msgid "No feed items match the current filters."
+msgstr "Mevcut filtrelerle eşleşen besleme öğesi yok."
+
+msgid "No wholesaler feed uploaded yet."
+msgstr "Henüz toptancı beslemesi yüklenmedi."
+
+msgid "Upload Wholesaler Feed"
+msgstr "Toptancı Beslemesi Yükle"
+
+msgid "Upload a CSV catalog feed from a supplier to track wholesale prices and stock."
+msgstr "Toptan fiyatları ve stoğu takip etmek için bir tedarikçiden CSV katalog beslemesi yükleyin."
+
+msgid "Back to Feed"
+msgstr "Beslemeye Geri Dön"
+
+msgid "Select a supplier"
+msgstr "Bir tedarikçi seçin"
+
+msgid "Replace this supplier's existing feed entries (treat this file as a full snapshot)"
+msgstr "Bu tedarikçinin mevcut besleme kayıtlarını değiştir (bu dosyayı tam bir anlık görüntü olarak kabul et)"
+
+msgid "Add a supplier first before uploading a wholesaler feed."
+msgstr "Toptancı beslemesi yüklemeden önce bir tedarikçi ekleyin."
+
+msgid "Used to match this row to a book"
+msgstr "Bu satırı bir kitapla eşleştirmek için kullanılır"
+
+msgid "Decimal number; the supplier's wholesale price"
+msgstr "Ondalık sayı; tedarikçinin toptan fiyatı"
+
+msgid "Whole number; units the supplier has available"
+msgstr "Tam sayı; tedarikçide mevcut birim sayısı"
+
+msgid "Please choose a supplier."
+msgstr "Lütfen bir tedarikçi seçin."
+
+msgid "Row %(n)s: ISBN is required."
+msgstr "Satır %(n)s: ISBN gereklidir."
+
+msgid "Row %(n)s: invalid price, skipped."
+msgstr "Satır %(n)s: geçersiz fiyat, atlandı."
+
+msgid "Row %(n)s: invalid stock quantity, skipped."
+msgstr "Satır %(n)s: geçersiz stok miktarı, atlandı."
+
+msgid "Feed item deleted."
+msgstr "Besleme öğesi silindi."
+
+msgid "feed item"
+msgstr "besleme öğesini"
+
+msgid "Wholesale Availability"
+msgstr "Toptan Stok Durumu"
+
+msgid "No wholesaler feed data for this book's ISBN yet."
+msgstr "Bu kitabın ISBN'i için henüz toptancı besleme verisi yok."
+

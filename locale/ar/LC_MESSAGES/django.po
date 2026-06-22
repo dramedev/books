@@ -1402,6 +1402,15 @@ msgstr "تم حذف %(count)s كتاب."
 msgid "No books selected."
 msgstr "لم يتم اختيار أي كتاب."
 
+msgid "Delete selected"
+msgstr "حذف المحدد"
+
+msgid "Delete selected books? This cannot be undone."
+msgstr "حذف الكتب المحددة؟ لا يمكن التراجع عن هذا الإجراء."
+
+msgid "selected"
+msgstr "محدد"
+
 msgid "Tax Rate (%)"
 msgstr "معدل الضريبة (%)"
 

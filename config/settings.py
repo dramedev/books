@@ -157,6 +157,7 @@ LANGUAGES = [
     ('en', 'English'),
     ('fr', 'Français'),
     ('ar', 'العربية'),
+    ('tr', 'Türkçe'),
 ]
 
 LOCALE_PATHS = [
