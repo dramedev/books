@@ -3767,7 +3767,7 @@ class BillingViewTests(TestCase):
 
     @patch("books.views.iyzico_client.initialize_subscription_checkout_form")
     def test_billing_start_post_initializes_checkout_and_renders_embed(self, mock_init):
-        mock_init.return_value = {"data": {"token": "tok_123", "checkoutFormContent": "<script>widget</script>"}}
+        mock_init.return_value = {"token": "tok_123", "checkoutFormContent": "<script>widget</script>"}
 
         response = self.client.post(reverse("billing_start"), self.valid_form_data)
 
@@ -3798,11 +3798,11 @@ class BillingViewTests(TestCase):
     @patch("books.views.iyzico_client.retrieve_checkout_form")
     def test_billing_callback_activates_subscription(self, mock_retrieve):
         Subscription.objects.create(user=self.user, checkout_token="tok_123", status=Subscription.STATUS_INCOMPLETE)
-        mock_retrieve.return_value = {"data": {
+        mock_retrieve.return_value = {
             "customerReferenceCode": "cust_new",
             "referenceCode": "sub_new",
             "subscriptionStatus": "ACTIVE",
-        }}
+        }
 
         response = self.client.get(reverse("billing_callback"), {"token": "tok_123"})
         self.assertRedirects(response, reverse("dashboard"))
@@ -3815,9 +3815,9 @@ class BillingViewTests(TestCase):
 
     @patch("books.views.iyzico_client.retrieve_checkout_form")
     def test_billing_callback_pending_status_redirects_to_billing_required(self, mock_retrieve):
-        mock_retrieve.return_value = {"data": {
+        mock_retrieve.return_value = {
             "customerReferenceCode": "cust_new", "referenceCode": "sub_new", "subscriptionStatus": "PENDING",
-        }}
+        }
 
         response = self.client.get(reverse("billing_callback"), {"token": "tok_123"})
         self.assertRedirects(response, reverse("billing_required"))
@@ -3839,7 +3839,7 @@ class BillingViewTests(TestCase):
         Subscription.objects.create(
             user=self.user, external_customer_id="cust_1", status=Subscription.STATUS_UNPAID,
         )
-        mock_init.return_value = {"data": {"checkoutFormContent": "<script>cardwidget</script>"}}
+        mock_init.return_value = {"checkoutFormContent": "<script>cardwidget</script>"}
 
         response = self.client.get(reverse("billing_portal"))
         self.assertEqual(response.status_code, 200)
@@ -4634,3 +4634,11 @@ class WholesalerFeedListTests(TestCase):
     def test_upload_link_hidden_without_add_permission(self):
         response = self.client.get(reverse("wholesaler_feed_list"))
         self.assertNotContains(response, reverse("wholesaler_feed_upload"))
+
+
+class ServiceWorkerTests(TestCase):
+
+    def test_does_not_precache_a_nonexistent_static_file(self):
+        response = self.client.get(reverse("service_worker"))
+        self.assertEqual(response.status_code, 200)
+        self.assertNotIn(b"/static/books/css/style.css", response.content)

@@ -4574,7 +4574,6 @@ self.addEventListener("install", event => {
     caches.open(CACHE).then(cache => cache.addAll([
       "/",
       "/books/",
-      "/static/books/css/style.css",
     ]))
   );
   self.skipWaiting();
@@ -5066,11 +5065,11 @@ def billing_start(request):
                 messages.error(request, gettext("Couldn't start your subscription. Please try again or contact us."))
                 return redirect("billing_required")
 
-            subscription.checkout_token = result["data"]["token"]
+            subscription.checkout_token = result["token"]
             subscription.save(update_fields=["checkout_token"])
 
             return render(request, "registration/billing_checkout.html", {
-                "checkout_form_content": result["data"]["checkoutFormContent"],
+                "checkout_form_content": result["checkoutFormContent"],
                 "heading": gettext("Start your subscription"),
             })
 
@@ -5088,10 +5087,9 @@ def billing_callback(request):
         messages.error(request, gettext("Couldn't confirm your subscription. Please try again or contact us."))
         return redirect("billing_required")
 
-    data = result.get("data", {})
-    subscription.external_customer_id = data.get("customerReferenceCode", "")
-    subscription.external_subscription_id = data.get("referenceCode", "")
-    status = data.get("subscriptionStatus", "")
+    subscription.external_customer_id = result.get("customerReferenceCode", "")
+    subscription.external_subscription_id = result.get("referenceCode", "")
+    status = result.get("subscriptionStatus", "")
     if status in dict(Subscription.STATUS_CHOICES):
         subscription.status = status
     subscription.checkout_token = ""
@@ -5133,7 +5131,7 @@ def billing_portal(request):
         return redirect("billing_required")
 
     return render(request, "registration/billing_checkout.html", {
-        "checkout_form_content": result["data"]["checkoutFormContent"],
+        "checkout_form_content": result["checkoutFormContent"],
         "heading": gettext("Update payment method"),
     })
 
