@@ -2179,6 +2179,9 @@ msgstr "Utilisée pour les titres et les accents sur vos factures et reçus, par
 msgid "Enter a valid hex color code (e.g. #1f1f1f)."
 msgstr "Entrez un code couleur hexadécimal valide (ex. #1f1f1f)."
 
+msgid "Invoice Aging"
+msgstr "Ancienneté des factures"
+
 msgid "Invoice Aging Report"
 msgstr "Rapport d'ancienneté des factures"
 

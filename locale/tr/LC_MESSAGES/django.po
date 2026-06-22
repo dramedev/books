@@ -2179,6 +2179,9 @@ msgstr "Faturalarınızdaki ve fişlerinizdeki başlıklar ve vurgular için kul
 msgid "Enter a valid hex color code (e.g. #1f1f1f)."
 msgstr "Geçerli bir onaltılık renk kodu girin (örn. #1f1f1f)."
 
+msgid "Invoice Aging"
+msgstr "Fatura Yaşlandırma"
+
 msgid "Invoice Aging Report"
 msgstr "Fatura Yaşlandırma Raporu"
 

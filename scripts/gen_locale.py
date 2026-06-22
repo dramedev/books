@@ -886,6 +886,7 @@ FR = {
     "Used for titles and accents on your invoices and receipts, e.g. #1f1f1f.":
         "Utilisée pour les titres et les accents sur vos factures et reçus, par ex. #1f1f1f.",
     "Enter a valid hex color code (e.g. #1f1f1f).": "Entrez un code couleur hexadécimal valide (ex. #1f1f1f).",
+    "Invoice Aging": "Ancienneté des factures",
     "Invoice Aging Report": "Rapport d'ancienneté des factures",
     "Outstanding invoices grouped by how overdue they are.":
         "Factures impayées regroupées selon leur retard.",
@@ -1762,6 +1763,7 @@ AR = {
     "Used for titles and accents on your invoices and receipts, e.g. #1f1f1f.":
         "يُستخدم للعناوين واللمسات على فواتيرك وإيصالاتك، مثل #1f1f1f.",
     "Enter a valid hex color code (e.g. #1f1f1f).": "أدخل رمز لون سادس عشري صالح (مثل #1f1f1f).",
+    "Invoice Aging": "تقادم الفواتير",
     "Invoice Aging Report": "تقرير تقادم الفواتير",
     "Outstanding invoices grouped by how overdue they are.":
         "الفواتير غير المسددة مجمّعة حسب مدة تأخرها.",
@@ -2505,6 +2507,7 @@ TR = {
     "Used for titles and accents on your invoices and receipts, e.g. #1f1f1f.":
         "Faturalarınızdaki ve fişlerinizdeki başlıklar ve vurgular için kullanılır, örn. #1f1f1f.",
     "Enter a valid hex color code (e.g. #1f1f1f).": "Geçerli bir onaltılık renk kodu girin (örn. #1f1f1f).",
+    "Invoice Aging": "Fatura Yaşlandırma",
     "Invoice Aging Report": "Fatura Yaşlandırma Raporu",
     "Outstanding invoices grouped by how overdue they are.":
         "Ödenmemiş faturalar geciktikleri süreye göre gruplandırılmıştır.",
