@@ -9,7 +9,8 @@ from django.core.management.base import BaseCommand
 from books import ai_chat
 from books.models import (
     Account, AccountMembership, Author, Book, Category, Customer, Invoice,
-    InvoiceItem, RoyaltyPayment, RoyaltyRate, Sale, Supplier,
+    InvoiceItem, Location, PrintRun, Return, RoyaltyPayment, RoyaltyRate, Sale,
+    SaleTransaction, StockLevel, Supplier,
 )
 from books.permissions import sync_user_groups_for_role
 
@@ -99,6 +100,36 @@ EVAL_CASES = [
         "turns": ["Give me a quick health check on my business - what should I focus on?"],
         "expect_tools": {"get_business_insights"},
         "expect_keywords": ["overdue"],
+    },
+    {
+        "name": "recent_transactions",
+        "turns": ["What did I sell at the register recently? Show me my checkout transactions."],
+        "expect_tools": {"get_recent_transactions"},
+        "expect_keywords": ["RCT-EVAL-0001"],
+    },
+    {
+        "name": "transaction_by_receipt",
+        "turns": ["What's in checkout transaction RCT-EVAL-0001?"],
+        "expect_tools": {"get_transaction_by_receipt"},
+        "expect_keywords": ["Last Lighthouse"],
+    },
+    {
+        "name": "stock_by_location",
+        "turns": ["How much stock of The Last Lighthouse do we have at each location?"],
+        "expect_tools": {"get_stock_by_location"},
+        "expect_keywords": ["Main Warehouse"],
+    },
+    {
+        "name": "print_runs",
+        "turns": ["What print runs have I done?"],
+        "expect_tools": {"get_print_runs"},
+        "expect_keywords": ["Forgotten Tides"],
+    },
+    {
+        "name": "returns_summary",
+        "turns": ["Have I had any returns recently?"],
+        "expect_tools": {"get_returns_summary"},
+        "expect_keywords": ["damaged"],
     },
 ]
 
@@ -214,6 +245,33 @@ class Command(BaseCommand):
         )
         InvoiceItem.objects.create(
             invoice=paid_invoice, description="Order", quantity=1, unit_price=Decimal("200.00"),
+        )
+
+        transaction = SaleTransaction.objects.create(
+            owner=user, account=account, receipt_number="RCT-EVAL-0001",
+            payment_method=SaleTransaction.PAYMENT_CASH,
+        )
+        Sale.objects.create(
+            owner=user, account=account, book=low_book, quantity=1,
+            unit_price=Decimal("15.00"), sale_date=date.today(), transaction=transaction,
+        )
+
+        location = Location.objects.create(owner=user, account=account, name="Main Warehouse", is_default=True)
+        StockLevel.objects.create(owner=user, account=account, book=low_book, location=location, quantity=2)
+
+        PrintRun.objects.create(
+            owner=user, account=account, book=Book.objects.get(account=account, title="Forgotten Tides"),
+            quantity=200, cost_per_unit=Decimal("2.50"), run_date=date.today() - timedelta(days=14),
+            status=PrintRun.STATUS_COMPLETED,
+        )
+
+        returned_sale = Sale.objects.create(
+            owner=user, account=account, book=low_book, quantity=3,
+            unit_price=Decimal("15.00"), sale_date=date.today() - timedelta(days=2),
+        )
+        Return.objects.create(
+            owner=user, account=account, sale=returned_sale, quantity=1,
+            reason="Arrived damaged", return_date=date.today() - timedelta(days=1),
         )
 
         return user, account
