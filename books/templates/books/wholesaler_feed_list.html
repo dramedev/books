@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+
+{% block content %}
+
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+<div>
+<h1 class="mb-1">{% translate "Wholesaler Feed" %}</h1>
+<p class="muted-text mb-0">
+{% translate "Wholesale prices and stock availability uploaded from supplier catalog feeds." %}
+</p>
+</div>
+
+{% if perms.books.add_wholesalerfeeditem %}
+<a class="btn btn-primary" href="{% url 'wholesaler_feed_upload' %}">
+{% translate "Upload Feed" %}
+</a>
+{% endif %}
+</div>
+
+<form class="filter-panel mb-3" method="get">
+<div class="row g-3 align-items-end">
+<div class="col-md-4">
+<label class="form-label" for="q">{% translate "Search" %}</label>
+<div class="input-group">
+<span class="input-group-text"><i class="bi bi-search"></i></span>
+<input id="q" type="text" name="q" class="form-control" value="{{ q }}" placeholder="{% translate 'ISBN or title' %}">
+</div>
+</div>
+<div class="col-md-3">
+<label class="form-label" for="supplier">{% translate "Supplier" %}</label>
+<select id="supplier" name="supplier" class="form-select">
+<option value="">{% translate "All suppliers" %}</option>
+{% for supplier in suppliers %}
+<option value="{{ supplier.id }}" {% if supplier_id == supplier.id|stringformat:"s" %}selected{% endif %}>{{ supplier.name }}</option>
+{% endfor %}
+</select>
+</div>
+<div class="col-md-3 d-flex gap-2 align-items-end">
+<button class="btn btn-success" type="submit">{% translate "Apply" %}</button>
+<a class="btn btn-outline-light" href="{% url 'wholesaler_feed_list' %}">{% translate "Reset" %}</a>
+</div>
+</div>
+</form>
+
+<div class="mb-3">
+<span class="muted-text small">{{ result_count_text }}</span>
+</div>
+
+<div class="table-responsive">
+<table class="table table-striped align-middle">
+<thead>
+<tr>
+<th>{% translate "ISBN" %}</th>
+<th>{% translate "Title" %}</th>
+<th>{% translate "Supplier" %}</th>
+<th>{% translate "Wholesale price" %}</th>
+<th>{% translate "Stock" %}</th>
+<th>{% translate "Last updated" %}</th>
+<th>{% translate "Actions" %}</th>
+</tr>
+</thead>
+<tbody>
+{% for item in items %}
+<tr>
+<td>
+{% if item.matched_book_id %}
+<a href="{% url 'book_detail' item.matched_book_id %}">{{ item.isbn }}</a>
+{% else %}
+{{ item.isbn }}
+{% endif %}
+</td>
+<td>{{ item.title|default:"-" }}</td>
+<td>{{ item.supplier.name }}</td>
+<td>{{ item.wholesale_price|default:"-" }}</td>
+<td>{{ item.stock_quantity|default:"-" }}</td>
+<td class="muted-text">{{ item.updated_at }}</td>
+<td>
+{% if perms.books.delete_wholesalerfeeditem %}
+<a class="btn btn-danger btn-sm" href="{% url 'wholesaler_feed_delete' item.id %}" title="{% translate 'Delete' %}" aria-label="{% translate 'Delete' %}">
+<i class="bi bi-trash"></i>
+</a>
+{% endif %}
+</td>
+</tr>
+{% empty %}
+<tr>
+<td colspan="7" class="text-center muted-text py-4">
+{% if has_any_items %}
+{% translate "No feed items match the current filters." %}
+{% else %}
+{% translate "No wholesaler feed uploaded yet." %}
+{% endif %}
+</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+
+
+{% include "books/_pagination.html" with extra_qs=query_string %}
+
+
+{% endblock %}

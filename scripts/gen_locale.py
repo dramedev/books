@@ -843,6 +843,39 @@ FR = {
     "New Print Run": "Nouveau tirage",
     "New Print Run (pick a book)": "Nouveau tirage (choisir un livre)",
     "Open a book and use \"New Print Run\" to start one.": "Ouvrez un livre et utilisez « Nouveau tirage » pour en démarrer un.",
+    "Wholesaler Feed": "Flux grossiste",
+    "Wholesale prices and stock availability uploaded from supplier catalog feeds.":
+        "Prix de gros et disponibilité des stocks importés depuis les flux catalogue des fournisseurs.",
+    "Upload Feed": "Importer un flux",
+    "ISBN or title": "ISBN ou titre",
+    "All suppliers": "Tous les fournisseurs",
+    "%(count)s feed item(s) found": "%(count)s article(s) de flux trouvé(s)",
+    "Wholesale price": "Prix de gros",
+    "Last updated": "Dernière mise à jour",
+    "No feed items match the current filters.": "Aucun article de flux ne correspond aux filtres actuels.",
+    "No wholesaler feed uploaded yet.": "Aucun flux grossiste importé pour le moment.",
+    "Upload Wholesaler Feed": "Importer un flux grossiste",
+    "Upload a CSV catalog feed from a supplier to track wholesale prices and stock.":
+        "Importez un flux catalogue CSV d'un fournisseur pour suivre les prix de gros et les stocks.",
+    "Back to Feed": "Retour au flux",
+    "Select a supplier": "Sélectionner un fournisseur",
+    "Replace this supplier's existing feed entries (treat this file as a full snapshot)":
+        "Remplacer les entrées de flux existantes de ce fournisseur (traiter ce fichier comme un instantané complet)",
+    "Add a supplier first before uploading a wholesaler feed.":
+        "Ajoutez d'abord un fournisseur avant d'importer un flux grossiste.",
+    "Used to match this row to a book": "Utilisé pour associer cette ligne à un livre",
+    "Price": "Prix",
+    "Decimal number; the supplier's wholesale price": "Nombre décimal ; le prix de gros du fournisseur",
+    "Whole number; units the supplier has available": "Nombre entier ; unités disponibles chez le fournisseur",
+    "Please choose a supplier.": "Veuillez choisir un fournisseur.",
+    "Row %(n)s: ISBN is required.": "Ligne %(n)s : l'ISBN est requis.",
+    "Row %(n)s: invalid price, skipped.": "Ligne %(n)s : prix invalide, ignorée.",
+    "Row %(n)s: invalid stock quantity, skipped.": "Ligne %(n)s : quantité en stock invalide, ignorée.",
+    "Feed item deleted.": "Article de flux supprimé.",
+    "feed item": "article de flux",
+    "Wholesale Availability": "Disponibilité chez les grossistes",
+    "No wholesaler feed data for this book's ISBN yet.":
+        "Aucune donnée de flux grossiste pour l'ISBN de ce livre pour le moment.",
 }
 
 # ---------------------------------------------------------------------------
@@ -1666,6 +1699,39 @@ AR = {
     "New Print Run": "تشغيل طباعة جديد",
     "New Print Run (pick a book)": "تشغيل طباعة جديد (اختر كتابًا)",
     "Open a book and use \"New Print Run\" to start one.": "افتح كتابًا واستخدم «تشغيل طباعة جديد» لبدء واحد.",
+    "Wholesaler Feed": "خلاصة المورّد الجملة",
+    "Wholesale prices and stock availability uploaded from supplier catalog feeds.":
+        "أسعار الجملة وتوفر المخزون المستوردة من خلاصات كتالوج الموردين.",
+    "Upload Feed": "استيراد خلاصة",
+    "ISBN or title": "ISBN أو العنوان",
+    "All suppliers": "كل الموردين",
+    "%(count)s feed item(s) found": "تم العثور على %(count)s عنصر خلاصة",
+    "Wholesale price": "سعر الجملة",
+    "Last updated": "آخر تحديث",
+    "No feed items match the current filters.": "لا توجد عناصر خلاصة مطابقة للفلاتر الحالية.",
+    "No wholesaler feed uploaded yet.": "لم يتم استيراد أي خلاصة مورّد جملة بعد.",
+    "Upload Wholesaler Feed": "استيراد خلاصة مورّد الجملة",
+    "Upload a CSV catalog feed from a supplier to track wholesale prices and stock.":
+        "استورد خلاصة كتالوج CSV من مورّد لتتبّع أسعار الجملة والمخزون.",
+    "Back to Feed": "الرجوع إلى الخلاصة",
+    "Select a supplier": "اختر مورّدًا",
+    "Replace this supplier's existing feed entries (treat this file as a full snapshot)":
+        "استبدال عناصر الخلاصة الحالية لهذا المورّد (معاملة هذا الملف كلقطة كاملة)",
+    "Add a supplier first before uploading a wholesaler feed.":
+        "أضف مورّدًا أولاً قبل استيراد خلاصة مورّد الجملة.",
+    "Used to match this row to a book": "يُستخدم لمطابقة هذا الصف بكتاب",
+    "Price": "السعر",
+    "Decimal number; the supplier's wholesale price": "رقم عشري؛ سعر الجملة من المورّد",
+    "Whole number; units the supplier has available": "رقم صحيح؛ الوحدات المتوفرة لدى المورّد",
+    "Please choose a supplier.": "يرجى اختيار مورّد.",
+    "Row %(n)s: ISBN is required.": "الصف %(n)s: رقم ISBN مطلوب.",
+    "Row %(n)s: invalid price, skipped.": "الصف %(n)s: سعر غير صالح، تم التجاهل.",
+    "Row %(n)s: invalid stock quantity, skipped.": "الصف %(n)s: كمية مخزون غير صالحة، تم التجاهل.",
+    "Feed item deleted.": "تم حذف عنصر الخلاصة.",
+    "feed item": "عنصر خلاصة",
+    "Wholesale Availability": "التوفر لدى الجملة",
+    "No wholesaler feed data for this book's ISBN yet.":
+        "لا توجد بيانات خلاصة مورّد جملة لرقم ISBN لهذا الكتاب حتى الآن.",
 }
 
 

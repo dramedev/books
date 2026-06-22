@@ -498,6 +498,49 @@ class Supplier(AccountScopedModel):
         return self.name
 
 
+class WholesalerFeedItem(AccountScopedModel):
+
+    owner = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="owned_wholesaler_feed_items",
+    )
+
+    account = models.ForeignKey(
+        Account,
+        on_delete=models.CASCADE,
+        related_name="+",
+    )
+
+    supplier = models.ForeignKey(
+        Supplier,
+        on_delete=models.CASCADE,
+        related_name="feed_items",
+        verbose_name=_("Supplier"),
+    )
+
+    isbn = models.CharField(max_length=20, verbose_name=_("ISBN"))
+
+    title = models.CharField(max_length=300, blank=True, verbose_name=_("Title"))
+
+    wholesale_price = models.DecimalField(
+        max_digits=8, decimal_places=2, null=True, blank=True, verbose_name=_("Wholesale price"),
+    )
+
+    stock_quantity = models.PositiveIntegerField(null=True, blank=True, verbose_name=_("Stock quantity"))
+
+    updated_at = models.DateTimeField(auto_now=True, verbose_name=_("Last updated"))
+
+
+    class Meta:
+        ordering = ["isbn"]
+        unique_together = ("supplier", "isbn")
+
+
+    def __str__(self):
+        return f"{self.supplier.name} - {self.isbn}"
+
+
 
 class Reorder(AccountScopedModel):
 

@@ -579,6 +579,12 @@ html[dir="rtl"] .chat-panel{
 </a>
 {% endif %}
 
+{% if perms.books.view_wholesalerfeeditem %}
+<a class="sidebar-link {% if url_name == 'wholesaler_feed_list' or url_name == 'wholesaler_feed_upload' or url_name == 'wholesaler_feed_delete' %}active{% endif %}" href="{% url 'wholesaler_feed_list' %}">
+<i class="bi bi-cloud-arrow-down"></i> {% translate "Wholesaler Feed" %}
+</a>
+{% endif %}
+
 {% if perms.books.view_category %}
 <a class="sidebar-link {% if url_name == 'category_list' or url_name == 'category_create' or url_name == 'category_update' or url_name == 'category_delete' %}active{% endif %}" href="{% url 'category_list' %}">
 <i class="bi bi-tags"></i> {% translate "Categories" %}

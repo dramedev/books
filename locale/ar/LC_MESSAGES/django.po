@@ -2074,3 +2074,84 @@ msgstr "تشغيل طباعة جديد (اختر كتابًا)"
 msgid "Open a book and use \"New Print Run\" to start one."
 msgstr "افتح كتابًا واستخدم «تشغيل طباعة جديد» لبدء واحد."
 
+msgid "Wholesaler Feed"
+msgstr "خلاصة المورّد الجملة"
+
+msgid "Wholesale prices and stock availability uploaded from supplier catalog feeds."
+msgstr "أسعار الجملة وتوفر المخزون المستوردة من خلاصات كتالوج الموردين."
+
+msgid "Upload Feed"
+msgstr "استيراد خلاصة"
+
+msgid "ISBN or title"
+msgstr "ISBN أو العنوان"
+
+msgid "All suppliers"
+msgstr "كل الموردين"
+
+msgid "%(count)s feed item(s) found"
+msgstr "تم العثور على %(count)s عنصر خلاصة"
+
+msgid "Wholesale price"
+msgstr "سعر الجملة"
+
+msgid "Last updated"
+msgstr "آخر تحديث"
+
+msgid "No feed items match the current filters."
+msgstr "لا توجد عناصر خلاصة مطابقة للفلاتر الحالية."
+
+msgid "No wholesaler feed uploaded yet."
+msgstr "لم يتم استيراد أي خلاصة مورّد جملة بعد."
+
+msgid "Upload Wholesaler Feed"
+msgstr "استيراد خلاصة مورّد الجملة"
+
+msgid "Upload a CSV catalog feed from a supplier to track wholesale prices and stock."
+msgstr "استورد خلاصة كتالوج CSV من مورّد لتتبّع أسعار الجملة والمخزون."
+
+msgid "Back to Feed"
+msgstr "الرجوع إلى الخلاصة"
+
+msgid "Select a supplier"
+msgstr "اختر مورّدًا"
+
+msgid "Replace this supplier's existing feed entries (treat this file as a full snapshot)"
+msgstr "استبدال عناصر الخلاصة الحالية لهذا المورّد (معاملة هذا الملف كلقطة كاملة)"
+
+msgid "Add a supplier first before uploading a wholesaler feed."
+msgstr "أضف مورّدًا أولاً قبل استيراد خلاصة مورّد الجملة."
+
+msgid "Used to match this row to a book"
+msgstr "يُستخدم لمطابقة هذا الصف بكتاب"
+
+msgid "Decimal number; the supplier's wholesale price"
+msgstr "رقم عشري؛ سعر الجملة من المورّد"
+
+msgid "Whole number; units the supplier has available"
+msgstr "رقم صحيح؛ الوحدات المتوفرة لدى المورّد"
+
+msgid "Please choose a supplier."
+msgstr "يرجى اختيار مورّد."
+
+msgid "Row %(n)s: ISBN is required."
+msgstr "الصف %(n)s: رقم ISBN مطلوب."
+
+msgid "Row %(n)s: invalid price, skipped."
+msgstr "الصف %(n)s: سعر غير صالح، تم التجاهل."
+
+msgid "Row %(n)s: invalid stock quantity, skipped."
+msgstr "الصف %(n)s: كمية مخزون غير صالحة، تم التجاهل."
+
+msgid "Feed item deleted."
+msgstr "تم حذف عنصر الخلاصة."
+
+msgid "feed item"
+msgstr "عنصر خلاصة"
+
+msgid "Wholesale Availability"
+msgstr "التوفر لدى الجملة"
+
+msgid "No wholesaler feed data for this book's ISBN yet."
+msgstr "لا توجد بيانات خلاصة مورّد جملة لرقم ISBN لهذا الكتاب حتى الآن."
+

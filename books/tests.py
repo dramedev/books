@@ -32,7 +32,7 @@ from .models import (
     AccessCode, AVATAR_MAX_SIZE_BYTES, Account, AccountInvitation, AccountMembership, Author, Book, Category,
     Customer, CustomerLoginToken, get_or_create_account_for_user,
     Integration, Invoice, InvoiceItem, Location, PrintRun, ProcessedShopifyOrder, Profile, Reorder, Return, RoyaltyPayment, RoyaltyRate,
-    Sale, SaleTransaction, StockAdjustment, StockLevel, Subscription, Supplier, validate_avatar_size,
+    Sale, SaleTransaction, StockAdjustment, StockLevel, Subscription, Supplier, WholesalerFeedItem, validate_avatar_size,
 )
 from .permissions import sync_user_groups_for_role
 from .views import _adjust_stock, _invoice_aging_data, _next_receipt_number, _parse_publish_date, _pl_data, _safe_json
@@ -4272,3 +4272,225 @@ class PasswordResetFlowTests(TestCase):
             follow=True,
         )
         self.assertContains(response, "invalid", status_code=200)
+
+
+class WholesalerFeedUploadTests(TestCase):
+
+    def setUp(self):
+        User = get_user_model()
+        self.user = User.objects.create_user(username="feedimporter", password="pass1234")
+        self.account = get_or_create_account_for_user(self.user)
+        self.client.force_login(self.user)
+        grant(self.user, "add_wholesalerfeeditem", "view_wholesalerfeeditem", "delete_wholesalerfeeditem")
+        self.supplier = Supplier.objects.create(owner=self.user, account=self.account, name="Acme Distribution")
+
+    def _upload(self, content, supplier_id=None, replace=False, name="feed.csv"):
+        data = {
+            "supplier": supplier_id if supplier_id is not None else self.supplier.id,
+            "csv_file": SimpleUploadedFile(name, content.encode("utf-8"), content_type="text/csv"),
+        }
+        if replace:
+            data["replace_existing"] = "1"
+        return self.client.post(reverse("wholesaler_feed_upload"), data)
+
+    def test_upload_creates_items(self):
+        csv_content = "isbn,title,price,stock\n111,Some Book,9.50,40\n222,Other Book,5.25,12\n"
+        response = self._upload(csv_content)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(WholesalerFeedItem.objects.filter(account=self.account).count(), 2)
+        item = WholesalerFeedItem.objects.get(account=self.account, isbn="111")
+        self.assertEqual(item.wholesale_price, Decimal("9.50"))
+        self.assertEqual(item.stock_quantity, 40)
+        self.assertEqual(item.supplier, self.supplier)
+
+    def test_reupload_updates_existing_item_for_same_supplier_isbn(self):
+        self._upload("isbn,title,price,stock\n111,Some Book,9.50,40\n")
+        self._upload("isbn,title,price,stock\n111,Some Book,7.00,5\n")
+
+        self.assertEqual(WholesalerFeedItem.objects.filter(account=self.account, isbn="111").count(), 1)
+        item = WholesalerFeedItem.objects.get(account=self.account, isbn="111")
+        self.assertEqual(item.wholesale_price, Decimal("7.00"))
+        self.assertEqual(item.stock_quantity, 5)
+
+    def test_missing_isbn_row_is_skipped_not_fatal(self):
+        csv_content = "isbn,title,price,stock\n,No ISBN Book,9.50,40\n222,Good Book,5.25,12\n"
+        response = self._upload(csv_content)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(WholesalerFeedItem.objects.filter(account=self.account).count(), 1)
+        self.assertTrue(WholesalerFeedItem.objects.filter(account=self.account, isbn="222").exists())
+
+    def test_invalid_price_row_keeps_row_but_leaves_price_blank(self):
+        csv_content = "isbn,title,price,stock\n111,Some Book,not-a-number,40\n"
+        response = self._upload(csv_content, name="bad_price.csv")
+
+        item = WholesalerFeedItem.objects.get(account=self.account, isbn="111")
+        self.assertIsNone(item.wholesale_price)
+        self.assertContains(response, "invalid price")
+
+    def test_oversized_file_is_rejected(self):
+        header = "isbn,title,price,stock\n"
+        row = "111,Some Book,9.50,40\n"
+        big_csv = header + row * 260000
+        big_bytes = big_csv.encode("utf-8")
+        self.assertGreater(len(big_bytes), settings.CSV_IMPORT_MAX_SIZE_BYTES)
+
+        response = self.client.post(
+            reverse("wholesaler_feed_upload"),
+            {
+                "supplier": self.supplier.id,
+                "csv_file": SimpleUploadedFile("big.csv", big_bytes, content_type="text/csv"),
+            },
+            follow=True,
+        )
+        self.assertContains(response, "too large")
+        self.assertFalse(WholesalerFeedItem.objects.filter(account=self.account).exists())
+
+    def test_replace_existing_only_clears_items_for_chosen_supplier(self):
+        other_supplier = Supplier.objects.create(owner=self.user, account=self.account, name="Other Supplier")
+        WholesalerFeedItem.objects.create(
+            owner=self.user, account=self.account, supplier=self.supplier, isbn="999", wholesale_price=Decimal("1.00"),
+        )
+        WholesalerFeedItem.objects.create(
+            owner=self.user, account=self.account, supplier=other_supplier, isbn="888", wholesale_price=Decimal("2.00"),
+        )
+
+        self._upload("isbn,title,price,stock\n111,New Book,9.50,40\n", replace=True)
+
+        self.assertFalse(WholesalerFeedItem.objects.filter(account=self.account, isbn="999").exists())
+        self.assertTrue(WholesalerFeedItem.objects.filter(account=self.account, isbn="888").exists())
+        self.assertTrue(WholesalerFeedItem.objects.filter(account=self.account, isbn="111").exists())
+
+    def test_upload_requires_permission(self):
+        other = get_user_model().objects.create_user(username="nopower_feed", password="pass1234")
+        AccountMembership.objects.create(account=self.account, user=other, role=AccountMembership.ROLE_VIEWER)
+        sync_user_groups_for_role(other, AccountMembership.ROLE_VIEWER)
+        self.client.force_login(other)
+
+        response = self._upload("isbn,title,price,stock\n111,Some Book,9.50,40\n")
+        self.assertEqual(response.status_code, 403)
+
+    def test_cannot_upload_against_another_accounts_supplier(self):
+        other_user = get_user_model().objects.create_user(username="otheraccount_feed", password="pass1234")
+        other_account = get_or_create_account_for_user(other_user)
+        other_supplier = Supplier.objects.create(owner=other_user, account=other_account, name="Foreign Supplier")
+
+        response = self._upload("isbn,title,price,stock\n111,Some Book,9.50,40\n", supplier_id=other_supplier.id)
+
+        self.assertEqual(response.status_code, 302)
+        self.assertFalse(WholesalerFeedItem.objects.filter(supplier=other_supplier).exists())
+
+    def test_delete_view_is_account_scoped(self):
+        other_user = get_user_model().objects.create_user(username="otheraccount_feed2", password="pass1234")
+        other_account = get_or_create_account_for_user(other_user)
+        other_supplier = Supplier.objects.create(owner=other_user, account=other_account, name="Foreign Supplier 2")
+        foreign_item = WholesalerFeedItem.objects.create(
+            owner=other_user, account=other_account, supplier=other_supplier, isbn="777", wholesale_price=Decimal("3.00"),
+        )
+
+        response = self.client.post(reverse("wholesaler_feed_delete", args=[foreign_item.id]))
+
+        self.assertEqual(response.status_code, 404)
+        self.assertTrue(WholesalerFeedItem.objects.filter(id=foreign_item.id).exists())
+
+
+class WholesalerFeedBookDetailTests(TestCase):
+
+    def setUp(self):
+        User = get_user_model()
+        self.user = User.objects.create_user(username="feedviewer", password="pass1234")
+        self.account = get_or_create_account_for_user(self.user)
+        self.client.force_login(self.user)
+        grant(self.user, "view_book", "view_wholesalerfeeditem")
+
+        cat = Category.objects.create(owner=self.user, account=self.account, name="Fiction")
+        self.book = Book.objects.create(
+            owner=self.user, account=self.account, title="Matched Book", isbn="555",
+            publisher="Acme", published_date=date(2024, 1, 1), category=cat,
+            distribution_expense=Decimal("5.00"), stock_on_hand=1, reorder_threshold=1,
+        )
+        self.supplier = Supplier.objects.create(owner=self.user, account=self.account, name="Acme Distribution")
+
+    def test_matching_offer_is_shown_with_permission(self):
+        WholesalerFeedItem.objects.create(
+            owner=self.user, account=self.account, supplier=self.supplier, isbn="555",
+            wholesale_price=Decimal("4.20"), stock_quantity=30,
+        )
+
+        response = self.client.get(reverse("book_detail", args=[self.book.id]))
+        self.assertContains(response, "Acme Distribution")
+        self.assertContains(response, "4.20")
+
+    def test_offer_hidden_without_permission(self):
+        other = get_user_model().objects.create_user(username="nopower_feedview", password="pass1234")
+        AccountMembership.objects.create(account=self.account, user=other, role=AccountMembership.ROLE_VIEWER)
+        grant(other, "view_book")
+        self.client.force_login(other)
+
+        WholesalerFeedItem.objects.create(
+            owner=self.user, account=self.account, supplier=self.supplier, isbn="555",
+            wholesale_price=Decimal("4.20"), stock_quantity=30,
+        )
+
+        response = self.client.get(reverse("book_detail", args=[self.book.id]))
+        self.assertNotContains(response, "Acme Distribution")
+
+    def test_no_offers_for_unmatched_isbn(self):
+        WholesalerFeedItem.objects.create(
+            owner=self.user, account=self.account, supplier=self.supplier, isbn="not-this-book",
+            wholesale_price=Decimal("4.20"), stock_quantity=30,
+        )
+
+        response = self.client.get(reverse("book_detail", args=[self.book.id]))
+        self.assertContains(response, "No wholesaler feed data")
+
+
+class WholesalerFeedListTests(TestCase):
+
+    def setUp(self):
+        User = get_user_model()
+        self.user = User.objects.create_user(username="feedlister", password="pass1234")
+        self.account = get_or_create_account_for_user(self.user)
+        self.client.force_login(self.user)
+        grant(self.user, "view_wholesalerfeeditem")
+        self.supplier = Supplier.objects.create(owner=self.user, account=self.account, name="Acme Distribution")
+
+    def test_list_is_account_scoped(self):
+        other_user = get_user_model().objects.create_user(username="otheraccount_feedlist", password="pass1234")
+        other_account = get_or_create_account_for_user(other_user)
+        other_supplier = Supplier.objects.create(owner=other_user, account=other_account, name="Foreign Supplier")
+        WholesalerFeedItem.objects.create(
+            owner=other_user, account=other_account, supplier=other_supplier, isbn="333", wholesale_price=Decimal("1.00"),
+        )
+        WholesalerFeedItem.objects.create(
+            owner=self.user, account=self.account, supplier=self.supplier, isbn="444", wholesale_price=Decimal("2.00"),
+        )
+
+        response = self.client.get(reverse("wholesaler_feed_list"))
+        self.assertContains(response, "444")
+        self.assertNotContains(response, "333")
+
+    def test_search_filters_by_isbn_or_title(self):
+        WholesalerFeedItem.objects.create(
+            owner=self.user, account=self.account, supplier=self.supplier, isbn="111", title="Matching Title",
+        )
+        WholesalerFeedItem.objects.create(
+            owner=self.user, account=self.account, supplier=self.supplier, isbn="222", title="Other",
+        )
+
+        response = self.client.get(reverse("wholesaler_feed_list"), {"q": "Matching"})
+        self.assertContains(response, "111")
+        self.assertNotContains(response, "222")
+
+    def test_list_requires_permission(self):
+        other = get_user_model().objects.create_user(username="nopower_feedlist", password="pass1234")
+        AccountMembership.objects.create(account=self.account, user=other, role=AccountMembership.ROLE_VIEWER)
+        self.client.force_login(other)
+
+        response = self.client.get(reverse("wholesaler_feed_list"))
+        self.assertEqual(response.status_code, 403)
+
+    def test_upload_link_hidden_without_add_permission(self):
+        response = self.client.get(reverse("wholesaler_feed_list"))
+        self.assertNotContains(response, reverse("wholesaler_feed_upload"))

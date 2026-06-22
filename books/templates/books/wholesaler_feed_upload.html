@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+<div>
+<h1 class="mb-1">{% translate "Upload Wholesaler Feed" %}</h1>
+<p class="muted-text mb-0">{% translate "Upload a CSV catalog feed from a supplier to track wholesale prices and stock." %}</p>
+</div>
+<a class="btn btn-outline-secondary" href="{% url 'wholesaler_feed_list' %}">{% translate "Back to Feed" %}</a>
+</div>
+
+{% if results %}
+<div class="card p-4 mb-4">
+<h5 class="mb-3">{% translate "Import results" %}</h5>
+<div class="d-flex gap-4 mb-3 flex-wrap">
+<div class="text-center">
+<div style="font-size:1.8rem;font-weight:700;color:#198754;">{{ results.created }}</div>
+<div class="muted-text small">{% translate "Created" %}</div>
+</div>
+<div class="text-center">
+<div style="font-size:1.8rem;font-weight:700;color:var(--accent);">{{ results.updated }}</div>
+<div class="muted-text small">{% translate "Updated" %}</div>
+</div>
+<div class="text-center">
+<div style="font-size:1.8rem;font-weight:700;color:var(--text-muted);">{{ results.skipped }}</div>
+<div class="muted-text small">{% translate "Skipped" %}</div>
+</div>
+</div>
+{% if results.errors %}
+<div class="alert alert-warning mb-0">
+<strong>{% translate "Row errors:" %}</strong>
+<ul class="mb-0 mt-1">
+{% for err in results.errors %}<li>{{ err }}</li>{% endfor %}
+</ul>
+</div>
+{% endif %}
+</div>
+{% endif %}
+
+<div class="row g-4">
+<div class="col-md-6">
+<div class="card p-4 h-100">
+<h5 class="mb-3">{% translate "Upload CSV" %}</h5>
+{% if suppliers %}
+<form method="post" enctype="multipart/form-data">
+{% csrf_token %}
+<div class="mb-3">
+<label class="form-label" for="supplier">{% translate "Supplier" %}</label>
+<select id="supplier" name="supplier" class="form-select" required>
+<option value="">{% translate "Select a supplier" %}</option>
+{% for supplier in suppliers %}
+<option value="{{ supplier.id }}">{{ supplier.name }}</option>
+{% endfor %}
+</select>
+</div>
+<div class="mb-3">
+<label class="form-label" for="csv_file">{% translate "CSV file" %}</label>
+<input type="file" name="csv_file" id="csv_file" class="form-control" accept=".csv" required>
+<div class="form-text">{% translate "Maximum file size: 5 MB. Encoding: UTF-8." %}</div>
+</div>
+<div class="form-check mb-3">
+<input type="checkbox" name="replace_existing" id="replace_existing" class="form-check-input" value="1">
+<label class="form-check-label" for="replace_existing">
+{% translate "Replace this supplier's existing feed entries (treat this file as a full snapshot)" %}
+</label>
+</div>
+<button type="submit" class="btn btn-primary">{% translate "Import" %}</button>
+</form>
+{% else %}
+<p class="muted-text">{% translate "Add a supplier first before uploading a wholesaler feed." %}</p>
+<a class="btn btn-outline-light" href="{% url 'supplier_create' %}">{% translate "Add Supplier" %}</a>
+{% endif %}
+</div>
+</div>
+
+<div class="col-md-6">
+<div class="card p-4 h-100">
+<h5 class="mb-3">{% translate "Format guide" %}</h5>
+<p class="small muted-text mb-2">{% translate "The first row must be a header. Supported columns:" %}</p>
+<table class="table table-sm small mb-0">
+<tr><th>{% translate "Column" %}</th><th>{% translate "Required" %}</th><th>{% translate "Notes" %}</th></tr>
+<tr><td>ISBN</td><td class="text-danger">✓</td><td>{% translate "Used to match this row to a book" %}</td></tr>
+<tr><td>Title</td><td>—</td><td>—</td></tr>
+<tr><td>Price</td><td>—</td><td>{% translate "Decimal number; the supplier's wholesale price" %}</td></tr>
+<tr><td>Stock</td><td>—</td><td>{% translate "Whole number; units the supplier has available" %}</td></tr>
+</table>
+</div>
+</div>
+</div>
+
+{% endblock %}

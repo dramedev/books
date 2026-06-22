@@ -2074,3 +2074,84 @@ msgstr "Nouveau tirage (choisir un livre)"
 msgid "Open a book and use \"New Print Run\" to start one."
 msgstr "Ouvrez un livre et utilisez « Nouveau tirage » pour en démarrer un."
 
+msgid "Wholesaler Feed"
+msgstr "Flux grossiste"
+
+msgid "Wholesale prices and stock availability uploaded from supplier catalog feeds."
+msgstr "Prix de gros et disponibilité des stocks importés depuis les flux catalogue des fournisseurs."
+
+msgid "Upload Feed"
+msgstr "Importer un flux"
+
+msgid "ISBN or title"
+msgstr "ISBN ou titre"
+
+msgid "All suppliers"
+msgstr "Tous les fournisseurs"
+
+msgid "%(count)s feed item(s) found"
+msgstr "%(count)s article(s) de flux trouvé(s)"
+
+msgid "Wholesale price"
+msgstr "Prix de gros"
+
+msgid "Last updated"
+msgstr "Dernière mise à jour"
+
+msgid "No feed items match the current filters."
+msgstr "Aucun article de flux ne correspond aux filtres actuels."
+
+msgid "No wholesaler feed uploaded yet."
+msgstr "Aucun flux grossiste importé pour le moment."
+
+msgid "Upload Wholesaler Feed"
+msgstr "Importer un flux grossiste"
+
+msgid "Upload a CSV catalog feed from a supplier to track wholesale prices and stock."
+msgstr "Importez un flux catalogue CSV d'un fournisseur pour suivre les prix de gros et les stocks."
+
+msgid "Back to Feed"
+msgstr "Retour au flux"
+
+msgid "Select a supplier"
+msgstr "Sélectionner un fournisseur"
+
+msgid "Replace this supplier's existing feed entries (treat this file as a full snapshot)"
+msgstr "Remplacer les entrées de flux existantes de ce fournisseur (traiter ce fichier comme un instantané complet)"
+
+msgid "Add a supplier first before uploading a wholesaler feed."
+msgstr "Ajoutez d'abord un fournisseur avant d'importer un flux grossiste."
+
+msgid "Used to match this row to a book"
+msgstr "Utilisé pour associer cette ligne à un livre"
+
+msgid "Decimal number; the supplier's wholesale price"
+msgstr "Nombre décimal ; le prix de gros du fournisseur"
+
+msgid "Whole number; units the supplier has available"
+msgstr "Nombre entier ; unités disponibles chez le fournisseur"
+
+msgid "Please choose a supplier."
+msgstr "Veuillez choisir un fournisseur."
+
+msgid "Row %(n)s: ISBN is required."
+msgstr "Ligne %(n)s : l'ISBN est requis."
+
+msgid "Row %(n)s: invalid price, skipped."
+msgstr "Ligne %(n)s : prix invalide, ignorée."
+
+msgid "Row %(n)s: invalid stock quantity, skipped."
+msgstr "Ligne %(n)s : quantité en stock invalide, ignorée."
+
+msgid "Feed item deleted."
+msgstr "Article de flux supprimé."
+
+msgid "feed item"
+msgstr "article de flux"
+
+msgid "Wholesale Availability"
+msgstr "Disponibilité chez les grossistes"
+
+msgid "No wholesaler feed data for this book's ISBN yet."
+msgstr "Aucune donnée de flux grossiste pour l'ISBN de ce livre pour le moment."
+

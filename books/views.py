@@ -78,7 +78,7 @@ from .models import (
     Integration, Invoice, InvoiceItem,
     Location, PrintRun, ProcessedShopifyOrder, Profile,
     Reorder, Return, RoyaltyPayment, RoyaltyRate,
-    Sale, SaleTransaction, StockAdjustment, StockLevel, Subscription, Supplier,
+    Sale, SaleTransaction, StockAdjustment, StockLevel, Subscription, Supplier, WholesalerFeedItem,
 )
 from .permissions import ensure_roles, sync_user_groups_for_role
 
@@ -531,11 +531,20 @@ def book_detail(request, id):
 
     history.sort(key=lambda x: x["date"], reverse=True)
 
+    wholesaler_offers = []
+    if book.isbn:
+        wholesaler_offers = list(
+            WholesalerFeedItem.objects.filter(account=request.account, isbn=book.isbn)
+            .select_related("supplier")
+            .order_by("wholesale_price")
+        )
+
     context = {
         "book": book,
         "total_quantity_sold": totals["total_quantity"] or 0,
         "total_revenue": totals["total_revenue"] or 0,
         "history": history[:50],
+        "wholesaler_offers": wholesaler_offers,
     }
 
     return render(request, "books/detail.html", context)
@@ -1087,6 +1096,161 @@ def supplier_delete(request, id):
                 else ""
             ),
             "disable_delete": bool(reorder_count),
+        },
+    )
+
+
+@login_required
+@permission_required("books.view_wholesalerfeeditem", raise_exception=True)
+def wholesaler_feed_list(request):
+    items = WholesalerFeedItem.objects.filter(account=request.account).select_related("supplier")
+
+    supplier_id = request.GET.get("supplier", "").strip()
+    if supplier_id:
+        items = items.filter(supplier_id=supplier_id)
+
+    q = request.GET.get("q", "").strip()
+    if q:
+        items = items.filter(Q(isbn__icontains=q) | Q(title__icontains=q))
+
+    query_params = request.GET.copy()
+    query_params.pop("page", None)
+    query_string = query_params.urlencode()
+
+    paginator = Paginator(items, 25)
+    page_obj = paginator.get_page(request.GET.get("page"))
+
+    matched_book_ids = {
+        b.isbn: b.id
+        for b in Book.objects.filter(
+            account=request.account,
+            isbn__in=[item.isbn for item in page_obj.object_list],
+        )
+    }
+    for item in page_obj.object_list:
+        item.matched_book_id = matched_book_ids.get(item.isbn)
+
+    return render(
+        request,
+        "books/wholesaler_feed_list.html",
+        {
+            "items": page_obj.object_list,
+            "page_obj": page_obj,
+            "q": q,
+            "supplier_id": supplier_id,
+            "query_string": query_string,
+            "suppliers": Supplier.objects.filter(account=request.account),
+            "result_count_text": gettext("%(count)s feed item(s) found") % {"count": paginator.count},
+            "has_any_items": WholesalerFeedItem.objects.filter(account=request.account).exists(),
+        },
+    )
+
+
+@login_required
+@permission_required("books.add_wholesalerfeeditem", raise_exception=True)
+def wholesaler_feed_upload(request):
+    results = None
+    suppliers = Supplier.objects.filter(account=request.account)
+
+    if request.method == "POST" and request.FILES.get("csv_file"):
+        supplier_id = request.POST.get("supplier")
+        supplier = suppliers.filter(id=supplier_id).first()
+
+        if supplier is None:
+            messages.error(request, gettext("Please choose a supplier."))
+            return redirect("wholesaler_feed_upload")
+
+        f = request.FILES["csv_file"]
+
+        if not f.name.lower().endswith(".csv"):
+            messages.error(request, gettext("Please upload a .csv file."))
+            return redirect("wholesaler_feed_upload")
+
+        if f.size > settings.CSV_IMPORT_MAX_SIZE_BYTES:
+            messages.error(request, gettext("File is too large (maximum 5 MB)."))
+            return redirect("wholesaler_feed_upload")
+
+        try:
+            text = f.read().decode("utf-8-sig")
+        except UnicodeDecodeError:
+            messages.error(request, gettext("File must be UTF-8 encoded."))
+            return redirect("wholesaler_feed_upload")
+
+        if request.POST.get("replace_existing"):
+            WholesalerFeedItem.objects.filter(account=request.account, supplier=supplier).delete()
+
+        reader = csv.DictReader(text.splitlines())
+        reader.fieldnames = [h.strip().lower() for h in (reader.fieldnames or [])]
+
+        created = updated = skipped = 0
+        errors = []
+
+        for i, row in enumerate(reader, start=2):  # row 1 is header
+            isbn = (row.get("isbn") or "").strip()
+            if not isbn:
+                errors.append(gettext("Row %(n)s: ISBN is required.") % {"n": i})
+                skipped += 1
+                continue
+
+            title = (row.get("title") or "").strip()
+            price_raw = (row.get("price") or row.get("wholesale price") or "").strip()
+            stock_raw = (row.get("stock") or row.get("stock quantity") or "").strip()
+
+            price = None
+            if price_raw:
+                try:
+                    price = Decimal(price_raw)
+                except Exception:
+                    errors.append(gettext("Row %(n)s: invalid price, skipped.") % {"n": i})
+
+            stock_quantity = None
+            if stock_raw:
+                try:
+                    stock_quantity = max(0, int(stock_raw))
+                except ValueError:
+                    errors.append(gettext("Row %(n)s: invalid stock quantity, skipped.") % {"n": i})
+
+            item, was_created = WholesalerFeedItem.objects.update_or_create(
+                account=request.account, supplier=supplier, isbn=isbn,
+                defaults={
+                    "owner": request.user,
+                    "title": title,
+                    "wholesale_price": price,
+                    "stock_quantity": stock_quantity,
+                },
+            )
+
+            if was_created:
+                created += 1
+            else:
+                updated += 1
+
+        results = {"created": created, "updated": updated, "skipped": skipped, "errors": errors}
+
+    return render(
+        request,
+        "books/wholesaler_feed_upload.html",
+        {"results": results, "suppliers": suppliers},
+    )
+
+
+@login_required
+@permission_required("books.delete_wholesalerfeeditem", raise_exception=True)
+def wholesaler_feed_delete(request, id):
+    item = get_object_or_404(WholesalerFeedItem, id=id, account=request.account)
+
+    if request.method == "POST":
+        item.delete()
+        messages.success(request, gettext("Feed item deleted."))
+        return redirect("wholesaler_feed_list")
+
+    return render(
+        request,
+        "books/confirm_delete.html",
+        {
+            "object_type": gettext("feed item"),
+            "object_name": f"{item.supplier.name} - {item.isbn}",
+            "cancel_url": reverse("wholesaler_feed_list"),
         },
     )
 

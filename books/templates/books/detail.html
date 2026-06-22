@@ -151,4 +151,36 @@
 </div>
 
 
+{% if perms.books.view_wholesalerfeeditem %}
+<div class="page-panel mt-3">
+<h2 class="mb-3">{% translate "Wholesale Availability" %}</h2>
+
+{% if wholesaler_offers %}
+<div class="table-responsive">
+<table class="table table-striped align-middle mb-0">
+<tr>
+<th>{% translate "Supplier" %}</th>
+<th>{% translate "Wholesale price" %}</th>
+<th>{% translate "Stock" %}</th>
+<th>{% translate "Last updated" %}</th>
+</tr>
+{% for offer in wholesaler_offers %}
+<tr>
+<td>{{ offer.supplier.name }}</td>
+<td>{{ offer.wholesale_price|default:"-" }}</td>
+<td>{{ offer.stock_quantity|default:"-" }}</td>
+<td class="muted-text">{{ offer.updated_at }}</td>
+</tr>
+{% endfor %}
+</table>
+</div>
+{% else %}
+<p class="muted-text mb-0">
+{% translate "No wholesaler feed data for this book's ISBN yet." %}
+</p>
+{% endif %}
+</div>
+{% endif %}
+
+
 {% endblock %}
