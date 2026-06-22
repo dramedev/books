@@ -829,12 +829,25 @@ const chatForm = document.getElementById("chatForm");
 const chatInput = document.getElementById("chatInput");
 
 if(chatToggle){
+    const STORAGE_KEY = "rumipress_chat_state";
     let chatHistory = [];
+    let renderedMessages = [];
     const i18nThinking = "{% translate 'Thinking...' %}";
     const i18nChatError = "{% translate 'Sorry, something went wrong.' %}";
 
+    function saveState(){
+        try{
+            sessionStorage.setItem(STORAGE_KEY, JSON.stringify({
+                history: chatHistory,
+                rendered: renderedMessages,
+                open: chatPanel.classList.contains("show"),
+            }));
+        } catch(e){ /* storage unavailable (e.g. private browsing) - degrade silently */ }
+    }
+
     chatToggle.addEventListener("click", function(){
         chatPanel.classList.toggle("show");
+        saveState();
     });
 
     function renderAssistantReply(el, text){
@@ -857,6 +870,33 @@ if(chatToggle){
         return el;
     }
 
+    (function restoreState(){
+        let saved = null;
+        try{
+            saved = JSON.parse(sessionStorage.getItem(STORAGE_KEY) || "null");
+        } catch(e){ /* corrupt/unavailable storage - start fresh */ }
+
+        if(!saved){
+            return;
+        }
+
+        chatHistory = saved.history || [];
+        renderedMessages = saved.rendered || [];
+
+        renderedMessages.forEach(function(message){
+            const el = addChatMessage(message.role, "");
+            if(message.role === "assistant"){
+                renderAssistantReply(el, message.text);
+            } else {
+                el.textContent = message.text;
+            }
+        });
+
+        if(saved.open){
+            chatPanel.classList.add("show");
+        }
+    })();
+
     chatForm.addEventListener("submit", function(event){
         event.preventDefault();
 
@@ -866,6 +906,7 @@ if(chatToggle){
         }
 
         addChatMessage("user", text);
+        renderedMessages.push({role: "user", text: text});
         chatInput.value = "";
         chatInput.disabled = true;
         const pending = addChatMessage("assistant", i18nThinking);
@@ -884,6 +925,7 @@ if(chatToggle){
         .then(function(data){
             if(data.reply){
                 renderAssistantReply(pending, data.reply);
+                renderedMessages.push({role: "assistant", text: data.reply});
             }
             else{
                 pending.textContent = i18nChatError;
@@ -891,6 +933,7 @@ if(chatToggle){
             if(data.history){
                 chatHistory = data.history;
             }
+            saveState();
         })
         .catch(function(){
             pending.textContent = i18nChatError;
