@@ -5076,20 +5076,31 @@ def billing_start(request):
     return render(request, "registration/billing_start.html", {"form": form})
 
 
-@login_required
+@csrf_exempt
 def billing_callback(request):
-    subscription = _get_or_create_subscription(request.account, request.user)
-    token = request.GET.get("token", "")
+    # iyzico's hosted checkout form redirects the browser back here as a
+    # cross-site navigation (often POST) once payment finishes. SameSite=Lax
+    # cookies aren't sent on a cross-site POST, so neither the session nor the
+    # CSRF cookie reliably arrives on this specific request - this view must
+    # not depend on request.user/request.account, and must stay CSRF-exempt.
+    # The checkout_token (an unguessable value we generated and stored at
+    # billing_start) is what ties this request back to the right Subscription.
+    token = request.POST.get("token") or request.GET.get("token", "")
+    subscription = Subscription.objects.filter(checkout_token=token).first()
+    if subscription is None:
+        return redirect("billing_required")
 
     try:
         result = iyzico_client.retrieve_checkout_form(token)
     except iyzico_client.IyzicoError:
-        messages.error(request, gettext("Couldn't confirm your subscription. Please try again or contact us."))
         return redirect("billing_required")
 
-    subscription.external_customer_id = result.get("customerReferenceCode", "")
-    subscription.external_subscription_id = result.get("referenceCode", "")
-    status = result.get("subscriptionStatus", "")
+    # Unlike the initialize endpoint (flat response), iyzico's checkout-form
+    # retrieve endpoint nests the real fields under "data" on success.
+    data = result.get("data", result)
+    subscription.external_customer_id = data.get("customerReferenceCode", "")
+    subscription.external_subscription_id = data.get("referenceCode", "")
+    status = data.get("subscriptionStatus", "")
     if status in dict(Subscription.STATUS_CHOICES):
         subscription.status = status
     subscription.checkout_token = ""
@@ -5098,10 +5109,7 @@ def billing_callback(request):
     ])
 
     if subscription.is_in_good_standing:
-        messages.success(request, gettext("Your subscription is active. Welcome to RumiPress!"))
         return redirect("dashboard")
-
-    messages.error(request, gettext("Your subscription couldn't be activated. Please try again or contact us."))
     return redirect("billing_required")
 
 
@@ -5136,9 +5144,11 @@ def billing_portal(request):
     })
 
 
-@login_required
+@csrf_exempt
 def billing_card_update_callback(request):
-    messages.success(request, gettext("Your payment method has been updated."))
+    # Same cross-site-redirect-back caveat as billing_callback above: this
+    # request may arrive without the session/CSRF cookies, so it must stay
+    # CSRF-exempt, unauthenticated, and avoid touching request.session.
     return redirect("billing_required")
 
 

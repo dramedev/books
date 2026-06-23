@@ -3798,10 +3798,15 @@ class BillingViewTests(TestCase):
     @patch("books.views.iyzico_client.retrieve_checkout_form")
     def test_billing_callback_activates_subscription(self, mock_retrieve):
         Subscription.objects.create(user=self.user, checkout_token="tok_123", status=Subscription.STATUS_INCOMPLETE)
+        # Real sandbox responses from this endpoint nest fields under "data" -
+        # unlike the initialize endpoint's flat response (see test_billing_start_*).
         mock_retrieve.return_value = {
-            "customerReferenceCode": "cust_new",
-            "referenceCode": "sub_new",
-            "subscriptionStatus": "ACTIVE",
+            "status": "success",
+            "data": {
+                "customerReferenceCode": "cust_new",
+                "referenceCode": "sub_new",
+                "subscriptionStatus": "ACTIVE",
+            },
         }
 
         response = self.client.get(reverse("billing_callback"), {"token": "tok_123"})
@@ -3815,8 +3820,10 @@ class BillingViewTests(TestCase):
 
     @patch("books.views.iyzico_client.retrieve_checkout_form")
     def test_billing_callback_pending_status_redirects_to_billing_required(self, mock_retrieve):
+        Subscription.objects.create(user=self.user, checkout_token="tok_123", status=Subscription.STATUS_INCOMPLETE)
         mock_retrieve.return_value = {
-            "customerReferenceCode": "cust_new", "referenceCode": "sub_new", "subscriptionStatus": "PENDING",
+            "status": "success",
+            "data": {"customerReferenceCode": "cust_new", "referenceCode": "sub_new", "subscriptionStatus": "PENDING"},
         }
 
         response = self.client.get(reverse("billing_callback"), {"token": "tok_123"})
@@ -3824,6 +3831,7 @@ class BillingViewTests(TestCase):
 
     @patch("books.views.iyzico_client.retrieve_checkout_form")
     def test_billing_callback_iyzico_error_redirects_to_billing_required(self, mock_retrieve):
+        Subscription.objects.create(user=self.user, checkout_token="tok_123", status=Subscription.STATUS_INCOMPLETE)
         mock_retrieve.side_effect = iyzico_client.IyzicoError("boom")
 
         response = self.client.get(reverse("billing_callback"), {"token": "tok_123"})
