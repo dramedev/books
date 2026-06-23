@@ -357,8 +357,9 @@ textarea{
     .chat-panel{
         left:12px;
         right:12px;
-        width:auto;
+        width:auto !important;
         bottom:84px;
+        resize:none;
     }
 }
 
@@ -386,13 +387,18 @@ textarea{
     right:24px;
     bottom:92px;
     width:340px;
-    max-height:70vh;
+    height:480px;
+    min-width:280px;
+    min-height:320px;
+    max-width:90vw;
+    max-height:80vh;
     background:var(--surface);
     border:1px solid var(--border);
     border-radius:12px;
     display:none;
     flex-direction:column;
     overflow:hidden;
+    resize:both;
     box-shadow:0 8px 24px rgba(0,0,0,0.3);
     z-index:1001;
 }
@@ -406,6 +412,24 @@ textarea{
     background:var(--sidebar-bg);
     border-bottom:1px solid var(--border);
     font-weight:600;
+    color:var(--text);
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:0.5rem;
+}
+
+.chat-panel-close{
+    border:none;
+    background:none;
+    color:var(--text-muted);
+    font-size:1.1rem;
+    line-height:1;
+    padding:0;
+    cursor:pointer;
+}
+
+.chat-panel-close:hover{
     color:var(--text);
 }
 
@@ -786,7 +810,12 @@ html[dir="rtl"] .chat-panel{
 </button>
 
 <div class="chat-panel" id="chatPanel">
-<div class="chat-panel-header">{% translate "RumiPress Assistant" %}</div>
+<div class="chat-panel-header">
+<span>{% translate "RumiPress Assistant" %}</span>
+<button type="button" class="chat-panel-close" id="chatClose" aria-label="{% translate 'Close' %}">
+<i class="bi bi-x-lg"></i>
+</button>
+</div>
 <div class="chat-panel-messages" id="chatMessages"></div>
 <form class="chat-panel-form" id="chatForm">
 {% csrf_token %}
@@ -847,6 +876,8 @@ if(chatToggle){
                 history: chatHistory,
                 rendered: renderedMessages,
                 open: chatPanel.classList.contains("show"),
+                width: chatPanel.style.width || null,
+                height: chatPanel.style.height || null,
             }));
         } catch(e){ /* storage unavailable (e.g. private browsing) - degrade silently */ }
     }
@@ -855,6 +886,18 @@ if(chatToggle){
         chatPanel.classList.toggle("show");
         saveState();
     });
+
+    const chatClose = document.getElementById("chatClose");
+    if(chatClose){
+        chatClose.addEventListener("click", function(){
+            chatPanel.classList.remove("show");
+            saveState();
+        });
+    }
+
+    if(window.ResizeObserver){
+        new ResizeObserver(saveState).observe(chatPanel);
+    }
 
     function renderAssistantReply(el, text){
         const escaped = text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
@@ -900,6 +943,13 @@ if(chatToggle){
 
         if(saved.open){
             chatPanel.classList.add("show");
+        }
+
+        if(saved.width){
+            chatPanel.style.width = saved.width;
+        }
+        if(saved.height){
+            chatPanel.style.height = saved.height;
         }
     })();
 
