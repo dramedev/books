@@ -953,6 +953,15 @@ if(chatToggle){
 </script>
 
 <script>
+(function(){
+    const activeLink = document.querySelector(".sidebar-link.active");
+    if(activeLink){
+        activeLink.scrollIntoView({block: "center"});
+    }
+})();
+</script>
+
+<script>
 if ("serviceWorker" in navigator) {
   navigator.serviceWorker.register("/sw.js").catch(() => {});
 }
