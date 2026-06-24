@@ -771,3 +771,14 @@ class IyzicoCustomerForm(forms.Form):
     zip_code = forms.CharField(
         max_length=20, required=False, widget=forms.TextInput(attrs={"class": "form-control"}),
     )
+
+
+class CinetpayCustomerForm(forms.Form):
+
+    name = forms.CharField(max_length=100, widget=forms.TextInput(attrs={"class": "form-control"}))
+    surname = forms.CharField(max_length=100, widget=forms.TextInput(attrs={"class": "form-control"}))
+    email = forms.EmailField(widget=forms.EmailInput(attrs={"class": "form-control"}))
+    phone = forms.CharField(
+        max_length=20,
+        widget=forms.TextInput(attrs={"class": "form-control", "placeholder": "+223XXXXXXXX"}),
+    )

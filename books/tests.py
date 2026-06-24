@@ -25,7 +25,7 @@ from django.utils import timezone
 from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode
 
-from . import ai_chat, iyzico_client
+from . import ai_chat, cinetpay_client, iyzico_client
 from .fields import decrypt_value, encrypt_value
 from .isbn_lookup import IsbnLookupError, lookup_isbn
 from .models import (
@@ -3446,6 +3446,12 @@ class CustomerPortalPaymentTests(TestCase):
             api_key="sk_test_dummy", webhook_secret="whsec_dummy", is_active=is_active,
         )
 
+    def _add_cinetpay_integration(self, is_active=True):
+        return Integration.objects.create(
+            owner=self.owner, platform=Integration.PLATFORM_CINETPAY, name="CinetPay",
+            api_key="cp_test_dummy", api_secret="site_test_dummy", is_active=is_active,
+        )
+
     def test_pay_now_hidden_without_stripe_integration(self):
         response = self.client.get(reverse("customer_portal_invoice_detail", args=[self.invoice.id]))
         self.assertNotContains(response, "Pay Now")
@@ -3519,6 +3525,123 @@ class CustomerPortalPaymentTests(TestCase):
         )
         response = self.client.post(reverse("customer_portal_invoice_pay", args=[other_invoice.id]))
         self.assertEqual(response.status_code, 404)
+
+    def test_pay_now_shown_with_active_cinetpay_integration(self):
+        self._add_cinetpay_integration()
+        response = self.client.get(reverse("customer_portal_invoice_detail", args=[self.invoice.id]))
+        self.assertContains(response, "Pay Now")
+
+    @patch("books.views.cinetpay_client.initiate_payment")
+    def test_pay_creates_cinetpay_payment_and_redirects(self, mock_init):
+        integration = self._add_cinetpay_integration()
+        mock_init.return_value = {"data": {"payment_url": "https://checkout.cinetpay.com/xyz"}}
+
+        response = self.client.post(reverse("customer_portal_invoice_pay", args=[self.invoice.id]))
+
+        self.assertRedirects(response, "https://checkout.cinetpay.com/xyz", fetch_redirect_response=False)
+        call_kwargs = mock_init.call_args.kwargs
+        self.assertTrue(call_kwargs["transaction_id"].startswith(f"inv-{self.invoice.id}-"))
+        self.assertIn(str(integration.id), call_kwargs["notify_url"])
+
+    @patch("books.views.cinetpay_client.initiate_payment")
+    def test_pay_cinetpay_error_shows_message(self, mock_init):
+        self._add_cinetpay_integration()
+        mock_init.side_effect = cinetpay_client.CinetpayError("boom")
+
+        response = self.client.post(reverse("customer_portal_invoice_pay", args=[self.invoice.id]), follow=True)
+        self.assertContains(response, "Couldn")
+
+
+class CinetpayInvoiceWebhookTests(TestCase):
+
+    def setUp(self):
+        User = get_user_model()
+        self.owner = User.objects.create_user(username="owner", password="pass1234")
+        self.customer = Customer.objects.create(owner=self.owner, name="Acme Shop", email="acme@example.com")
+        self.invoice = Invoice.objects.create(
+            owner=self.owner, customer=self.customer, customer_name=self.customer.name,
+            invoice_date=date(2024, 1, 1), currency="XOF", status=Invoice.STATUS_SENT,
+        )
+        InvoiceItem.objects.create(invoice=self.invoice, description="Book", quantity=2, unit_price=Decimal("10.00"))
+        self.integration = Integration.objects.create(
+            owner=self.owner, platform=Integration.PLATFORM_CINETPAY, name="CinetPay",
+            api_key="cp_test_dummy", api_secret="site_test_dummy",
+        )
+        self.transaction_id = f"inv-{self.invoice.id}-abc123"
+
+    def _post(self, transaction_id=None):
+        return self.client.post(
+            reverse("cinetpay_invoice_webhook", args=[self.integration.id]),
+            {"cpm_trans_id": transaction_id or self.transaction_id},
+        )
+
+    @patch("books.views.cinetpay_client.check_payment_status")
+    def test_accepted_payment_marks_invoice_paid(self, mock_check):
+        mock_check.return_value = {
+            "code": "00",
+            "data": {"status": "ACCEPTED", "currency": "XOF", "amount": "20"},
+        }
+        response = self._post()
+        self.assertEqual(response.status_code, 200)
+        self.invoice.refresh_from_db()
+        self.assertEqual(self.invoice.status, Invoice.STATUS_PAID)
+
+    @patch("books.views.cinetpay_client.check_payment_status")
+    def test_refused_payment_does_not_mark_paid(self, mock_check):
+        mock_check.return_value = {
+            "code": "00",
+            "data": {"status": "REFUSED", "currency": "XOF", "amount": "20"},
+        }
+        response = self._post()
+        self.assertEqual(response.status_code, 200)
+        self.invoice.refresh_from_db()
+        self.assertEqual(self.invoice.status, Invoice.STATUS_SENT)
+
+    @patch("books.views.cinetpay_client.check_payment_status")
+    def test_amount_mismatch_does_not_mark_paid(self, mock_check):
+        mock_check.return_value = {
+            "code": "00",
+            "data": {"status": "ACCEPTED", "currency": "XOF", "amount": "999"},
+        }
+        response = self._post()
+        self.assertEqual(response.status_code, 200)
+        self.invoice.refresh_from_db()
+        self.assertEqual(self.invoice.status, Invoice.STATUS_SENT)
+
+    @patch("books.views.cinetpay_client.check_payment_status")
+    def test_already_paid_invoice_not_reprocessed(self, mock_check):
+        self.invoice.status = Invoice.STATUS_PAID
+        self.invoice.save()
+        mock_check.return_value = {
+            "code": "00",
+            "data": {"status": "ACCEPTED", "currency": "XOF", "amount": "20"},
+        }
+        self._post()
+        mock_check.assert_called_once()
+
+    def test_unparseable_transaction_id_returns_400(self):
+        response = self._post(transaction_id="garbage")
+        self.assertEqual(response.status_code, 400)
+
+    def test_unknown_invoice_returns_404(self):
+        response = self._post(transaction_id="inv-999999-abc123")
+        self.assertEqual(response.status_code, 404)
+
+    def test_unknown_integration_returns_404(self):
+        response = self.client.post(
+            reverse("cinetpay_invoice_webhook", args=[999999]), {"cpm_trans_id": self.transaction_id},
+        )
+        self.assertEqual(response.status_code, 404)
+
+    def test_get_request_returns_405(self):
+        response = self.client.get(reverse("cinetpay_invoice_webhook", args=[self.integration.id]))
+        self.assertEqual(response.status_code, 405)
+
+    @patch("books.views.cinetpay_client.check_payment_status")
+    def test_check_error_returns_502(self, mock_check):
+        mock_check.side_effect = cinetpay_client.CinetpayError("boom")
+        response = self._post()
+        self.assertEqual(response.status_code, 502)
 
 
 class StripeWebhookTests(TestCase):
@@ -3871,6 +3994,130 @@ class BillingViewTests(TestCase):
         response = self.client.get(reverse("billing_required"))
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Manage billing")
+
+
+class CinetpayBillingTests(TestCase):
+
+    def setUp(self):
+        User = get_user_model()
+        self.user = User.objects.create_user(username="owner", password="pass1234", email="owner@example.com")
+        grant(self.user, "view_book")
+        self.client.force_login(self.user)
+        self.override = override_settings(
+            PLATFORM_BILLING_PROVIDER="cinetpay",
+            CINETPAY_SUBSCRIPTION_AMOUNT=5000,
+            CINETPAY_SUBSCRIPTION_PERIOD_DAYS=30,
+        )
+        self.override.enable()
+        self.addCleanup(self.override.disable)
+        self.valid_form_data = {
+            "name": "Aminata", "surname": "Traore", "email": "owner@example.com", "phone": "+22377001122",
+        }
+
+    @patch("books.views.cinetpay_client.initiate_payment")
+    def test_billing_start_post_redirects_to_cinetpay_payment_url(self, mock_init):
+        mock_init.return_value = {"data": {"payment_url": "https://checkout.cinetpay.com/abc123"}}
+
+        response = self.client.post(reverse("billing_start"), self.valid_form_data)
+
+        self.assertRedirects(response, "https://checkout.cinetpay.com/abc123", fetch_redirect_response=False)
+        subscription = Subscription.objects.get(user=self.user)
+        self.assertTrue(subscription.checkout_token.startswith(f"sub-{subscription.id}-"))
+
+    @patch("books.views.cinetpay_client.initiate_payment")
+    def test_billing_start_post_cinetpay_error_redirects_to_billing_required(self, mock_init):
+        mock_init.side_effect = cinetpay_client.CinetpayError("boom")
+
+        response = self.client.post(reverse("billing_start"), self.valid_form_data)
+        self.assertRedirects(response, reverse("billing_required"))
+
+    def test_billing_portal_redirects_to_billing_start(self):
+        Subscription.objects.create(user=self.user, external_customer_id="cust_1", status=Subscription.STATUS_UNPAID)
+        response = self.client.get(reverse("billing_portal"))
+        self.assertRedirects(response, reverse("billing_start"))
+
+    @patch("books.views.cinetpay_client.check_payment_status")
+    def test_webhook_activates_subscription_on_accepted(self, mock_check):
+        subscription = Subscription.objects.create(
+            user=self.user, checkout_token="sub-1-abc123", status=Subscription.STATUS_INCOMPLETE,
+        )
+        mock_check.return_value = {"code": "00", "data": {"status": "ACCEPTED"}}
+
+        response = self.client.post(reverse("platform_cinetpay_webhook"), {"cpm_trans_id": "sub-1-abc123"})
+
+        self.assertEqual(response.status_code, 200)
+        subscription.refresh_from_db()
+        self.assertEqual(subscription.status, Subscription.STATUS_ACTIVE)
+        self.assertIsNotNone(subscription.current_period_end)
+        self.assertEqual(subscription.checkout_token, "")
+
+    @patch("books.views.cinetpay_client.check_payment_status")
+    def test_webhook_does_not_activate_on_refused(self, mock_check):
+        subscription = Subscription.objects.create(
+            user=self.user, checkout_token="sub-1-abc123", status=Subscription.STATUS_INCOMPLETE,
+        )
+        mock_check.return_value = {"code": "00", "data": {"status": "REFUSED"}}
+
+        response = self.client.post(reverse("platform_cinetpay_webhook"), {"cpm_trans_id": "sub-1-abc123"})
+
+        self.assertEqual(response.status_code, 200)
+        subscription.refresh_from_db()
+        self.assertEqual(subscription.status, Subscription.STATUS_INCOMPLETE)
+
+    def test_webhook_unknown_transaction_returns_404(self):
+        response = self.client.post(reverse("platform_cinetpay_webhook"), {"cpm_trans_id": "sub-unknown"})
+        self.assertEqual(response.status_code, 404)
+
+    def test_webhook_missing_transaction_id_returns_400(self):
+        response = self.client.post(reverse("platform_cinetpay_webhook"), {})
+        self.assertEqual(response.status_code, 400)
+
+    def test_webhook_get_request_returns_405(self):
+        response = self.client.get(reverse("platform_cinetpay_webhook"))
+        self.assertEqual(response.status_code, 405)
+
+    @patch("books.views.cinetpay_client.check_payment_status")
+    def test_webhook_check_error_returns_502(self, mock_check):
+        Subscription.objects.create(user=self.user, checkout_token="sub-1-abc123", status=Subscription.STATUS_INCOMPLETE)
+        mock_check.side_effect = cinetpay_client.CinetpayError("boom")
+
+        response = self.client.post(reverse("platform_cinetpay_webhook"), {"cpm_trans_id": "sub-1-abc123"})
+        self.assertEqual(response.status_code, 502)
+
+
+class SubscriptionPeriodExpiryTests(TestCase):
+
+    def setUp(self):
+        User = get_user_model()
+        self.user = User.objects.create_user(username="owner", password="pass1234")
+
+    def test_active_with_no_period_end_is_in_good_standing(self):
+        subscription = Subscription.objects.create(user=self.user, status=Subscription.STATUS_ACTIVE)
+        self.assertTrue(subscription.is_in_good_standing)
+
+    def test_active_with_future_period_end_is_in_good_standing(self):
+        subscription = Subscription.objects.create(
+            user=self.user, status=Subscription.STATUS_ACTIVE,
+            current_period_end=timezone.now() + timedelta(days=10),
+        )
+        self.assertTrue(subscription.is_in_good_standing)
+
+    def test_active_with_past_period_end_is_not_in_good_standing(self):
+        subscription = Subscription.objects.create(
+            user=self.user, status=Subscription.STATUS_ACTIVE,
+            current_period_end=timezone.now() - timedelta(days=1),
+        )
+        self.assertFalse(subscription.is_in_good_standing)
+
+    def test_activate_for_period_sets_status_and_period_end_and_clears_token(self):
+        subscription = Subscription.objects.create(
+            user=self.user, status=Subscription.STATUS_INCOMPLETE, checkout_token="tok",
+        )
+        subscription.activate_for_period(30)
+        subscription.refresh_from_db()
+        self.assertEqual(subscription.status, Subscription.STATUS_ACTIVE)
+        self.assertEqual(subscription.checkout_token, "")
+        self.assertTrue(subscription.current_period_end > timezone.now() + timedelta(days=29))
 
 
 class PlatformWebhookTests(TestCase):

@@ -240,6 +240,29 @@ IYZICO_BASE_URL = os.environ.get("IYZICO_BASE_URL", "https://sandbox-api.iyzipay
 IYZICO_PRICING_PLAN_REFERENCE_CODE = os.environ.get("IYZICO_PRICING_PLAN_REFERENCE_CODE", "")
 SUBSCRIPTION_TRIAL_DAYS = 7
 
+# Which provider billing_start uses for platform subscription billing -
+# "iyzico" (Turkey-only, card-based, has a native recurring Subscription
+# product) or "cinetpay" (West Africa incl. Mali, mobile money + cards, no
+# native recurring billing - each period is its own one-time checkout, same
+# shape as an invoice payment). Switch by setting this env var once real
+# CinetPay credentials exist; defaults to iyzico so existing setups keep
+# working unchanged.
+PLATFORM_BILLING_PROVIDER = os.environ.get("PLATFORM_BILLING_PROVIDER", "iyzico")
+
+# CinetPay (West Africa mobile money/card aggregator - Orange Money, Moov
+# Money, etc.) - used both for the per-owner Integration model (customer
+# invoice payments) and, if PLATFORM_BILLING_PROVIDER is "cinetpay", for
+# RumiPress's own platform subscription billing. CinetPay only collects in
+# your account's authorized local currency (XOF for a Mali-registered
+# account) - it cannot run multi-currency like Stripe/iyzico.
+CINETPAY_API_KEY = os.environ.get("CINETPAY_API_KEY", "")
+CINETPAY_SITE_ID = os.environ.get("CINETPAY_SITE_ID", "")
+CINETPAY_BASE_URL = os.environ.get("CINETPAY_BASE_URL", "https://api-checkout.cinetpay.com/v2")
+CINETPAY_CURRENCY = os.environ.get("CINETPAY_CURRENCY", "XOF")
+# Amount must be a multiple of 5 per CinetPay's API constraint.
+CINETPAY_SUBSCRIPTION_AMOUNT = int(os.environ.get("CINETPAY_SUBSCRIPTION_AMOUNT", "5000"))
+CINETPAY_SUBSCRIPTION_PERIOD_DAYS = int(os.environ.get("CINETPAY_SUBSCRIPTION_PERIOD_DAYS", "30"))
+
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 

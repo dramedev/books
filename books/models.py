@@ -1,4 +1,5 @@
 import re
+from datetime import timedelta
 from decimal import Decimal, ROUND_HALF_UP
 
 from django.conf import settings
@@ -1223,11 +1224,13 @@ class Integration(AccountScopedModel):
     PLATFORM_SHOPIFY = "shopify"
     PLATFORM_AMAZON = "amazon"
     PLATFORM_STRIPE = "stripe"
+    PLATFORM_CINETPAY = "cinetpay"
 
     PLATFORM_CHOICES = [
         (PLATFORM_SHOPIFY, _("Shopify")),
         (PLATFORM_AMAZON, _("Amazon")),
         (PLATFORM_STRIPE, _("Stripe")),
+        (PLATFORM_CINETPAY, _("CinetPay")),
     ]
 
     owner = models.ForeignKey(
@@ -1430,7 +1433,22 @@ class Subscription(models.Model):
 
     @property
     def is_in_good_standing(self):
-        return self.status in self.GOOD_STANDING_STATUSES
+        if self.status not in self.GOOD_STANDING_STATUSES:
+            return False
+        # iyzico auto-renews and pushes a fresh status via webhook each
+        # cycle, so it never sets current_period_end and this check is a
+        # no-op for it. CinetPay has no native recurring billing - each
+        # period is its own one-time payment, so an account stays "active"
+        # only until the period it actually paid for runs out.
+        if self.current_period_end and self.current_period_end < timezone.now():
+            return False
+        return True
+
+    def activate_for_period(self, days):
+        self.status = self.STATUS_ACTIVE
+        self.current_period_end = timezone.now() + timedelta(days=days)
+        self.checkout_token = ""
+        self.save(update_fields=["status", "current_period_end", "checkout_token"])
 
 
     def save(self, *args, **kwargs):

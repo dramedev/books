@@ -36,7 +36,7 @@ from django.utils.translation import gettext, gettext_lazy
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 
-from . import ai_chat, iyzico_client
+from . import ai_chat, cinetpay_client, iyzico_client
 from .isbn_lookup import IsbnLookupError, lookup_isbn
 from .analytics import PURCHASE_COST_EXPRESSION, REVENUE_EXPRESSION
 from .reorder_logic import (
@@ -50,6 +50,7 @@ from .forms import (
     AuthorForm,
     BookForm,
     CategoryForm,
+    CinetpayCustomerForm,
     CustomerForm,
     IntegrationForm,
     InviteUserForm,
@@ -4543,6 +4544,47 @@ def stripe_webhook(request, integration_id):
     return HttpResponse(status=200)
 
 
+@csrf_exempt
+def cinetpay_invoice_webhook(request, integration_id):
+    if request.method != "POST":
+        return HttpResponse(status=405)
+
+    try:
+        intg = Integration.objects.get(
+            id=integration_id,
+            platform=Integration.PLATFORM_CINETPAY,
+            is_active=True,
+        )
+    except Integration.DoesNotExist:
+        return HttpResponse(status=404)
+
+    transaction_id = request.POST.get("cpm_trans_id") or request.POST.get("transaction_id", "")
+    match = re.match(r"^inv-(\d+)-", transaction_id)
+    if not match:
+        return HttpResponse(status=400)
+
+    invoice = Invoice.objects.filter(id=int(match.group(1)), account=intg.account).first()
+    if invoice is None:
+        return HttpResponse(status=404)
+
+    try:
+        result = cinetpay_client.check_payment_status(transaction_id)
+    except cinetpay_client.CinetpayError:
+        return HttpResponse(status=502)
+
+    data = result.get("data", result)
+    if (
+        data.get("status") == "ACCEPTED"
+        and invoice.status != Invoice.STATUS_PAID
+        and data.get("currency", "").upper() == invoice.currency
+        and int(Decimal(str(data.get("amount", 0))).to_integral_value()) == int(invoice.grand_total.to_integral_value())
+    ):
+        invoice.status = Invoice.STATUS_PAID
+        invoice.save(update_fields=["status"])
+
+    return HttpResponse(status=200)
+
+
 # ---------------------------------------------------------------------------
 # PWA views
 # ---------------------------------------------------------------------------
@@ -5035,6 +5077,12 @@ def billing_start(request):
     if subscription.is_in_good_standing:
         return redirect("dashboard")
 
+    if settings.PLATFORM_BILLING_PROVIDER == "cinetpay":
+        return _billing_start_cinetpay(request, subscription)
+    return _billing_start_iyzico(request, subscription)
+
+
+def _billing_start_iyzico(request, subscription):
     form = IyzicoCustomerForm(initial={"email": request.user.email})
 
     if request.method == "POST":
@@ -5072,6 +5120,48 @@ def billing_start(request):
                 "checkout_form_content": result["checkoutFormContent"],
                 "heading": gettext("Start your subscription"),
             })
+
+    return render(request, "registration/billing_start.html", {"form": form})
+
+
+def _billing_start_cinetpay(request, subscription):
+    form = CinetpayCustomerForm(initial={"email": request.user.email})
+
+    if request.method == "POST":
+        form = CinetpayCustomerForm(request.POST)
+        if form.is_valid():
+            data = form.cleaned_data
+            # CinetPay has no native recurring billing, unlike iyzico - this
+            # is a one-time checkout per period, the same shape as an
+            # invoice payment. A fresh transaction_id each attempt avoids
+            # colliding with the merchant's own past transaction IDs.
+            transaction_id = f"sub-{subscription.id}-{secrets.token_hex(8)}"
+            notify_url = request.build_absolute_uri(reverse("platform_cinetpay_webhook"))
+            return_url = request.build_absolute_uri(reverse("billing_required"))
+
+            try:
+                result = cinetpay_client.initiate_payment(
+                    transaction_id=transaction_id,
+                    amount=settings.CINETPAY_SUBSCRIPTION_AMOUNT,
+                    currency=settings.CINETPAY_CURRENCY,
+                    description=f"RumiPress subscription - {request.account.name}",
+                    notify_url=notify_url,
+                    return_url=return_url,
+                    customer={
+                        "name": data["name"],
+                        "surname": data["surname"],
+                        "email": data["email"],
+                        "phone": data["phone"],
+                    },
+                )
+            except cinetpay_client.CinetpayError:
+                messages.error(request, gettext("Couldn't start your subscription. Please try again or contact us."))
+                return redirect("billing_required")
+
+            subscription.checkout_token = transaction_id
+            subscription.save(update_fields=["checkout_token"])
+
+            return redirect(result["data"]["payment_url"])
 
     return render(request, "registration/billing_start.html", {"form": form})
 
@@ -5125,6 +5215,13 @@ def billing_required(request):
 @login_required
 def billing_portal(request):
     subscription = _get_or_create_subscription(request.account, request.user)
+
+    # CinetPay has no stored-card-on-file concept (mobile money has nothing
+    # to "update") - paying for the next period via billing_start already
+    # is the billing-management action for this provider.
+    if settings.PLATFORM_BILLING_PROVIDER == "cinetpay":
+        return redirect("billing_start")
+
     if not subscription.external_customer_id:
         return redirect("billing_start")
 
@@ -5181,6 +5278,39 @@ def platform_webhook(request):
         elif event_type == "subscription.order.failure":
             subscription.status = Subscription.STATUS_UNPAID
             subscription.save(update_fields=["status"])
+
+    return HttpResponse(status=200)
+
+
+@csrf_exempt
+def platform_cinetpay_webhook(request):
+    if request.method != "POST":
+        return HttpResponse(status=405)
+
+    # CinetPay's notify_url body itself isn't trusted as proof of payment -
+    # it only tells us which transaction_id to re-query for real. CinetPay
+    # has documented field-naming variants here ("cpm_trans_id" on its
+    # classic notify payload, "transaction_id" on newer integrations); accept
+    # either rather than guessing which one a given merchant config sends.
+    transaction_id = request.POST.get("cpm_trans_id") or request.POST.get("transaction_id", "")
+    if not transaction_id:
+        return HttpResponse(status=400)
+
+    subscription = Subscription.objects.filter(checkout_token=transaction_id).first()
+    if subscription is None:
+        return HttpResponse(status=404)
+
+    try:
+        result = cinetpay_client.check_payment_status(transaction_id)
+    except cinetpay_client.CinetpayError:
+        # Transient failure re-querying CinetPay - ask it to retry later
+        # rather than silently swallowing a real payment.
+        return HttpResponse(status=502)
+
+    data = result.get("data", result)
+    if data.get("status") == "ACCEPTED":
+        subscription.external_subscription_id = transaction_id
+        subscription.activate_for_period(settings.CINETPAY_SUBSCRIPTION_PERIOD_DAYS)
 
     return HttpResponse(status=200)
 
@@ -5622,9 +5752,11 @@ def customer_portal_dashboard(request):
     })
 
 
-def _get_stripe_integration(account):
+def _get_payment_integration(account):
     return Integration.objects.filter(
-        account=account, platform=Integration.PLATFORM_STRIPE, is_active=True,
+        account=account,
+        platform__in=[Integration.PLATFORM_STRIPE, Integration.PLATFORM_CINETPAY],
+        is_active=True,
     ).first()
 
 
@@ -5640,7 +5772,7 @@ def customer_portal_invoice_detail(request, id):
 
     can_pay = (
         invoice.status != Invoice.STATUS_PAID
-        and _get_stripe_integration(invoice.account) is not None
+        and _get_payment_integration(invoice.account) is not None
     )
 
     return render(request, "customer_portal/invoice_detail.html", {
@@ -5663,12 +5795,16 @@ def customer_portal_invoice_pay(request, id):
     if invoice.status == Invoice.STATUS_PAID:
         return redirect("customer_portal_invoice_detail", id=invoice.id)
 
-    integration = _get_stripe_integration(invoice.account)
+    integration = _get_payment_integration(invoice.account)
     if integration is None:
         messages.error(request, gettext("Online payment isn't available for this invoice yet."))
         return redirect("customer_portal_invoice_detail", id=invoice.id)
 
     detail_url = request.build_absolute_uri(reverse("customer_portal_invoice_detail", args=[invoice.id]))
+
+    if integration.platform == Integration.PLATFORM_CINETPAY:
+        return _customer_portal_invoice_pay_cinetpay(request, invoice, integration, detail_url)
+
     client = stripe.StripeClient(api_key=integration.api_key)
 
     try:
@@ -5693,3 +5829,35 @@ def customer_portal_invoice_pay(request, id):
         return redirect("customer_portal_invoice_detail", id=invoice.id)
 
     return redirect(session.url)
+
+
+def _customer_portal_invoice_pay_cinetpay(request, invoice, integration, detail_url):
+    # The invoice id is encoded directly in the transaction_id (parsed back
+    # out by the webhook below) since CinetPay has no generic metadata bag
+    # like Stripe's Checkout Session to carry it for us.
+    transaction_id = f"inv-{invoice.id}-{secrets.token_hex(6)}"
+    notify_url = request.build_absolute_uri(
+        reverse("cinetpay_invoice_webhook", args=[integration.id]),
+    )
+    customer = invoice.customer
+
+    try:
+        result = cinetpay_client.initiate_payment(
+            transaction_id=transaction_id,
+            amount=int(invoice.grand_total.to_integral_value()),
+            currency=invoice.currency,
+            description=f"Invoice {invoice.invoice_number or invoice.id}",
+            notify_url=notify_url,
+            return_url=f"{detail_url}?paid=1",
+            customer={
+                "name": (customer.name.split(" ", 1)[0] if customer and customer.name else ""),
+                "surname": (customer.name.split(" ", 1)[1] if customer and customer.name and " " in customer.name else ""),
+                "email": customer.email if customer else "",
+                "phone": customer.phone if customer else "",
+            },
+        )
+    except cinetpay_client.CinetpayError:
+        messages.error(request, gettext("Couldn't start payment. Please try again or contact us."))
+        return redirect("customer_portal_invoice_detail", id=invoice.id)
+
+    return redirect(result["data"]["payment_url"])
